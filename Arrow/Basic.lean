@@ -35,4 +35,7 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
       (∀ i: Fin N, (p i).lt a b) ↔ (∀ i: Fin N, (q i).lt a b) ->
       ((R p).lt a b ↔ (R q).lt a b)
 
+def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
+  ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
+
 def hello := "world"
