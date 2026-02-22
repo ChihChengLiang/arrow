@@ -1,8 +1,11 @@
 import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Data.Finset.Defs
+import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Fintype.Card
 
-variable (α: Type) -- α is the type of alternatives
+variable (α: Type) [Fintype α] [DecidableEq α] -- α is the type of alternatives
 variable (N: ℕ ) -- N is the number of voters
+variable (ha: Fintype.card α ≥ 3)
 
 structure Preorder' (α : Type) where
   le : α → α → Prop
@@ -37,5 +40,27 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
+
+-- A profile where voters 0..k-1 prefer a over b, and voters k..N-1 prefer b over a
+def swappedProfile (k : Fin (N+1)) (a b : α) : PreferenceProfile α N :=
+  -- def preferAoverB := fun (x  y : α): (p : Preorder' α) ↦ if x = a ∧ y = b then  x > y else x = y
+  fun j ↦ if j.val < k.val then b < a else a < b
+
+
+-- The pivotal voter is the first k where society flips
+def pivotalVoter (R : SocialWelfareFunction α N) (a b : α) : Fin N := sorry
+
+theorem Impossibility :
+    ¬ ∃ R : SocialWelfareFunction α N,
+    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
+  by_contra h
+  obtain ⟨ R, h⟩ := h
+  rcases h with ⟨ hunanimity, hAIIANonDictactor ⟩
+  rcases hAIIANonDictactor with ⟨ hAIIA, hNonDictactor ⟩
+  apply hNonDictactor
+  constructor
+  intro p a b
+
+  sorry
 
 def hello := "world"
