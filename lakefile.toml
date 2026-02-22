@@ -1,0 +1,10 @@
+name = "arrow"
+version = "0.1.0"
+defaultTargets = ["arrow"]
+
+[[lean_lib]]
+name = "Arrow"
+
+[[lean_exe]]
+name = "arrow"
+root = "Main"
