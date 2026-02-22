@@ -1,6 +1,11 @@
 name = "arrow"
 version = "0.1.0"
 defaultTargets = ["arrow"]
+lintDriver = "batteries/runLinter"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
 
 [[lean_lib]]
 name = "Arrow"
