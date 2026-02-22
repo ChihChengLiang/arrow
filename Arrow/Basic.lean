@@ -41,9 +41,112 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
 
+
+def preferAoverB (a b : α) (hab : a ≠ b) : Preorder' α where
+  le x y := x = y ∨ x = b ∨ y = a  ∨ (x ≠ a ∧ x ≠ b ∧ y ≠ a ∧ y ≠ b) -- a is top, b is bottom, else arbitrary
+  refl := by
+    intro x
+    left
+    rfl
+  trans := by
+    intro x y z hxy hyz
+    rcases hxy with hxy | hxb | hya | hneg
+    rcases hyz with hyz | hyb | hxa | hneg
+    rw[hyz] at hxy
+    left
+    exact hxy
+    rw[hyb] at hxy
+    right
+    left
+    exact hxy
+    right
+    right
+    left
+    exact hxa
+    right
+    right
+    right
+    rw [← hxy] at hneg
+    exact hneg
+    right
+    left
+    exact hxb
+    rcases hyz with hyz | hyb | hxa | hneg
+    right
+    right
+    left
+    rw[hyz] at hya
+    exact hya
+    have : a = b := by rw [← hya, hyb]
+    exact absurd this hab
+    right
+    right
+    left
+    exact hxa
+    exact absurd hya hneg.left
+    rcases hyz with hyz | hyb | hxa | hneg2
+    rw[hyz] at hneg
+    right
+    right
+    right
+    exact hneg
+    exact absurd hyb hneg.right.right.right
+    right
+    right
+    left
+    exact hxa
+    right
+    right
+    right
+    constructor
+    exact hneg.left
+    constructor
+    exact hneg.right.left
+    constructor
+    exact hneg2.right.right.left
+    exact hneg2.right.right.right
+
+  total := by
+    intro x y
+    by_cases hxa : x = a
+    right
+    right
+    right
+    left
+    exact hxa
+    by_cases hxb : x = b
+    left
+    right
+    left
+    exact hxb
+    by_cases hya: y = a
+    left
+    right
+    right
+    left
+    exact hya
+    by_cases hyb: y = b
+    right
+    right
+    left
+    exact hyb
+    left
+    right
+    right
+    right
+    push_neg at hxa hxb hya hyb
+    constructor
+    exact hxa
+    constructor
+    exact hxb
+    constructor
+    exact hya
+    exact hyb
+
+
 -- A profile where voters 0..k-1 prefer a over b, and voters k..N-1 prefer b over a
 def swappedProfile (k : Fin (N+1)) (a b : α) : PreferenceProfile α N :=
-  -- def preferAoverB := fun (x  y : α): (p : Preorder' α) ↦ if x = a ∧ y = b then  x > y else x = y
+
   fun j ↦ if j.val < k.val then b < a else a < b
 
 
