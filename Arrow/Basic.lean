@@ -67,134 +67,80 @@ def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
 
 
-def preferAoverB {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α where
-  le x y := x = y ∨ x = b ∨ y = a  ∨ (x ≠ a ∧ x ≠ b ∧ y ≠ a ∧ y ≠ b) -- a is top, b is bottom, else arbitrary
+def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
+  le x y :=
+    if x = b then True           -- b is below everything
+    else if y = a then True      -- a is above everything
+    else if x = a then y = a     -- a is only ≤ itself (it's the top)
+    else if y = b then x = b     -- b is only ≥ itself (it's the bottom)
+    else x ≤ y                   -- everything else uses existing order
   refl := by
     intro x
-    left
-    rfl
+    simp
   trans := by
     intro x y z hxy hyz
-    rcases hxy with hxy | hxb | hya | hneg
-    rcases hyz with hyz | hyb | hxa | hneg
-    rw[hyz] at hxy
-    left
+    simp
+    intro hxb
+    intro hza
+    split_ifs with hxa hzb
+    split_ifs at hxy ⊢ with hya
+    split_ifs at hyz ⊢ with hyb
+    rw[hya] at hyb
+    exact absurd hyb hab
+    exact hyz
+    exact absurd hxy hya
+    split_ifs at hxy ⊢ with hya hyb
+    split_ifs at hyz ⊢ with hyb
+    rw[hya] at hyb
+    exact absurd hyb hab
+    exact absurd hyz hza
     exact hxy
-    rw[hyb] at hxy
-    right
-    left
-    exact hxy
-    right
-    right
-    left
-    exact hxa
-    right
-    right
-    right
-    rw [← hxy] at hneg
-    exact hneg
-    right
-    left
-    exact hxb
-    rcases hyz with hyz | hyb | hxa | hneg
-    right
-    right
-    left
-    rw[hyz] at hya
-    exact hya
-    have : a = b := by rw [← hya, hyb]
-    exact absurd this hab
-    right
-    right
-    left
-    exact hxa
-    exact absurd hya hneg.left
-    rcases hyz with hyz | hyb | hxa | hneg2
-    rw[hyz] at hneg
-    right
-    right
-    right
-    exact hneg
-    exact absurd hyb hneg.right.right.right
-    right
-    right
-    left
-    exact hxa
-    right
-    right
-    right
-    constructor
-    exact hneg.left
-    constructor
-    exact hneg.right.left
-    constructor
-    exact hneg2.right.right.left
-    exact hneg2.right.right.right
+    split_ifs at hyz
+    exact absurd hyz hyb
+    split_ifs at hxy ⊢ with hya hyb
+    split_ifs at hyz ⊢ with hyb
+    rw[hya] at hyb
+    exact absurd hyb hab
+    exact absurd hyz hza
+    exact absurd hxy hxb
+    split_ifs at hyz
+    exact le_trans hxy hyz
 
   total := by
     intro x y
-    by_cases hxa : x = a
-    right
-    right
-    right
-    left
-    exact hxa
-    by_cases hxb : x = b
-    left
-    right
-    left
-    exact hxb
-    by_cases hya: y = a
-    left
-    right
-    right
-    left
-    exact hya
-    by_cases hyb: y = b
-    right
-    right
-    left
-    exact hyb
-    left
-    right
-    right
-    right
-    push_neg at hxa hxb hya hyb
-    constructor
-    exact hxa
-    constructor
-    exact hxb
-    constructor
-    exact hya
-    exact hyb
+    split_ifs with hxb hyb hxa hya hya hyb hxa hxa hyb hyb
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    exact le_total x y
+
   antisymm := by
-    intro x y hxy hyx
-    rcases hxy with h | h | h | ⟨h1, h2, h3, h4⟩
-    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
-    exact h
-    exact h
-    exact h
-    exact h
-    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
-    rw [h']
-    rw[h , h']
-    rw[h'] at h
-    exact absurd h hab
-    exact absurd h h4'
-    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
-    rw[h']
-    rw[h] at h'
-    exact absurd h' hab
-    rw[h', h]
-    exact absurd h h1'
-    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
-    rw[h']
-    exact absurd h' h4
-    exact absurd h' h1
-    sorry
+    intro x y hxb hyb
+    split_ifs at hxb ⊢ with hxb2 hya hxa hyb2
+    split_ifs at hyb ⊢ with hyb3 hxa hya
+    rw [ hyb3, hxb2]
+    rw[hxa] at hxb2
+    exact absurd hxb2 hab
+    rw[hya, hyb]
+    rw[hxb2, hyb]
+    split_ifs at hyb ⊢ with hyb2 hxa
+    rw[hya] at hyb2
+    exact absurd hyb2 hab
+    rw[hya, hxa]
+    exact absurd hyb hxa
+    rw[hxa, hxb]
+    rw[hyb2, hxb]
+    split_ifs at hyb
+    exact le_antisymm hxb hyb
 
-
-def preferBoverA {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α :=
+def preferBoverA {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α :=
   preferAoverB b a (Ne.symm hab)
 
 #check @preferBoverA
@@ -202,27 +148,18 @@ example : Preorder' (Fin 3) := preferBoverA (⟨0, by decide⟩ : Fin 3) ⟨1, b
 #reduce (preferBoverA (a := 0) (b := 1) (by decide) : Preorder' (Fin 3)).le
 
 -- A profile where voters 0..k-1 prefer a over b, and voters k..N-1 prefer b over a
-def swappedProfile {α : Type} {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
+def swappedProfile {α : Type} [LinearOrder α] {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
   fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
 
 omit [Fintype α] in
-lemma preferAoverB_lt {α : Type} (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
+lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
   simp only [Preorder'.lt, preferAoverB]
   constructor
-  right
-  left
+  split_ifs
+  split_ifs with hab2 hba
   tauto
-  push_neg
-  constructor
-  exact hab
-  constructor
-  exact hab
-  constructor
-  exact Ne.symm hab
-  intro h
-  by_contra hh
-  apply h
-  rfl
+  tauto
+  exact hba
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
@@ -261,6 +198,7 @@ lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
 -- there must be a first index where it flips
 lemma exists_pivotal
   {α : Type}
+  [LinearOrder α]
   (a b : α)
   (hab : a ≠ b)
   (N:ℕ)
