@@ -80,8 +80,7 @@ def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preor
   trans := by
     intro x y z hxy hyz
     simp
-    intro hxb
-    intro hza
+    intro hxb hza
     split_ifs with hxa hzb
     split_ifs at hxy ⊢ with hya
     split_ifs at hyz ⊢ with hyb
