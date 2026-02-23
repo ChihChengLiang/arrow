@@ -242,6 +242,34 @@ lemma exists_pivotal
   exact Preorder'.lt_of_not_lt _ a b hab hleft
   exact hright
 
+lemma exists_third {α : Type} [Fintype α] [DecidableEq α]
+    (ha : Fintype.card α ≥ 3) (a b : α) :
+    ∃ c : α, c ≠ a ∧ c ≠ b := by
+  by_contra h
+  push_neg at h
+  have h' : ∀ c : α, c = a ∨ c = b := by
+    intro c
+    by_cases hca : c = a
+    · left; exact hca
+    · right; exact h c hca
+  have hle : Fintype.card α ≤ 2 := by
+    have hsub: Finset.univ ⊆ {a, b} := by
+      intro x _
+      simp [Finset.mem_insert]
+      exact h' x
+    calc Finset.univ.card
+          ≤ ({a, b} : Finset α).card := Finset.card_le_card hsub
+        _ ≤ 2 := by apply le_trans (Finset.card_insert_le a {b}); simp
+  omega
+
+lemma pivotal_is_dictator
+  {R : SocialWelfareFunction α N}
+  (hun : unanimity α N R)
+  (hAIIA : AIIA α N R)
+  (k : Fin N) :
+  ∀ (p : PreferenceProfile α N) (a b : α), (p k).lt a b → (R p).lt a b := by
+  sorry
+
 theorem Impossibility :
     ¬ ∃ R : SocialWelfareFunction α N,
     (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
