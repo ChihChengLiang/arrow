@@ -42,7 +42,7 @@ def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
 
 
-def preferAoverB (a b : α) (hab : a ≠ b) : Preorder' α where
+def preferAoverB {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α where
   le x y := x = y ∨ x = b ∨ y = a  ∨ (x ≠ a ∧ x ≠ b ∧ y ≠ a ∧ y ≠ b) -- a is top, b is bottom, else arbitrary
   refl := by
     intro x
@@ -143,11 +143,12 @@ def preferAoverB (a b : α) (hab : a ≠ b) : Preorder' α where
     exact hya
     exact hyb
 
+def preferBoverA {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α :=
+  preferAoverB b a (Ne.symm hab)
 
 -- A profile where voters 0..k-1 prefer a over b, and voters k..N-1 prefer b over a
-def swappedProfile (k : Fin (N+1)) (a b : α) : PreferenceProfile α N :=
-
-  fun j ↦ if j.val < k.val then b < a else a < b
+def swappedProfile (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
+  fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
 
 
 -- The pivotal voter is the first k where society flips
@@ -163,6 +164,7 @@ theorem Impossibility :
   apply hNonDictactor
   constructor
   intro p a b
+    sorry
 
   sorry
 
