@@ -146,13 +146,61 @@ def preferAoverB {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α where
 def preferBoverA {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α :=
   preferAoverB b a (Ne.symm hab)
 
+#check @preferBoverA
+example : Preorder' (Fin 3) := preferBoverA (⟨0, by decide⟩ : Fin 3) ⟨1, by decide⟩ (by decide)
+#reduce (preferBoverA (a := 0) (b := 1) (by decide) : Preorder' (Fin 3)).le
+
 -- A profile where voters 0..k-1 prefer a over b, and voters k..N-1 prefer b over a
-def swappedProfile (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
+def swappedProfile {α : Type} {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
   fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
 
+omit [Fintype α] in
+lemma preferAoverB_lt (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
+  simp only [Preorder'.lt, preferAoverB]
+  constructor
+  right
+  left
+  tauto
+  push_neg
+  constructor
+  exact hab
+  constructor
+  exact hab
+  constructor
+  exact Ne.symm hab
+  intro h
+  by_contra hh
+  apply h
+  rfl
 
--- The pivotal voter is the first k where society flips
-def pivotalVoter (R : SocialWelfareFunction α N) (a b : α) : Fin N := sorry
+-- if a property holds at 0 and not at N (or vice versa),
+-- there must be a first index where it flips
+lemma exists_pivotal
+  {α : Type}
+  (a b : α)
+  (hab : a ≠ b)
+  (N:ℕ)
+  {R: SocialWelfareFunction α N}
+  (hun: (unanimity _ _ R)):
+    ∃ k : Fin N,
+    (R (swappedProfile k.castSucc a b hab)).lt b a ∧
+    (R (swappedProfile k.succ a b hab)).lt a b := by
+  -- when k = 0, everyone prefers b over a, so society prefers b over a
+  have hStart : (R (swappedProfile 0 a b hab)).lt b a := by
+    show (R (swappedProfile 0 a b hab)).lt b a
+    apply hun
+    intro i
+    rw[swappedProfile]
+    have : ¬ (i.val < 0) := Nat.not_lt_zero _
+    simp
+    simp only [Preorder'.lt]
+    simp only [preferBoverA]
+    simp only [preferAoverB]
+
+
+    -- swappedProfile 0 means all voters prefer b over a
+    sorry
+  sorry
 
 theorem Impossibility :
     ¬ ∃ R : SocialWelfareFunction α N,
