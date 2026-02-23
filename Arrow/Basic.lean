@@ -16,6 +16,16 @@ structure Preorder' (α : Type) where
 def Preorder'.lt {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
 
+lemma Preorder'.lt_asymm {α : Type} (p : Preorder' α) (a b : α) :
+    p.lt a b → ¬ p.lt b a := by
+  intro ⟨hab, hnba⟩ ⟨hba, _⟩
+  exact hnba hba
+
+lemma Preorder'.lt_irrefl {α : Type} (p : Preorder' α) (a : α) :
+    ¬ p.lt a a := by
+  intro ⟨h, hn⟩
+  exact hn h
+
 -- Map individual i to their preferences
 def PreferenceProfile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
@@ -216,8 +226,8 @@ lemma exists_pivotal
   {R: SocialWelfareFunction α N}
   (hun: (unanimity _ _ R)):
     ∃ k : Fin N,
-    (R (swappedProfile k.castSucc a b hab)).lt b a ∧
-    (R (swappedProfile k.succ a b hab)).lt a b := by
+    (R (swappedProfile k.castSucc a b hab)).lt a b ∧
+    (R (swappedProfile k.succ a b hab)).lt b a := by
   -- when k = 0, everyone prefers b over a, so society prefers b over a
   have hStart : (R (swappedProfile 0 a b hab)).lt a b := by
     apply hun
@@ -236,8 +246,22 @@ lemma exists_pivotal
       simp [Fin.castSucc, Fin.last]
     simp
     exact preferAoverB_lt a b hab
-  use Fin.find (fun k: Fin N ↦  (R (swappedProfile k.castSucc a b hab)).lt a b) hStart
-
+  let P := fun k => (R (swappedProfile k a b hab)).lt b a
+  have hp0: ¬ P 0 := by
+    simp [P]
+    apply  Preorder'.lt_asymm at hStart
+    exact hStart
+  have hpN: P (Fin.last N) := by
+    simp [P]
+    exact hEnd
+  have hh: ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
+    exact flip_exists N P hp0 hpN
+  obtain ⟨ k, hk ⟩ := hh
+  simp [P] at hk
+  rcases hk with ⟨ hleft, hright ⟩
+  use k
+  constructor
+  -- apply Preorder'.lt_asymm (R (swappedProfile k.castSucc a b hab)) a b
   sorry
 
 theorem Impossibility :
