@@ -27,6 +27,20 @@ lemma Preorder'.lt_irrefl {α : Type} (p : Preorder' α) (a : α) :
   intro ⟨h, hn⟩
   exact hn h
 
+lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
+    (hab : a ≠ b) (h : ¬ p.lt b a) : p.lt a b := by
+  unfold Preorder'.lt at *
+  push_neg at h
+  rcases p.total a b with hab' | hba'
+  · constructor
+    · exact hab'
+    · intro hba
+      exact hab (p.antisymm a b hab' hba)
+  · constructor
+    · exact h hba'
+    · intro hba
+      exact hab (p.antisymm a b (h hba') hba)
+
 -- Map individual i to their preferences
 def PreferenceProfile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
@@ -177,12 +191,7 @@ def preferAoverB {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α where
     rw[h']
     exact absurd h' h4
     exact absurd h' h1
-
     sorry
-
-
-
-
 
 
 def preferBoverA {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α :=
@@ -293,8 +302,8 @@ lemma exists_pivotal
   rcases hk with ⟨ hleft, hright ⟩
   use k
   constructor
-  -- apply Preorder'.lt_asymm (R (swappedProfile k.castSucc a b hab)) a b
-  sorry
+  exact Preorder'.lt_of_not_lt _ a b hab hleft
+  exact hright
 
 theorem Impossibility :
     ¬ ∃ R : SocialWelfareFunction α N,
