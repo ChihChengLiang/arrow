@@ -12,6 +12,7 @@ structure Preorder' (α : Type) where
   refl : ∀ a, le a a
   trans : ∀ a b c, le a b → le b c → le a c
   total : ∀ a b, le a b ∨ le b a
+  antisymm : ∀ a b, le a b → le b a → a = b
 
 def Preorder'.lt {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
@@ -152,6 +153,37 @@ def preferAoverB {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α where
     constructor
     exact hya
     exact hyb
+  antisymm := by
+    intro x y hxy hyx
+    rcases hxy with h | h | h | ⟨h1, h2, h3, h4⟩
+    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
+    exact h
+    exact h
+    exact h
+    exact h
+    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
+    rw [h']
+    rw[h , h']
+    rw[h'] at h
+    exact absurd h hab
+    exact absurd h h4'
+    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
+    rw[h']
+    rw[h] at h'
+    exact absurd h' hab
+    rw[h', h]
+    exact absurd h h1'
+    rcases hyx with h' | h' | h' | ⟨h1', h2', h3', h4'⟩
+    rw[h']
+    exact absurd h' h4
+    exact absurd h' h1
+
+    sorry
+
+
+
+
+
 
 def preferBoverA {α : Type} (a b : α) (hab : a ≠ b) : Preorder' α :=
   preferAoverB b a (Ne.symm hab)
