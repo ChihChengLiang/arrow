@@ -60,7 +60,7 @@ def unanimity (R : SocialWelfareFunction α N) : Prop :=
 -- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
 def AIIA (R : SocialWelfareFunction α N) : Prop :=
   ∀ (p q: PreferenceProfile α N) (a b: α),
-      (∀ i: Fin N, (p i).lt a b) ↔ (∀ i: Fin N, (q i).lt a b) ->
+      (∀ i: Fin N, (p i).lt a b ↔ (q i).lt a b) →
       ((R p).lt a b ↔ (R q).lt a b)
 
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
