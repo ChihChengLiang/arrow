@@ -155,7 +155,7 @@ def swappedProfile {α : Type} {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b
   fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
 
 omit [Fintype α] in
-lemma preferAoverB_lt (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
+lemma preferAoverB_lt {α : Type} (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
   simp only [Preorder'.lt, preferAoverB]
   constructor
   right
@@ -173,6 +173,39 @@ lemma preferAoverB_lt (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a
   apply h
   rfl
 
+lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
+    ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
+  induction N with
+  | zero =>
+    -- Fin.last 0 = 0, so hN and h0 contradict
+    simp [Fin.last] at hN h0
+    exact absurd hN h0
+  | succ n ih =>
+    -- either P flips somewhere in 0..n, or it flips at n→n+1
+    by_cases h : P (Fin.last n).castSucc
+    · -- P is true before the end, recurse on smaller range
+      let P' : Fin (n+1) → Prop := fun k => P k.castSucc
+      have h0' : ¬ P' 0 := by
+        simp [P']
+        exact h0
+      by_cases h : P' (Fin.last n)
+      . -- P' flips somewhere in 0..n, use ih
+        have hk := ih P' h0' h
+        simp [P'] at hk
+        obtain ⟨ k, hk2⟩ := hk
+        exact ⟨k.castSucc, hk2⟩
+      . -- P' is false at Fin.last n, so flip happens at last step
+        simp [P'] at h
+        use Fin.last n
+        constructor
+        exact h
+        exact hN
+    · -- P flips at the last step
+      use Fin.last n
+      constructor
+      exact h
+      exact hN
+
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
 lemma exists_pivotal
@@ -186,20 +219,25 @@ lemma exists_pivotal
     (R (swappedProfile k.castSucc a b hab)).lt b a ∧
     (R (swappedProfile k.succ a b hab)).lt a b := by
   -- when k = 0, everyone prefers b over a, so society prefers b over a
-  have hStart : (R (swappedProfile 0 a b hab)).lt b a := by
-    show (R (swappedProfile 0 a b hab)).lt b a
+  have hStart : (R (swappedProfile 0 a b hab)).lt a b := by
     apply hun
     intro i
     rw[swappedProfile]
     have : ¬ (i.val < 0) := Nat.not_lt_zero _
     simp
-    simp only [Preorder'.lt]
     simp only [preferBoverA]
-    simp only [preferAoverB]
+    exact preferAoverB_lt b a (Ne.symm hab)
+  -- when k = N, everyone prefers a over b, so society prefers a over b
+  have hEnd : (R (swappedProfile (Fin.last N) a b hab)).lt b a := by
+    apply hun
+    intro i
+    rw[swappedProfile]
+    have : ((i.castSucc).val < (Fin.last N).val) := by
+      simp [Fin.castSucc, Fin.last]
+    simp
+    exact preferAoverB_lt a b hab
+  use Fin.find (fun k: Fin N ↦  (R (swappedProfile k.castSucc a b hab)).lt a b) hStart
 
-
-    -- swappedProfile 0 means all voters prefer b over a
-    sorry
   sorry
 
 theorem Impossibility :
