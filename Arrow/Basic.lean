@@ -2,6 +2,7 @@ import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Data.Finset.Defs
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
+import Mathlib.Data.Fintype.EquivFin
 
 variable (α: Type) [Fintype α] [DecidableEq α] -- α is the type of alternatives
 variable (N: ℕ ) -- N is the number of voters
@@ -244,7 +245,10 @@ lemma exists_pivotal
 
 lemma exists_two_distinct {α : Type} [Fintype α] (ha : Fintype.card α ≥ 3) :
   ∃ a b : α, a ≠ b := by
-  sorry
+  by_contra h
+  push_neg at h
+  rw [← Fintype.card_le_one_iff] at h
+  omega
 
 lemma exists_third {α : Type} [Fintype α] [DecidableEq α]
     (ha : Fintype.card α ≥ 3) (a b : α) :
@@ -319,8 +323,6 @@ lemma pivotal_is_dictator
   have htransfer : (R p).lt a b := by
     sorry
   exact htransfer
-
-
 
   -- k dictates ALL pairs
 lemma pivotal_dictates_all_pairs
