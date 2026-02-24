@@ -262,26 +262,80 @@ lemma exists_third {α : Type} [Fintype α] [DecidableEq α]
         _ ≤ 2 := by apply le_trans (Finset.card_insert_le a {b}); simp
   omega
 
+lemma lemma_Rq_ab
+  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+  {N:ℕ }
+  {R : SocialWelfareFunction α N}
+  (k : Fin N)
+  (a b c : α)
+  (hab : a ≠ b)
+  (hca : c ≠ a)
+  (hcb : c ≠ b)
+  (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
+             (R (swappedProfile k.succ a b hab)).lt b a)
+  (hAIIA : AIIA α N R)
+  (q : PreferenceProfile α N)
+  (hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b)
+  : (R q).lt a b := by sorry
+
+lemma lemma_Rq_bc
+  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+  {N:ℕ }
+  {R : SocialWelfareFunction α N}
+  (k : Fin N)
+  (a b c : α)
+  (hab : a ≠ b)
+  (hca : c ≠ a)
+  (hcb : c ≠ b)
+  (hun : unanimity α N R)
+  (q : PreferenceProfile α N)
+  : (R q).lt b c := by sorry
+
 lemma pivotal_is_dictator
+  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+  (ha : Fintype.card α ≥ 3)
   {R : SocialWelfareFunction α N}
   (hun : unanimity α N R)
   (hAIIA : AIIA α N R)
-  (k : Fin N) :
+  (k : Fin N)
+  (a b : α)
+  (hab : a ≠ b)
+  (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
+             (R (swappedProfile k.succ a b hab)).lt b a) :
   ∀ (p : PreferenceProfile α N) (a b : α), (p k).lt a b → (R p).lt a b := by
-  sorry
+  -- Step 1: get a third alternative
+  obtain ⟨c, hca, hcb⟩ := exists_third ha a b
+  -- Step 2: define q concretely
+  let q : PreferenceProfile α N := fun i =>
+    if i.val ≤ k.val
+    then preferAoverB a b hab  -- placeholder, real construction uses c
+    else preferBoverA a b hab
+  -- Step 3: prove the column of q matches swappedProfile k.castSucc on (a,b)
+  have hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b := by
+    sorry
+  have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b c hab hca hcb hpivot hAIIA q hq_col
+  have hRq_bc : (R q).lt b c := lemma_Rq_bc k a b c hab hca hcb hun q
+  have hRq_ac : (R q).lt a c := by
+    constructor
+    · exact (R q).trans a b c hRq_ab.1 hRq_bc.1
+    . intro hca
+      have hcb := (R q).trans c a b hca hRq_ab.1
+      exact hRq_bc.2 hcb
+  -- Step 4: transfer back to p via AIIA
+  intro p a b hpk
+  have htransfer : (R p).lt a b := by
+    sorry
+  exact htransfer
 
-theorem Impossibility :
+theorem Impossibility
+    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+    (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SocialWelfareFunction α N,
     (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
   by_contra h
   obtain ⟨ R, h⟩ := h
-  rcases h with ⟨ hunanimity, hAIIANonDictactor ⟩
-  rcases hAIIANonDictactor with ⟨ hAIIA, hNonDictactor ⟩
+  rcases h with ⟨ hunanimity, hAIIA, hNonDictactor ⟩
   apply hNonDictactor
-  constructor
-  intro p a b
-    sorry
-
   sorry
 
 def hello := "world"
