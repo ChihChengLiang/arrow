@@ -275,16 +275,18 @@ lemma lemma_Rq_ab
   {N:ℕ }
   {R : SocialWelfareFunction α N}
   (k : Fin N)
-  (a b c : α)
+  (a b : α)
   (hab : a ≠ b)
-  (hca : c ≠ a)
-  (hcb : c ≠ b)
   (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
              (R (swappedProfile k.succ a b hab)).lt b a)
   (hAIIA : AIIA α N R)
   (q : PreferenceProfile α N)
   (hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b)
-  : (R q).lt a b := by sorry
+  : (R q).lt a b := by
+  have hk := hpivot.1
+  rw[AIIA] at hAIIA
+  rw[hAIIA q (swappedProfile k.castSucc a b hab) a b hq_col]
+  exact hk
 
 lemma pivotal_is_dictator
   {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
@@ -310,7 +312,7 @@ lemma pivotal_is_dictator
     sorry
   have hq_bc_col : ∀ i, (q i).lt b c := by
     sorry
-  have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b c hab hca hcb hpivot hAIIA q hq_col
+  have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b hab hpivot hAIIA q hq_col
   have hRq_bc : (R q).lt b c := hun q b c hq_bc_col
   have hRq_ac : (R q).lt a c := by
     constructor
