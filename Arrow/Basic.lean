@@ -67,7 +67,6 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
 
-
 def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
   le x y :=
     if x = b then True           -- b is below everything
@@ -249,6 +248,16 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
 def swappedProfile {α : Type} [LinearOrder α] {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
   fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
 
+-- society prefers a over b in profile p
+abbrev socPrefers {α : Type} {N : ℕ}
+    (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
+  (R p).lt b a  -- b is below a, meaning a is preferred
+
+def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
+    (R : SocialWelfareFunction α N) (k : Fin N) (a b : α) (hab : a ≠ b) : Prop :=
+  socPrefers R (swappedProfile k.castSucc a b hab) b a ∧  -- b preferred before k
+  socPrefers R (swappedProfile k.succ a b hab) a b        -- a preferred after k
+
 omit [Fintype α] in
 lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
   simp only [Preorder'.lt, preferAoverB]
@@ -311,11 +320,9 @@ lemma exists_pivotal
   (N:ℕ)
   {R: SocialWelfareFunction α N}
   (hun: (unanimity _ _ R)):
-    ∃ k : Fin N,
-    (R (swappedProfile k.castSucc a b hab)).lt a b ∧
-    (R (swappedProfile k.succ a b hab)).lt b a := by
+    ∃ k : Fin N, isPivotal R k a b hab := by
   -- when k = 0, everyone prefers b over a, so society prefers b over a
-  have hStart : (R (swappedProfile 0 a b hab)).lt a b := by
+  have hStart : socPrefers R (swappedProfile 0 a b hab) b a := by
     apply hun
     intro i
     rw[swappedProfile]
@@ -324,7 +331,7 @@ lemma exists_pivotal
     simp only [preferBoverA]
     exact preferAoverB_lt b a (Ne.symm hab)
   -- when k = N, everyone prefers a over b, so society prefers a over b
-  have hEnd : (R (swappedProfile (Fin.last N) a b hab)).lt b a := by
+  have hEnd : socPrefers R (swappedProfile (Fin.last N) a b hab) a b := by
     apply hun
     intro i
     rw[swappedProfile]
@@ -332,7 +339,7 @@ lemma exists_pivotal
       simp [Fin.castSucc, Fin.last]
     simp
     exact preferAoverB_lt a b hab
-  let P := fun k => (R (swappedProfile k a b hab)).lt b a
+  let P := fun k => socPrefers R (swappedProfile k a b hab) a b
   have hp0: ¬ P 0 := by
     simp [P]
     apply  Preorder'.lt_asymm at hStart
@@ -384,8 +391,7 @@ lemma lemma_Rq_ab
   (k : Fin N)
   (a b : α)
   (hab : a ≠ b)
-  (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
-             (R (swappedProfile k.succ a b hab)).lt b a)
+  (hpivot : isPivotal R k a b hab)
   (hAIIA : AIIA α N R)
   (q : PreferenceProfile α N)
   (hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b)
@@ -404,8 +410,7 @@ lemma pivotal_is_dictator
   (k : Fin N)
   (a b : α)
   (hab : a ≠ b)
-  (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
-             (R (swappedProfile k.succ a b hab)).lt b a) :
+  (hpivot : isPivotal R k a b hab) :
   ∀ (p : PreferenceProfile α N), (p k).lt a b → (R p).lt a b := by
   -- Step 1: get a third alternative
   obtain ⟨c, hca, hcb⟩ := exists_third ha a b
@@ -465,8 +470,7 @@ lemma pivotal_dictates_all_pairs
   (k : Fin N)
   (a b : α)
   (hab : a ≠ b)
-  (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
-             (R (swappedProfile k.succ a b hab)).lt b a) :
+  (hpivot : isPivotal R k a b hab) :
   ∀ (p : PreferenceProfile α N) (x y : α), (p k).lt x y → (R p).lt x y := by sorry
 
 
