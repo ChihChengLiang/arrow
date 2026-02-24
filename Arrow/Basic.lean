@@ -432,8 +432,14 @@ lemma pivotal_is_dictator
       . intro
         exact preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)
 
-  have hq_bc_col : ∀ i, (q i).lt b c := by
-    sorry
+  have hq_bc_col : ∀ i, (q i).lt c b := by
+    intro i
+    simp [q]
+    split_ifs with hi
+    · -- voter i < k.castSucc.val
+      exact preorderFromRanking_lt_12 a b c hab (Ne.symm hcb) (Ne.symm hca)
+    · -- voter i ≥ k.castSucc.val
+      exact preorderFromRanking_lt_01 b c a (Ne.symm hcb) hca (Ne.symm hab)
   have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b hab hpivot hAIIA q hq_col
   have hRq_bc : (R q).lt b c := hun q b c hq_bc_col
   have hRq_ac : (R q).lt a c := by
