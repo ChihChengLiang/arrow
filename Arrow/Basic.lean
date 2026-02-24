@@ -415,22 +415,23 @@ lemma pivotal_is_dictator
     then preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca) -- voters i ≤ k : a ≻ b ≻ c →  preorderFromRanking a b c
     else preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab) -- voters i > k : b ≻ c ≻ a →  preorderFromRanking b c a
   -- Step 3: prove the column of q matches swappedProfile k.castSucc on (a,b)
-  have hq_col : ∀ i, (q i).lt b a ↔ (swappedProfile k.castSucc a b hab i).lt b a := by
+  have hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b := by
     intro i
     simp [q, swappedProfile]
     split_ifs with hi
     . -- voter i < k, both sides prefer a over b
       constructor
-      . intro
-        exact preferAoverB_lt a b hab
-      . intro
-        exact preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)
+      . intro h
+        exact absurd h (Preorder'.lt_asymm _ b a (preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)))
+      . intro h
+        exact absurd h (Preorder'.lt_asymm _ b a (preferAoverB_lt a b hab))
     . -- voter i ≥ k, both sides prefer b over a
       constructor
-      . intro h
-        exact absurd h (Preorder'.lt_asymm _ a b (preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)))
-      . intro h
-        exact absurd h (Preorder'.lt_asymm _ a b (preferBoverA_lt a b hab))
+      . intro
+        exact preferBoverA_lt a b hab
+      . intro
+        exact preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)
+
   have hq_bc_col : ∀ i, (q i).lt b c := by
     sorry
   have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b hab hpivot hAIIA q hq_col
