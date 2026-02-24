@@ -49,24 +49,6 @@ def PreferenceProfile (α : Type) (N : ℕ) :=
 def SocialWelfareFunction (α : Type) (N : ℕ) :=
   (Fin N → Preorder' α) → Preorder' α
 
--- A constitution respects unanimity if society puts alternative `a` strictly above
--- `b` whenever every individual puts `a` strictly above `b`.
-def unanimity (R : SocialWelfareFunction α N) : Prop :=
-  ∀ (profile: PreferenceProfile α N) (a b: α),
-    (∀ i: Fin N, (profile i).lt a b) -> (R profile).lt a b
-
-
--- (AIIA: Arrow's Independence of Irrelevant Alternatives)
--- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
--- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
-def AIIA (R : SocialWelfareFunction α N) : Prop :=
-  ∀ (p q: PreferenceProfile α N) (a b: α),
-      (∀ i: Fin N, (p i).lt a b ↔ (q i).lt a b) →
-      ((R p).lt a b ↔ (R q).lt a b)
-
-def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
-  ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
-
 def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
   le x y :=
     if x = b then True           -- b is below everything
@@ -258,6 +240,27 @@ def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
   socPrefers R (swappedProfile k.castSucc a b hab) b a ∧  -- b preferred before k
   socPrefers R (swappedProfile k.succ a b hab) a b        -- a preferred after k
 
+def sameCol {α : Type} {N : ℕ}
+    (p q : PreferenceProfile α N) (a b : α) : Prop :=
+  ∀ i, (p i).lt b a ↔ (q i).lt b a  -- voter i prefers a over b in p iff in q
+
+-- A constitution respects unanimity if society puts alternative `a` strictly above
+-- `b` whenever every individual puts `a` strictly above `b`.
+def unanimity (R : SocialWelfareFunction α N) : Prop :=
+  ∀ (profile: PreferenceProfile α N) (a b: α),
+    (∀ i: Fin N, (profile i).lt a b) -> (R profile).lt a b
+
+-- (AIIA: Arrow's Independence of Irrelevant Alternatives)
+-- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
+-- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
+def AIIA (R : SocialWelfareFunction α N) : Prop :=
+  ∀ (p q: PreferenceProfile α N) (a b: α),
+    sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
+
+def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
+  ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
+
+
 omit [Fintype α] in
 lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
   simp only [Preorder'.lt, preferAoverB]
@@ -394,8 +397,8 @@ lemma lemma_Rq_ab
   (hpivot : isPivotal R k a b hab)
   (hAIIA : AIIA α N R)
   (q : PreferenceProfile α N)
-  (hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b)
-  : (R q).lt a b := by
+  (hq_col : sameCol q (swappedProfile k.castSucc a b hab) a b)
+  : socPrefers R q a b := by
   have hk := hpivot.1
   rw[AIIA] at hAIIA
   rw[hAIIA q (swappedProfile k.castSucc a b hab) a b hq_col]
