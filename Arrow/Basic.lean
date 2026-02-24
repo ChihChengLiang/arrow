@@ -242,6 +242,10 @@ lemma exists_pivotal
   exact Preorder'.lt_of_not_lt _ a b hab hleft
   exact hright
 
+lemma exists_two_distinct {α : Type} [Fintype α] (ha : Fintype.card α ≥ 3) :
+  ∃ a b : α, a ≠ b := by
+  sorry
+
 lemma exists_third {α : Type} [Fintype α] [DecidableEq α]
     (ha : Fintype.card α ≥ 3) (a b : α) :
     ∃ c : α, c ≠ a ∧ c ≠ b := by
@@ -278,19 +282,6 @@ lemma lemma_Rq_ab
   (hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b)
   : (R q).lt a b := by sorry
 
-lemma lemma_Rq_bc
-  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
-  {N:ℕ }
-  {R : SocialWelfareFunction α N}
-  (k : Fin N)
-  (a b c : α)
-  (hab : a ≠ b)
-  (hca : c ≠ a)
-  (hcb : c ≠ b)
-  (hun : unanimity α N R)
-  (q : PreferenceProfile α N)
-  : (R q).lt b c := by sorry
-
 lemma pivotal_is_dictator
   {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
   (ha : Fintype.card α ≥ 3)
@@ -302,7 +293,7 @@ lemma pivotal_is_dictator
   (hab : a ≠ b)
   (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
              (R (swappedProfile k.succ a b hab)).lt b a) :
-  ∀ (p : PreferenceProfile α N) (a b : α), (p k).lt a b → (R p).lt a b := by
+  ∀ (p : PreferenceProfile α N), (p k).lt a b → (R p).lt a b := by
   -- Step 1: get a third alternative
   obtain ⟨c, hca, hcb⟩ := exists_third ha a b
   -- Step 2: define q concretely
@@ -313,19 +304,39 @@ lemma pivotal_is_dictator
   -- Step 3: prove the column of q matches swappedProfile k.castSucc on (a,b)
   have hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b := by
     sorry
+  have hq_bc_col : ∀ i, (q i).lt b c := by
+    sorry
   have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b c hab hca hcb hpivot hAIIA q hq_col
-  have hRq_bc : (R q).lt b c := lemma_Rq_bc k a b c hab hca hcb hun q
+  have hRq_bc : (R q).lt b c := hun q b c hq_bc_col
   have hRq_ac : (R q).lt a c := by
     constructor
-    · exact (R q).trans a b c hRq_ab.1 hRq_bc.1
+    . exact (R q).trans a b c hRq_ab.1 hRq_bc.1
     . intro hca
       have hcb := (R q).trans c a b hca hRq_ab.1
       exact hRq_bc.2 hcb
   -- Step 4: transfer back to p via AIIA
-  intro p a b hpk
+  intro p hpk
   have htransfer : (R p).lt a b := by
     sorry
   exact htransfer
+
+
+
+  -- k dictates ALL pairs
+lemma pivotal_dictates_all_pairs
+  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+  (ha : Fintype.card α ≥ 3)
+  {N : ℕ}
+  {R : SocialWelfareFunction α N}
+  (hun : unanimity α N R)
+  (hAIIA : AIIA α N R)
+  (k : Fin N)
+  (a b : α)
+  (hab : a ≠ b)
+  (hpivot : (R (swappedProfile k.castSucc a b hab)).lt a b ∧
+             (R (swappedProfile k.succ a b hab)).lt b a) :
+  ∀ (p : PreferenceProfile α N) (x y : α), (p k).lt x y → (R p).lt x y := by sorry
+
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
@@ -336,6 +347,9 @@ theorem Impossibility
   obtain ⟨ R, h⟩ := h
   rcases h with ⟨ hunanimity, hAIIA, hNonDictactor ⟩
   apply hNonDictactor
-  sorry
-
-def hello := "world"
+  -- get two distinct elements to run exists_pivotal on
+  obtain ⟨a, b, hab⟩ := exists_two_distinct ha
+  -- get the pivotal voter for (a,b)
+  obtain ⟨k, hpivot⟩ := exists_pivotal a b hab N hunanimity
+  -- k is a dictator over all pairs
+  exact ⟨k, pivotal_dictates_all_pairs ha hunanimity hAIIA k a b hab hpivot⟩
