@@ -434,13 +434,13 @@ theorem Impossibility
       simp
       exact preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)
 
-  obtain ⟨n_ab, h_nab_pivot ⟩ := exists_pivotal a b hab N p hpflipping
+  obtain ⟨n_ab, h_nab_pivot_p ⟩ := exists_pivotal a b hab N p hpflipping
 
   have habc: socPrefers R (p n_ab.castSucc) a b ∧ socPrefers R (p n_ab.castSucc) b c := by
     constructor
     -- by definiion of n_ab pivoting
-    . rw[isPivotal] at h_nab_pivot
-      exact h_nab_pivot.1
+    . rw[isPivotal] at h_nab_pivot_p
+      exact h_nab_pivot_p.1
     -- by hunanimity
     . have hp: (∀ i: Fin N, voterPrefers (p n_ab.castSucc i) b c) := by
         intro i
@@ -459,8 +459,51 @@ theorem Impossibility
   -- k prefer b > a > c
   -- k+1 ... N prefer a > b ∧ c < a
   -- result: socPrefer b ≥ a > c
-  let q: PreferenceProfile α N := sorry
-  have hbac: socWeakPrefers R q b a ∧ socPrefers R q a c := by sorry
+
+  -- let's see if we can ignore the square issue
+  let q: profileGen α N :=
+    fun k =>
+      fun i =>
+        if i.val < k.val
+          then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
+          else if i.val = k.val
+            then preorderFromRanking b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)
+            else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
+
+  have h_nab_pivot_q: isPivotal R n_ab q a b := by
+    have hSameCol: sameCol (p n_ab.castSucc) (q n_ab.castSucc) a b := by
+      simp only [sameCol]
+      intro i
+      constructor
+      .
+        simp only [p, q]
+        split_ifs
+        . intro h; exact h
+        . intro h
+          simp [preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)] at h
+          sorry
+        . sorry
+      .sorry
+    have hSameColSucc: sameCol (p n_ab.succ) (q n_ab.succ) b a := by
+      sorry
+    obtain ⟨ hp, hpsucc⟩ := h_nab_pivot_p
+    apply hAIIA at hSameCol
+    rw [hSameCol] at hp
+    apply hAIIA at hSameColSucc
+    rw [hSameColSucc] at hpsucc
+    exact ⟨hp, hpsucc⟩
+
+  have hbac: socPrefers R (q n_ab.castSucc) b a ∧ socPrefers R (q n_ab.castSucc) a c := by
+    constructor
+    . have h_nab_pivot_q: isPivotal R n_ab q b a := by
+        rw[isPivotal]
+        constructor
+        .
+          simp only [q]
+          sorry
+        .sorry
+      exact h_nab_pivot_q.1
+    .sorry
 
   -- focusing on b c
   -- by AIIA with p q
