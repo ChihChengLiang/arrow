@@ -419,8 +419,16 @@ theorem Impossibility
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
-  let p: PreferenceProfile α N := sorry
-  have habc: socPrefers R p a b ∧ socPrefers R p b c := by sorry
+  let p: PreferenceProfile α N := fun i =>
+    if i.val < n_ab.castSucc.val
+      then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
+      else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
+  have habc: socPrefers R p a b ∧ socPrefers R p b c := by
+    constructor
+    .
+      rw[isPivotal] at hpivot
+      sorry
+    . sorry
 
   -- i j k
   -- a b c
