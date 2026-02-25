@@ -235,6 +235,11 @@ abbrev socPrefers {α : Type} {N : ℕ}
     (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
   (R p).lt b a  -- b is below a, meaning a is preferred
 
+abbrev socWeakPrefers {α : Type} {N : ℕ}
+    (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
+  (R p).le b a  -- b is below a, meaning a is preferred
+
+
 -- voter prefers a over b
 abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
@@ -245,8 +250,9 @@ def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
   socPrefers R (swappedProfile k.castSucc a b hab) b a ∧  -- b preferred before k
   socPrefers R (swappedProfile k.succ a b hab) a b        -- a preferred after k
 
-def dictate {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (p: PreferenceProfile α N) (k : Fin N) (a b : α): Prop :=
-  voterPrefers (p k) a b → socPrefers R p a b
+-- In society R, voter k dictate just ab
+def dictate_ab {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
+  ∀ (p: PreferenceProfile α N ), voterPrefers (p k) a b → socPrefers R p a b
 
 -- all voters in both profile p and q prefer a over b
 def sameCol {α : Type} {N : ℕ}
@@ -266,7 +272,7 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
-  ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), dictate R p i a b)
+  ¬ (∃ i: Fin N, ∀ (a b: α), dictate_ab R i a b)
 
 omit [Fintype α] in
 lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferAoverB a b hab) a b := by
@@ -405,31 +411,53 @@ theorem Impossibility
   obtain ⟨ R, h⟩ := h
   rcases h with ⟨ hunanimity, hAIIA, hNonDictactor ⟩
   apply hNonDictactor
+  obtain ⟨a, b, hab⟩ := exists_two_distinct ha
+  obtain ⟨c, hca, hcb⟩ := exists_third ha a b
+
+  obtain ⟨n_ab, hpivot ⟩ := exists_pivotal a b hab N hunanimity
   -- let p
-  -- 0...k-1 prefer j > k > i
-  -- k ... N prefer i > j > k
-  -- result: socPrefer i > j > k
+  -- 0...k-1 prefer b > c > a
+  -- k ... N prefer a > b > c
+  -- result: socPrefer a > b > c
+  let p: PreferenceProfile α N := sorry
+  have habc: socPrefers R p a b ∧ socPrefers R p b c := by sorry
+
+  -- i j k
+  -- a b c
 
   -- let q
-  -- 0...k-1 prefer j > i ∧ k > i
-  -- k prefer j > i > k
-  -- k+1 ... N prefer i > j ∧ k < i
-  -- result: socPrefer j ≥ i ⋗ k
+  -- 0...k-1 prefer b > a ∧ c > a
+  -- k prefer b > a > c
+  -- k+1 ... N prefer a > b ∧ c < a
+  -- result: socPrefer b ≥ a > c
+  let q: PreferenceProfile α N := sorry
+  have hbac: socWeakPrefers R q b a ∧ socPrefers R q a c := by sorry
 
-  -- focusing on j k
+  -- focusing on b c
   -- by AIIA with p q
-  -- n_ij dictate j k (*)
+  -- n_ab dictate b c (*)
+  have h_n_ab_dictacte_bc: dictate_ab R n_ab b c := by sorry
+
+  -- n_bc ≥ n_ab
+  let n_bc: Fin N := sorry
+  have h_nab_le_nbc: n_ab ≤ n_bc := by sorry
 
 
-  -- n_jk ≥ n_ij
+  -- n_cb ≤ n_ab
+  let n_cb: Fin N := sorry
+  have h_ncb_le_nab: n_cb ≤ n_ab := by sorry
+  -- n_bc ≥ n_ab ≥ n_cb
+  -- n_cb ≥ n_bc
+  have h_nbc_le_ncb: n_bc ≤ n_cb := by sorry
 
+  -- n_bc = n_cb = n_ab
+  have h_nbc_eq_ncb: n_bc = n_cb := by
+    have h_ncb_le_nbc: n_cb ≤ n_bc := by exact le_trans h_ncb_le_nab h_nab_le_nbc
+    exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
+  have h_ncb_eq_nab: n_cb = n_ab := by
+    have h_nab_le_n_cb: n_ab ≤ n_cb := by exact le_trans h_nab_le_nbc h_nbc_le_ncb
+    exact le_antisymm h_ncb_le_nab h_nab_le_n_cb
 
-  -- n_kj ≤ n_ij
+  -- n_bc = n_cb = n_ab can be extended to n_ts
 
-  -- n_kj ≤ n_jk
-
-  -- n_jk = n_kj = n_ij
-
-  -- n_jk = n_kj = n_ij can be extended to n_ts
-
-  -- but (*) requires n_ij holds dictatorship over all ordered pairs of alternatives
+  -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
