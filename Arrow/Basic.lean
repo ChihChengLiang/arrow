@@ -415,7 +415,25 @@ theorem Impossibility
         if i.val < k.val
           then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
           else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
-  have hpflipping: isFlipping R p a b := by sorry
+  have hpflipping: isFlipping R p a b := by
+    simp only [isFlipping]
+    constructor
+    -- k = 0
+    . apply hunanimity
+      intro i
+      simp only [p]
+      have hi0: ¬ (i.val < 0) := Nat.not_lt_zero _
+      simp
+      exact preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)
+    -- k = N
+    . apply hunanimity
+      intro i
+      simp only [p]
+      have : ((i.castSucc).val < (Fin.last N).val) := by
+        simp [Fin.castSucc, Fin.last]
+      simp
+      exact preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)
+
   obtain ⟨n_ab, h_nab_pivot ⟩ := exists_pivotal a b hab N p hpflipping
 
   have habc: socPrefers R (p n_ab.castSucc) a b ∧ socPrefers R (p n_ab.castSucc) b c := by
