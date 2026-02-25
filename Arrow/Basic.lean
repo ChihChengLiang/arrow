@@ -394,94 +394,6 @@ lemma exists_third {α : Type} [Fintype α] [DecidableEq α]
         _ ≤ 2 := by apply le_trans (Finset.card_insert_le a {b}); simp
   omega
 
-lemma lemma_Rq_ab
-  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
-  {N:ℕ }
-  {R : SocialWelfareFunction α N}
-  (k : Fin N)
-  (a b : α)
-  (hab : a ≠ b)
-  (hpivot : isPivotal R k a b hab)
-  (hAIIA : AIIA α N R)
-  (q : PreferenceProfile α N)
-  (hq_col : sameCol q (swappedProfile k.castSucc a b hab) a b)
-  : socPrefers R q a b := by
-  have hk := hpivot.1
-  rw[AIIA] at hAIIA
-  rw[hAIIA q (swappedProfile k.castSucc a b hab) a b hq_col]
-  exact hk
-
-lemma pivotal_is_dictator
-  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
-  (ha : Fintype.card α ≥ 3)
-  {R : SocialWelfareFunction α N}
-  (hun : unanimity α N R)
-  (hAIIA : AIIA α N R)
-  (k : Fin N)
-  (a b : α)
-  (hab : a ≠ b)
-  (hpivot : isPivotal R k a b hab) :
-  ∀ (p : PreferenceProfile α N), (p k).lt a b → (R p).lt a b := by
-  -- Step 1: get a third alternative
-  obtain ⟨c, hca, hcb⟩ := exists_third ha a b
-  -- Step 2: define q concretely
-  let q : PreferenceProfile α N := fun i =>
-    if i.val < k.castSucc.val
-    then preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca) -- voters i ≤ k : a ≻ b ≻ c →  preorderFromRanking a b c
-    else preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab) -- voters i > k : b ≻ c ≻ a →  preorderFromRanking b c a
-  -- Step 3: prove the column of q matches swappedProfile k.castSucc on (a,b)
-  have hq_col : ∀ i, (q i).lt a b ↔ (swappedProfile k.castSucc a b hab i).lt a b := by
-    intro i
-    simp [q, swappedProfile]
-    split_ifs with hi
-    . -- voter i < k, both sides prefer a over b
-      constructor
-      . intro h
-        exact absurd h (Preorder'.lt_asymm _ b a (preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)))
-      . intro h
-        exact absurd h (Preorder'.lt_asymm _ b a (preferAoverB_lt a b hab))
-    . -- voter i ≥ k, both sides prefer b over a
-      constructor
-      . intro
-        exact preferBoverA_lt a b hab
-      . intro
-        exact preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)
-
-  have hq_bc_col : ∀ i, (q i).lt c b := by
-    intro i
-    simp [q]
-    split_ifs with hi
-    · -- voter i < k.castSucc.val
-      exact preorderFromRanking_lt_12 a b c hab (Ne.symm hcb) (Ne.symm hca)
-    · -- voter i ≥ k.castSucc.val
-      exact preorderFromRanking_lt_01 b c a (Ne.symm hcb) hca (Ne.symm hab)
-  have hRq_ab : (R q).lt a b := lemma_Rq_ab k a b hab hpivot hAIIA q hq_col
-  have hRq_bc : (R q).lt b c := hun q b c hq_bc_col
-  have hRq_ac : (R q).lt a c := by
-    constructor
-    . exact (R q).trans a b c hRq_ab.1 hRq_bc.1
-    . intro hca
-      have hcb := (R q).trans c a b hca hRq_ab.1
-      exact hRq_bc.2 hcb
-  -- Step 4: transfer back to p via AIIA
-  intro p hpk
-  have htransfer : (R p).lt a b := by
-    sorry
-  exact htransfer
-
-  -- k dictates ALL pairs
-lemma pivotal_dictates_all_pairs
-  {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
-  (ha : Fintype.card α ≥ 3)
-  {N : ℕ}
-  {R : SocialWelfareFunction α N}
-  (hun : unanimity α N R)
-  (hAIIA : AIIA α N R)
-  (k : Fin N)
-  (a b : α)
-  (hab : a ≠ b)
-  (hpivot : isPivotal R k a b hab) :
-  ∀ (p : PreferenceProfile α N) (x y : α), dictate R p k x y := by sorry
 
 
 theorem Impossibility
@@ -493,9 +405,31 @@ theorem Impossibility
   obtain ⟨ R, h⟩ := h
   rcases h with ⟨ hunanimity, hAIIA, hNonDictactor ⟩
   apply hNonDictactor
-  -- get two distinct elements to run exists_pivotal on
-  obtain ⟨a, b, hab⟩ := exists_two_distinct ha
-  -- get the pivotal voter for (a,b)
-  obtain ⟨k, hpivot⟩ := exists_pivotal a b hab N hunanimity
-  -- k is a dictator over all pairs
-  exact ⟨k, pivotal_dictates_all_pairs ha hunanimity hAIIA k a b hab hpivot⟩
+  -- let p
+  -- 0...k-1 prefer j > k > i
+  -- k ... N prefer i > j > k
+  -- result: socPrefer i > j > k
+
+  -- let q
+  -- 0...k-1 prefer j > i ∧ k > i
+  -- k prefer j > i > k
+  -- k+1 ... N prefer i > j ∧ k < i
+  -- result: socPrefer j ≥ i ⋗ k
+
+  -- focusing on j k
+  -- by AIIA with p q
+  -- n_ij dictate j k (*)
+
+
+  -- n_jk ≥ n_ij
+
+
+  -- n_kj ≤ n_ij
+
+  -- n_kj ≤ n_jk
+
+  -- n_jk = n_kj = n_ij
+
+  -- n_jk = n_kj = n_ij can be extended to n_ts
+
+  -- but (*) requires n_ij holds dictatorship over all ordered pairs of alternatives
