@@ -230,6 +230,9 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
 def swappedProfile {α : Type} [LinearOrder α] {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
   fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
 
+-- profile generating function. Useful for building profile with a pivotal voter
+abbrev profileGen: Type := Fin (N+1) →  PreferenceProfile α N
+
 -- society prefers a over b in profile p
 abbrev socPrefers {α : Type} {N : ℕ}
     (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
@@ -246,9 +249,13 @@ abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
 
 -- voter k isPivotal when their switch affects the society
 def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
-    (R : SocialWelfareFunction α N) (k : Fin N) (a b : α) (hab : a ≠ b) : Prop :=
-  socPrefers R (swappedProfile k.castSucc a b hab) b a ∧  -- b preferred before k
-  socPrefers R (swappedProfile k.succ a b hab) a b        -- a preferred after k
+    (R : SocialWelfareFunction α N) (k : Fin N) (f: profileGen α N) (a b : α): Prop :=
+  socPrefers R (f k.castSucc) b a ∧  -- b preferred before k
+  socPrefers R (f k.succ) a b        -- a preferred after k
+
+-- profile generator f flips R when all or none voters change minds
+def isFlipping  {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (f: profileGen α N) (a b : α): Prop :=
+  socPrefers R (f 0) b a  ∧ socPrefers R (f (Fin.last N)) a b
 
 -- In society R, voter k dictate just ab
 def dictate_ab {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
@@ -335,27 +342,11 @@ lemma exists_pivotal
   (hab : a ≠ b)
   (N:ℕ)
   {R: SocialWelfareFunction α N}
-  (hun: (unanimity _ _ R)):
-    ∃ k : Fin N, isPivotal R k a b hab := by
-  -- when k = 0, everyone prefers b over a, so society prefers b over a
-  have hStart : socPrefers R (swappedProfile 0 a b hab) b a := by
-    apply hun
-    intro i
-    rw[swappedProfile]
-    have : ¬ (i.val < 0) := Nat.not_lt_zero _
-    simp
-    simp only [preferBoverA]
-    exact preferAoverB_lt b a (Ne.symm hab)
-  -- when k = N, everyone prefers a over b, so society prefers a over b
-  have hEnd : socPrefers R (swappedProfile (Fin.last N) a b hab) a b := by
-    apply hun
-    intro i
-    rw[swappedProfile]
-    have : ((i.castSucc).val < (Fin.last N).val) := by
-      simp [Fin.castSucc, Fin.last]
-    simp
-    exact preferAoverB_lt a b hab
-  let P := fun k => socPrefers R (swappedProfile k a b hab) a b
+  (f: profileGen α N)
+  (hf: isFlipping R f a b):
+    ∃ k : Fin N, isPivotal R k f a b := by
+  obtain ⟨ hStart, hEnd ⟩ := hf
+  let P := fun k => socPrefers R (f k) a b
   have hp0: ¬ P 0 := by
     simp [P]
     apply  Preorder'.lt_asymm at hStart
@@ -414,19 +405,25 @@ theorem Impossibility
   obtain ⟨a, b, hab⟩ := exists_two_distinct ha
   obtain ⟨c, hca, hcb⟩ := exists_third ha a b
 
-  obtain ⟨n_ab, hpivot ⟩ := exists_pivotal a b hab N hunanimity
+
   -- let p
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
-  let p: PreferenceProfile α N := fun i =>
-    if i.val < n_ab.castSucc.val
-      then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
-      else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
-  have habc: socPrefers R p a b ∧ socPrefers R p b c := by
+  let p: profileGen α N :=
+    fun k =>
+      fun i =>
+        if i.val < k.val
+          then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
+          else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
+  have hpflipping: isFlipping R p a b := by sorry
+  obtain ⟨n_ab, h_nab_pivot ⟩ := exists_pivotal a b hab N p hpflipping
+
+  have habc: socPrefers R (p n_ab.castSucc) a b ∧ socPrefers R (p n_ab.castSucc) b c := by
     constructor
     .
-      rw[isPivotal] at hpivot
+      rw[isPivotal] at h_nab_pivot
+      exact h_nab_pivot.1
       sorry
     . sorry
 
