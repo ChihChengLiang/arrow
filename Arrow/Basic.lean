@@ -235,20 +235,28 @@ abbrev socPrefers {α : Type} {N : ℕ}
     (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
   (R p).lt b a  -- b is below a, meaning a is preferred
 
+-- voter prefers a over b
+abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
+  p.lt b a  -- b is below a, meaning a is preferred
+
+-- voter k isPivotal when their switch affects the society
 def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
     (R : SocialWelfareFunction α N) (k : Fin N) (a b : α) (hab : a ≠ b) : Prop :=
   socPrefers R (swappedProfile k.castSucc a b hab) b a ∧  -- b preferred before k
   socPrefers R (swappedProfile k.succ a b hab) a b        -- a preferred after k
 
+def dictate {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (p: PreferenceProfile α N) (k : Fin N) (a b : α): Prop :=
+  voterPrefers (p k) a b → socPrefers R p a b
+
+-- all voters in both profile p and q prefer a over b
 def sameCol {α : Type} {N : ℕ}
     (p q : PreferenceProfile α N) (a b : α) : Prop :=
-  ∀ i, (p i).lt b a ↔ (q i).lt b a  -- voter i prefers a over b in p iff in q
+  ∀ i, voterPrefers (p i) a b ↔ voterPrefers (q i) a b  -- voter i prefers a over b in p iff in q
 
--- A constitution respects unanimity if society puts alternative `a` strictly above
--- `b` whenever every individual puts `a` strictly above `b`.
+-- if everyone like `a` over `b`, so is society
 def unanimity (R : SocialWelfareFunction α N) : Prop :=
-  ∀ (profile: PreferenceProfile α N) (a b: α),
-    (∀ i: Fin N, (profile i).lt a b) -> (R profile).lt a b
+  ∀ (p: PreferenceProfile α N) (a b: α),
+    (∀ i: Fin N, voterPrefers (p i) a b) → socPrefers R p a b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
@@ -258,11 +266,10 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
-  ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), (p i).lt a b → (R p).lt a b )
-
+  ¬ (∃ i: Fin N, ∀ (p: PreferenceProfile α N ) (a b: α), dictate R p i a b)
 
 omit [Fintype α] in
-lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : (preferAoverB a b hab).lt b a := by
+lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferAoverB a b hab) a b := by
   simp only [Preorder'.lt, preferAoverB]
   constructor
   split_ifs
@@ -272,7 +279,7 @@ lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : 
   exact hba
 
 omit [Fintype α] in
-lemma preferBoverA_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : (preferBoverA a b hab).lt a b := by
+lemma preferBoverA_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferBoverA a b hab) b a := by
   simp only [Preorder'.lt, preferBoverA, preferAoverB]
   constructor
   split_ifs
@@ -474,7 +481,7 @@ lemma pivotal_dictates_all_pairs
   (a b : α)
   (hab : a ≠ b)
   (hpivot : isPivotal R k a b hab) :
-  ∀ (p : PreferenceProfile α N) (x y : α), (p k).lt x y → (R p).lt x y := by sorry
+  ∀ (p : PreferenceProfile α N) (x y : α), dictate R p k x y := by sorry
 
 
 theorem Impossibility
