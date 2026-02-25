@@ -250,12 +250,12 @@ abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
 -- voter k isPivotal when their switch affects the society
 def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
     (R : SocialWelfareFunction α N) (k : Fin N) (f: profileGen α N) (a b : α): Prop :=
-  socPrefers R (f k.castSucc) b a ∧  -- b preferred before k
-  socPrefers R (f k.succ) a b        -- a preferred after k
+  socPrefers R (f k.castSucc) a b ∧  -- a preferred before k
+  socPrefers R (f k.succ) b a        -- b preferred after k
 
 -- profile generator f flips R when all or none voters change minds
 def isFlipping  {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (f: profileGen α N) (a b : α): Prop :=
-  socPrefers R (f 0) b a  ∧ socPrefers R (f (Fin.last N)) a b
+  socPrefers R (f 0) a b  ∧ socPrefers R (f (Fin.last N)) b a
 
 -- In society R, voter k dictate just ab
 def dictate_ab {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
@@ -346,7 +346,7 @@ lemma exists_pivotal
   (hf: isFlipping R f a b):
     ∃ k : Fin N, isPivotal R k f a b := by
   obtain ⟨ hStart, hEnd ⟩ := hf
-  let P := fun k => socPrefers R (f k) a b
+  let P := fun k => socPrefers R (f k) b a
   have hp0: ¬ P 0 := by
     simp [P]
     apply  Preorder'.lt_asymm at hStart
@@ -361,7 +361,7 @@ lemma exists_pivotal
   rcases hk with ⟨ hleft, hright ⟩
   use k
   constructor
-  exact Preorder'.lt_of_not_lt _ a b hab hleft
+  exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
   exact hright
 
 lemma exists_two_distinct {α : Type} [Fintype α] (ha : Fintype.card α ≥ 3) :
@@ -405,7 +405,6 @@ theorem Impossibility
   obtain ⟨a, b, hab⟩ := exists_two_distinct ha
   obtain ⟨c, hca, hcb⟩ := exists_third ha a b
 
-
   -- let p
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
@@ -421,11 +420,18 @@ theorem Impossibility
 
   have habc: socPrefers R (p n_ab.castSucc) a b ∧ socPrefers R (p n_ab.castSucc) b c := by
     constructor
-    .
-      rw[isPivotal] at h_nab_pivot
+    -- by definiion of n_ab pivoting
+    . rw[isPivotal] at h_nab_pivot
       exact h_nab_pivot.1
-      sorry
-    . sorry
+    -- by hunanimity
+    . have hp: (∀ i: Fin N, voterPrefers (p n_ab.castSucc i) b c) := by
+        intro i
+        simp only [p]
+        split_ifs with h
+        . exact preorderFromRanking_lt_01 b c a (Ne.symm hcb) hca (Ne.symm hab)
+        . exact preorderFromRanking_lt_12 a b c hab (Ne.symm hcb) (Ne.symm hca)
+      apply hunanimity at hp
+      exact hp
 
   -- i j k
   -- a b c
