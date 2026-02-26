@@ -42,6 +42,13 @@ lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
     · intro hba
       exact hab (p.antisymm a b (h hba') hba)
 
+lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
+    (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
+    constructor
+    . exact p.trans _ _ _ h1.1 h2.1
+    . intro h
+      exact h1.2 (p.trans _ _ _ h2.1 h)
+
 -- Map individual i to their preferences
 def PreferenceProfile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
@@ -506,17 +513,18 @@ theorem Impossibility
     apply hAIIA at hSameCol
     exact hSameCol.mp h_nab_pivot_p.2
 
-  have hbac: socPrefers R (q n_ab.castSucc) b a ∧ socPrefers R (q n_ab.castSucc) a c := by
-    constructor
-    . have h_nab_pivot_q: isPivotal R n_ab q b a := by
-        rw[isPivotal]
-        constructor
-        .
-          simp only [q]
-          sorry
-        .sorry
-      exact h_nab_pivot_q.1
-    .sorry
+  -- society of p prefer a over c, because of transit preference from a b and b c.
+  -- q has same preference of a and c with p. AIIA makes sure society of q prefers a over c too
+  have hSocPreferQac: socPrefers R (q n_ab.castSucc) a c := by
+    have hSameCol: sameCol (p n_ab.castSucc) (q n_ab.castSucc) a c := by
+      sorry
+
+    have hSocPreferPac: socPrefers R (p n_ab.castSucc) a c := by
+      obtain ⟨ hab, hbc ⟩ := habc
+      exact (R (p n_ab.castSucc)).lt_trans hbc hab
+    apply hAIIA at hSameCol
+    exact hSameCol.mp hSocPreferPac
+
 
   -- focusing on b c
   -- by AIIA with p q
