@@ -478,38 +478,31 @@ theorem Impossibility
     have hSameCol: sameCol (p n_ab.succ) (q n_ab.castSucc) b a := by
       simp only [sameCol]
       intro i
-      constructor
-      .
-        simp only [p, q]
-        by_cases hh: i.val < n_ab.castSucc.val
-        . have hhh: i.val < n_ab.succ.val := by exact Nat.lt_succ_of_lt hh
-          simp only [hhh]
-          simp only [hh]
-          simp only [if_true]
-          intro h; exact h
-        . by_cases hhh: i.val = n_ab.castSucc.val
-          .
-            have hhhh: ¬ (i.val < n_ab.castSucc.val) := by omega
-            simp only [hhhh, if_false]
-            have hhhhh: (i.val < n_ab.succ.val) := by
-              rw[hhh]
-              exact Fin.castSucc_lt_succ
-            simp only [hhhhh, if_true]
-            simp only [hhh, if_true]
-            intro h
-            rw[voterPrefers]
-            exact preorderFromRanking_lt_01 b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)
-          . have hhhh: i.val ≥ n_ab.succ.val := by
-              push_neg at hh
-              push_neg at hhh
-              have h1 : n_ab.castSucc.val < i.val := Nat.lt_of_le_of_ne hh (Ne.symm hhh)
-              exact Nat.succ_le_of_lt h1
-            have hhhh: ¬(i.val < n_ab.succ.val) := by omega
-            simp only [hhhh, if_false]
-            simp only [hh, if_false]
-            simp only [hhh, if_false]
-            intro h; exact h
-      . sorry
+      simp only [p, q]
+      by_cases hh: i.val < n_ab.castSucc.val
+      . have hhh: i.val < n_ab.succ.val := by exact Nat.lt_succ_of_lt hh
+        simp only [hhh, if_true]
+        simp only [hh, if_true]
+      . by_cases hhh: i.val = n_ab.castSucc.val
+        . have hhhh: ¬ (i.val < n_ab.castSucc.val) := by omega
+          simp only [hhhh, if_false]
+          have hhhhh: (i.val < n_ab.succ.val) := by
+            rw[hhh]
+            exact Fin.castSucc_lt_succ
+          simp only [hhhhh, if_true]
+          simp only [hhh, if_true]
+          rw[voterPrefers, voterPrefers]
+          simp [preorderFromRanking_lt_01 b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)]
+          simp [preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)]
+        . have hhhh: i.val ≥ n_ab.succ.val := by
+            push_neg at hh
+            push_neg at hhh
+            have h1 : n_ab.castSucc.val < i.val := Nat.lt_of_le_of_ne hh (Ne.symm hhh)
+            exact Nat.succ_le_of_lt h1
+          have hhhh: ¬(i.val < n_ab.succ.val) := by omega
+          simp only [hhhh, if_false]
+          simp only [hh, if_false]
+          simp only [hhh, if_false]
     apply hAIIA at hSameCol
     exact hSameCol.mp h_nab_pivot_p.2
 
