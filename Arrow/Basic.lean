@@ -470,6 +470,10 @@ theorem Impossibility
             then preorderFromRanking b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)
             else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
 
+  -- For just a and b, q happens to be the situation p flip the social outcome.
+  -- AIIA guarentee n_ab is pivotal in q too.
+  -- But we don't have to show n_ab is pivotal, which requires wrangling with n_ab - 1 and troubles of Fin N.
+  -- We only interest in showing n_ab flip q's outcome part.
   have hSocPreferQba: socPrefers R (q n_ab.castSucc) b a := by
     have hSameCol: sameCol (p n_ab.succ) (q n_ab.castSucc) b a := by
       simp only [sameCol]
@@ -506,14 +510,8 @@ theorem Impossibility
             simp only [hhh, if_false]
             intro h; exact h
       . sorry
-    have hSameColSucc: sameCol (p n_ab.succ) (q n_ab.succ) b a := by
-      sorry
-    obtain ⟨ hp, hpsucc⟩ := h_nab_pivot_p
     apply hAIIA at hSameCol
-    rw [hSameCol] at hp
-    apply hAIIA at hSameColSucc
-    rw [hSameColSucc] at hpsucc
-    exact ⟨hp, hpsucc⟩
+    exact hSameCol.mp h_nab_pivot_p.2
 
   have hbac: socPrefers R (q n_ab.castSucc) b a ∧ socPrefers R (q n_ab.castSucc) a c := by
     constructor
