@@ -517,8 +517,17 @@ theorem Impossibility
   -- q has same preference of a and c with p. AIIA makes sure society of q prefers a over c too
   have hSocPreferQac: socPrefers R (q n_ab.castSucc) a c := by
     have hSameCol: sameCol (p n_ab.castSucc) (q n_ab.castSucc) a c := by
-      sorry
-
+      simp only [sameCol]
+      intro i
+      simp only [p, q]
+      by_cases hh: i.val < n_ab.castSucc.val
+      . simp only [hh, if_true]
+      . simp only [hh, if_false]
+        by_cases hhh: i.val = n_ab.castSucc.val
+        . simp only [hhh, if_true]
+          simp [preorderFromRanking_lt_02 a b c hab (Ne.symm hcb) (Ne.symm hca)]
+          simp [preorderFromRanking_lt_12 b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)]
+        . simp only [hhh, if_false]
     have hSocPreferPac: socPrefers R (p n_ab.castSucc) a c := by
       obtain ⟨ hab, hbc ⟩ := habc
       exact (R (p n_ab.castSucc)).lt_trans hbc hab
