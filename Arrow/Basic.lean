@@ -233,10 +233,6 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
   simp [Preorder'.lt, preorderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
 
--- A profile where voters 0..k-1 prefer a over b, and voters k..N-1 prefer b over a
-def swappedProfile {α : Type} [LinearOrder α] {N:ℕ} (k : Fin (N+1)) (a b : α) (hab : a ≠ b): PreferenceProfile α N :=
-  fun j ↦ if j.val < k.val then preferAoverB a b hab else preferBoverA a b hab
-
 -- profile generating function. Useful for building profile with a pivotal voter
 abbrev profileGen: Type := Fin (N+1) →  PreferenceProfile α N
 
@@ -538,7 +534,16 @@ theorem Impossibility
   -- focusing on b c
   -- by AIIA with p q
   -- n_ab dictate b c (*)
-  have h_n_ab_dictacte_bc: dictate_ab R n_ab b c := by sorry
+  have h_n_ab_dictacte_bc: dictate_ab R n_ab b c := by
+    rw[dictate_ab]
+    intro p' hp
+    have hSameCol : sameCol (q n_ab.castSucc) p' b c := by
+      simp [sameCol]
+      intro i
+      sorry
+    have hSocQ : socPrefers R (q n_ab.castSucc) b c := by
+      exact (R (q n_ab.castSucc)).lt_trans hSocPreferQac hSocPreferQba
+    exact (hAIIA _ _ _ _ hSameCol).mp hSocQ
 
   -- n_bc ≥ n_ab
   let n_bc: Fin N := sorry
@@ -563,3 +568,4 @@ theorem Impossibility
   -- n_bc = n_cb = n_ab can be extended to n_ts
 
   -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
+  sorry
