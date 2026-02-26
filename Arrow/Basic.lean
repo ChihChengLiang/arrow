@@ -470,20 +470,42 @@ theorem Impossibility
             then preorderFromRanking b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)
             else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
 
-  have h_nab_pivot_q: isPivotal R n_ab q a b := by
-    have hSameCol: sameCol (p n_ab.castSucc) (q n_ab.castSucc) a b := by
+  have hSocPreferQba: socPrefers R (q n_ab.castSucc) b a := by
+    have hSameCol: sameCol (p n_ab.succ) (q n_ab.castSucc) b a := by
       simp only [sameCol]
       intro i
       constructor
       .
         simp only [p, q]
-        split_ifs
-        . intro h; exact h
-        . intro h
-          simp [preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)] at h
-          sorry
-        . sorry
-      .sorry
+        by_cases hh: i.val < n_ab.castSucc.val
+        . have hhh: i.val < n_ab.succ.val := by exact Nat.lt_succ_of_lt hh
+          simp only [hhh]
+          simp only [hh]
+          simp only [if_true]
+          intro h; exact h
+        . by_cases hhh: i.val = n_ab.castSucc.val
+          .
+            have hhhh: ¬ (i.val < n_ab.castSucc.val) := by omega
+            simp only [hhhh, if_false]
+            have hhhhh: (i.val < n_ab.succ.val) := by
+              rw[hhh]
+              exact Fin.castSucc_lt_succ
+            simp only [hhhhh, if_true]
+            simp only [hhh, if_true]
+            intro h
+            rw[voterPrefers]
+            exact preorderFromRanking_lt_01 b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)
+          . have hhhh: i.val ≥ n_ab.succ.val := by
+              push_neg at hh
+              push_neg at hhh
+              have h1 : n_ab.castSucc.val < i.val := Nat.lt_of_le_of_ne hh (Ne.symm hhh)
+              exact Nat.succ_le_of_lt h1
+            have hhhh: ¬(i.val < n_ab.succ.val) := by omega
+            simp only [hhhh, if_false]
+            simp only [hh, if_false]
+            simp only [hhh, if_false]
+            intro h; exact h
+      . sorry
     have hSameColSucc: sameCol (p n_ab.succ) (q n_ab.succ) b a := by
       sorry
     obtain ⟨ hp, hpsucc⟩ := h_nab_pivot_p
