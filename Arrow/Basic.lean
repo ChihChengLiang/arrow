@@ -156,7 +156,13 @@ lemma ab_pivotal_transfers {α : Type} [LinearOrder α] {N : ℕ}
     rw [h2, h3]
     exact hPivotal2
 
-#check not_congr  -- a < b ↔ ¬ b < a
+-- k is positively AB pivotal at p under R
+def positivelyABPivotal {α : Type} {N : ℕ} (R : SocialWelfareFunction α N)
+  (k : Fin N)
+  (p: PreferenceProfile α N)
+  (a b: α): Prop :=
+    (isABPivotal R k p a b)∧
+    (∀ p': Preorder' α, voterPrefers p' a b → socPrefers R (profileUpdate p p' k) a b)
 
 lemma exists_two_distinct {α : Type} [Fintype α] (ha : Fintype.card α ≥ 3) :
   ∃ a b : α, a ≠ b := by
