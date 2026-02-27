@@ -10,6 +10,6 @@ I made some wrong turns.
 - I haven't figured out how to build a preference profile that behave like the second one in the paper.
 
 
-In another branch, I also tried Barbera 1980, which defines ideas more formally.
+In another branch, I also tried [Barbera 1980](http://pareto.uab.es/sbarbera/versions%20noves/SB%20Pivotal%20voters%20ELetters1980.pdf), which defines ideas more formally.
 
 [Wiedijk 2009](https://repository.ubn.ru.nl/bitstream/handle/2066/75428/75428.pdf?sequence=1) formalizes Arrow's theorem in Mizar language. I haven't dived into this.
