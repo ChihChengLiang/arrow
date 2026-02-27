@@ -530,24 +530,74 @@ theorem Impossibility
     apply hAIIA at hSameCol
     exact hSameCol.mp hSocPreferPac
 
+  let pbc : profileGen α N  :=
+    fun k =>
+      fun i =>
+        if i.val < k.val
+          then preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)  -- a > b > c
+          else preorderFromRanking c b a hcb (Ne.symm hab) hca            -- c > b > a
+
+
+  let pbcProfile: PreferenceProfile α N := pbc n_ab.castSucc
 
   -- focusing on b c
   -- by AIIA with p q
   -- n_ab dictate b c (*)
-  have h_n_ab_dictacte_bc: dictate_ab R n_ab b c := by
-    rw[dictate_ab]
-    intro p' hp
-    have hSameCol : sameCol (q n_ab.castSucc) p' b c := by
-      simp [sameCol]
+  -- have h_n_ab_dictacte_bc:
+  --   voterPrefers ((p n_ab.castSucc) n_ab) b c → socPrefers R (p n_ab.castSucc) b c  := by sorry
+
+  have h_star : socPrefers R pbcProfile b c := by
+    -- AIIA from ξ (q n_ab.castSucc): the {b,c} columns match
+    have hSameCol : sameCol (q n_ab.castSucc) pbcProfile b c := by
       intro i
+      simp [q]
+      -- voters < n_ab: both have b > c ✓
+      -- voters ≥ n_ab: both have c > b ✓
       sorry
-    have hSocQ : socPrefers R (q n_ab.castSucc) b c := by
+    have hSocPreferQbc : socPrefers R (q n_ab.castSucc) b c := by
       exact (R (q n_ab.castSucc)).lt_trans hSocPreferQac hSocPreferQba
-    exact (hAIIA _ _ _ _ hSameCol).mp hSocQ
+    exact (hAIIA _ _ _ _ hSameCol).mp hSocPreferQbc
+
+  have hpbcflipping : isFlipping R pbc c b := by
+    constructor
+    · -- at k=0, all voters prefer c > b, so society prefers c > b
+      apply hunanimity
+      intro i
+      simp [pbc]
+      -- i.val < 0 is false, so all use preorderFromRanking a b c
+      -- need: voterPrefers (preorderFromRanking a b c) b c
+      exact preorderFromRanking_lt_01 c b a hcb (Ne.symm hab) hca
+    · -- at k=N, all voters prefer b > c, so society prefers b > c
+      apply hunanimity
+      intro i
+      simp [pbc]
+      -- i.val < N always, so all use preorderFromRanking c b a
+      exact preorderFromRanking_lt_12 a b c hab (Ne.symm hcb) (Ne.symm hca)
+
+
+  obtain ⟨n_bc, h_nbc_pivot⟩ := exists_pivotal c b hcb N pbc hpbcflipping
 
   -- n_bc ≥ n_ab
-  let n_bc: Fin N := sorry
-  have h_nab_le_nbc: n_ab ≤ n_bc := by sorry
+  have h_nab_le_nbc : n_ab ≤ n_bc := by
+    by_contra h
+    push_neg at h
+    -- h : n_bc < n_ab, meaning at castSucc of n_bc, society still prefers b > c
+    -- but h_nbc_pivot.1 says society prefers c > b at castSucc of n_bc
+    have : socPrefers R (pbc n_bc.castSucc) c b := h_nbc_pivot.1
+    -- h_star says socPrefers R (pbc n_ab.castSucc) b c
+    -- but pbc n_bc.castSucc and pbc n_ab.castSucc have same {b,c} column
+    -- when n_bc < n_ab, because the split point is earlier
+    have hSameCol : sameCol (pbc n_bc.castSucc) (pbc n_ab.castSucc) b c := by
+      intro i
+      simp [pbc]
+      by_cases hh: i < n_bc
+      . have hhh: i < n_ab := by omega
+        simp only [hh, hhh]
+      . sorry
+
+    have := (hAIIA _ _ _ _ hSameCol).mp h_star
+    exact absurd this (Preorder'.lt_asymm _ _ _ this)
+
 
 
   -- n_cb ≤ n_ab
