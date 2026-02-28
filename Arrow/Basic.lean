@@ -56,183 +56,6 @@ def PreferenceProfile (α : Type) (N : ℕ) :=
 def SocialWelfareFunction (α : Type) (N : ℕ) :=
   (Fin N → Preorder' α) → Preorder' α
 
-def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
-  le x y :=
-    if x = b then True           -- b is below everything
-    else if y = a then True      -- a is above everything
-    else if x = a then y = a     -- a is only ≤ itself (it's the top)
-    else if y = b then x = b     -- b is only ≥ itself (it's the bottom)
-    else x ≤ y                   -- everything else uses existing order
-  refl := by
-    intro x
-    simp
-  trans := by
-    intro x y z hxy hyz
-    simp
-    intro hxb hza
-    split_ifs with hxa hzb
-    split_ifs at hxy ⊢ with hya
-    split_ifs at hyz ⊢ with hyb
-    rw[hya] at hyb
-    exact absurd hyb hab
-    exact hyz
-    exact absurd hxy hya
-    split_ifs at hxy ⊢ with hya hyb
-    split_ifs at hyz ⊢ with hyb
-    rw[hya] at hyb
-    exact absurd hyb hab
-    exact absurd hyz hza
-    exact hxy
-    split_ifs at hyz
-    exact absurd hyz hyb
-    split_ifs at hxy ⊢ with hya hyb
-    split_ifs at hyz ⊢ with hyb
-    rw[hya] at hyb
-    exact absurd hyb hab
-    exact absurd hyz hza
-    exact absurd hxy hxb
-    split_ifs at hyz
-    exact le_trans hxy hyz
-
-  total := by
-    intro x y
-    split_ifs with hxb hyb hxa hya hya hyb hxa hxa hyb hyb
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    exact le_total x y
-
-  antisymm := by
-    intro x y hxb hyb
-    split_ifs at hxb ⊢ with hxb2 hya hxa hyb2
-    split_ifs at hyb ⊢ with hyb3 hxa hya
-    rw [ hyb3, hxb2]
-    rw[hxa] at hxb2
-    exact absurd hxb2 hab
-    rw[hya, hyb]
-    rw[hxb2, hyb]
-    split_ifs at hyb ⊢ with hyb2 hxa
-    rw[hya] at hyb2
-    exact absurd hyb2 hab
-    rw[hya, hxa]
-    exact absurd hyb hxa
-    rw[hxa, hxb]
-    rw[hyb2, hxb]
-    split_ifs at hyb
-    exact le_antisymm hxb hyb
-
-def preferBoverA {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α :=
-  preferAoverB b a (Ne.symm hab)
-
-#check @preferBoverA
-example : Preorder' (Fin 3) := preferBoverA (⟨0, by decide⟩ : Fin 3) ⟨1, by decide⟩ (by decide)
-#reduce (preferBoverA (a := 0) (b := 1) (by decide) : Preorder' (Fin 3)).le
-
-def preorderFromRanking {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α)
-    (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) : Preorder' α where
-  le x y :=
-    -- first handle the 6 ordered pairs among a₀, a₁, a₂
-    if x = a₂ then True              -- a₂ is bottom, below everything
-    else if y = a₀ then True         -- a₀ is top, everything is below it
-    else if x = a₀ then y = a₀      -- a₀ only ≤ itself
-    else if y = a₂ then x = a₂      -- a₂ only ≥ itself
-    -- now x, y ∉ {a₀, a₂} handled, only a₁ vs others remain
-    else x ≤ y                        -- fallback to LinearOrder
-  refl := by
-    intro x
-    simp
-  trans := by
-    intro a b c ha hb
-    split_ifs with haa2 hca0 haa0 hca2
-    . split_ifs at hb with hba2 hba0 hca2
-      . split_ifs at ha with hba0
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . rw[ha] at hba2
-          exact absurd hba2 h02
-      . exact hb
-      . split_ifs at ha
-        rw[ha] at hb
-        exact absurd hb h02
-      . split_ifs at ha
-        exact absurd ha hba0
-    . split_ifs at ha with hba0 hba2
-      . split_ifs at hb with hba2
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . rw[hb] at hca2
-          exact absurd hca2 h02
-      . exact ha
-      . split_ifs at hb
-        . exact absurd hb hba2
-    . split_ifs at ha with hba0 hba2
-      . split_ifs at hb with hba2
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . exact absurd hb hca0
-      . exact absurd ha haa2
-      . split_ifs at hb
-        exact le_trans ha hb
-  total := by
-    intro a b
-    split_ifs with haa2 hba2 haa0 hba0 hba0 hba2 haa0 haa0 hba2 hba2
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    exact le_total a b
-  antisymm := by
-    intro a b ha hb
-    split_ifs at ha with haa2 hba0 haa0 hba2
-    . split_ifs at hb with hba2 haa0 hba0
-      . rw [haa2, hba2]
-      . rw[haa0] at haa2; exact absurd haa2 h02
-      . exact absurd hb haa0
-      . rw[hb, haa2]
-    . split_ifs at hb with hba2 haa0
-      . rw[hba0 ] at hba2; exact absurd hba2 h02
-      . rw[hba0, haa0]
-      .  exact absurd hb haa0
-    . rw[ha, haa0]
-    . rw[ha , hba2]
-    . split_ifs at hb
-      exact le_antisymm ha hb
-
-lemma preorderFromRanking_lt_01 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₁ a₀ := by
-  simp [Preorder'.lt, preorderFromRanking]
-  exact ⟨h02, Ne.symm h01⟩
-
-lemma preorderFromRanking_lt_12 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₁ := by
-  simp [Preorder'.lt, preorderFromRanking]
-  split_ifs with ha10
-  . exact absurd (Eq.symm ha10) h01
-  . exact ⟨ h12, Ne.symm h02, h12 ⟩
-
-
-lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₀ := by
-  simp [Preorder'.lt, preorderFromRanking]
-  exact ⟨h02, Ne.symm h02⟩
-
 -- profile generating function. Useful for building profile with a pivotal voter
 abbrev profileGen: Type := Fin (N+1) →  PreferenceProfile α N
 
@@ -244,7 +67,6 @@ abbrev socPrefers {α : Type} {N : ℕ}
 abbrev socWeakPrefers {α : Type} {N : ℕ}
     (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
   (R p).le b a  -- b is below a, meaning a is preferred
-
 
 -- voter prefers a over b
 abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
@@ -284,24 +106,6 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), dictate_ab R i a b)
 
-omit [Fintype α] in
-lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferAoverB a b hab) a b := by
-  simp only [Preorder'.lt, preferAoverB]
-  constructor
-  split_ifs
-  split_ifs with hab2 hba
-  tauto
-  tauto
-  exact hba
-
-omit [Fintype α] in
-lemma preferBoverA_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferBoverA a b hab) b a := by
-  simp only [Preorder'.lt, preferBoverA, preferAoverB]
-  constructor
-  split_ifs
-  split_ifs with hab2
-  tauto
-  tauto
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
@@ -366,6 +170,11 @@ lemma exists_pivotal
   constructor
   exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
   exact hright
+
+def profileGen2
+  {α : Type} (N:ℕ) (p: PreferenceProfile α N) (k: Fin N)
+  (a b c:α) (hab: a≠ b) (hbc: b≠ c) (hac: a≠ c) :=
+  ∀ (i: Fin N), (i < k ↔ voterPrefers (p i) a b) ∧ (i < k ↔ voterPrefers (p i) a b)
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
