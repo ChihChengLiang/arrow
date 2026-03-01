@@ -367,35 +367,6 @@ lemma exists_pivotal
   exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
   exact hright
 
-lemma exists_two_distinct {α : Type} [Fintype α] (ha : Fintype.card α ≥ 3) :
-  ∃ a b : α, a ≠ b := by
-  by_contra h
-  push_neg at h
-  rw [← Fintype.card_le_one_iff] at h
-  omega
-
-lemma exists_third {α : Type} [Fintype α] [DecidableEq α]
-    (ha : Fintype.card α ≥ 3) (a b : α) :
-    ∃ c : α, c ≠ a ∧ c ≠ b := by
-  by_contra h
-  push_neg at h
-  have h' : ∀ c : α, c = a ∨ c = b := by
-    intro c
-    by_cases hca : c = a
-    · left; exact hca
-    · right; exact h c hca
-  have hle : Fintype.card α ≤ 2 := by
-    have hsub: Finset.univ ⊆ {a, b} := by
-      intro x _
-      simp [Finset.mem_insert]
-      exact h' x
-    calc Finset.univ.card
-          ≤ ({a, b} : Finset α).card := Finset.card_le_card hsub
-        _ ≤ 2 := by apply le_trans (Finset.card_insert_le a {b}); simp
-  omega
-
-
-
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
     (ha : Fintype.card α ≥ 3):
@@ -405,8 +376,7 @@ theorem Impossibility
   obtain ⟨ R, h⟩ := h
   rcases h with ⟨ hunanimity, hAIIA, hNonDictactor ⟩
   apply hNonDictactor
-  obtain ⟨a, b, hab⟩ := exists_two_distinct ha
-  obtain ⟨c, hca, hcb⟩ := exists_third ha a b
+  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
 
   -- let p
   -- 0...k-1 prefer b > c > a
@@ -416,8 +386,8 @@ theorem Impossibility
     fun k =>
       fun i =>
         if i.val < k.val
-          then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
-          else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
+          then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
+          else preorderFromRanking a b c hab hbc hac
   have hpflipping: isFlipping R p a b := by
     simp only [isFlipping]
     constructor
@@ -427,7 +397,7 @@ theorem Impossibility
       simp only [p]
       have hi0: ¬ (i.val < 0) := Nat.not_lt_zero _
       simp
-      exact preorderFromRanking_lt_01 a b c hab (Ne.symm hcb) (Ne.symm hca)
+      exact preorderFromRanking_lt_01 a b c hab hbc hac
     -- k = N
     . apply hunanimity
       intro i
@@ -435,7 +405,7 @@ theorem Impossibility
       have : ((i.castSucc).val < (Fin.last N).val) := by
         simp [Fin.castSucc, Fin.last]
       simp
-      exact preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)
+      exact preorderFromRanking_lt_02 b c a hbc (Ne.symm hac) (Ne.symm hab)
 
   obtain ⟨n_ab, h_nab_pivot_p ⟩ := exists_pivotal a b hab N p hpflipping
 
@@ -449,8 +419,8 @@ theorem Impossibility
         intro i
         simp only [p]
         split_ifs with h
-        . exact preorderFromRanking_lt_01 b c a (Ne.symm hcb) hca (Ne.symm hab)
-        . exact preorderFromRanking_lt_12 a b c hab (Ne.symm hcb) (Ne.symm hca)
+        . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
+        . exact preorderFromRanking_lt_12 a b c hab hbc hac
       apply hunanimity at hp
       exact hp
 
@@ -468,10 +438,10 @@ theorem Impossibility
     fun k =>
       fun i =>
         if i.val < k.val
-          then preorderFromRanking b c a (Ne.symm hcb) hca (Ne.symm hab)
+          then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
           else if i.val = k.val
-            then preorderFromRanking b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)
-            else preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)
+            then preorderFromRanking b a c (Ne.symm hab) hac hbc
+            else preorderFromRanking a b c hab hbc hac
 
   -- For just a and b, q happens to be the situation p flip the social outcome.
   -- AIIA guarentee n_ab is pivotal in q too.
@@ -495,8 +465,8 @@ theorem Impossibility
           simp only [hhhhh, if_true]
           simp only [hhh, if_true]
           rw[voterPrefers, voterPrefers]
-          simp [preorderFromRanking_lt_01 b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)]
-          simp [preorderFromRanking_lt_02 b c a (Ne.symm hcb) hca (Ne.symm hab)]
+          simp [preorderFromRanking_lt_01 b a c (Ne.symm hab) hac hbc]
+          simp [preorderFromRanking_lt_02 b c a hbc (Ne.symm hac) (Ne.symm hab)]
         . have hhhh: i.val ≥ n_ab.succ.val := by
             push_neg at hh
             push_neg at hhh
@@ -521,8 +491,8 @@ theorem Impossibility
       . simp only [hh, if_false]
         by_cases hhh: i.val = n_ab.castSucc.val
         . simp only [hhh, if_true]
-          simp [preorderFromRanking_lt_02 a b c hab (Ne.symm hcb) (Ne.symm hca)]
-          simp [preorderFromRanking_lt_12 b a c (Ne.symm hab) (Ne.symm hca) (Ne.symm hcb)]
+          simp [preorderFromRanking_lt_02 a b c hab hbc hac]
+          simp [preorderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
         . simp only [hhh, if_false]
     have hSocPreferPac: socPrefers R (p n_ab.castSucc) a c := by
       obtain ⟨ hab, hbc ⟩ := habc
@@ -534,8 +504,8 @@ theorem Impossibility
     fun k =>
       fun i =>
         if i.val < k.val
-          then preorderFromRanking a b c hab (Ne.symm hcb) (Ne.symm hca)  -- a > b > c
-          else preorderFromRanking c b a hcb (Ne.symm hab) hca            -- c > b > a
+          then preorderFromRanking a b c hab hbc hac  -- a > b > c
+          else preorderFromRanking c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac) -- c > b > a
 
 
   let pbcProfile: PreferenceProfile α N := pbc n_ab.castSucc
@@ -566,16 +536,16 @@ theorem Impossibility
       simp [pbc]
       -- i.val < 0 is false, so all use preorderFromRanking a b c
       -- need: voterPrefers (preorderFromRanking a b c) b c
-      exact preorderFromRanking_lt_01 c b a hcb (Ne.symm hab) hca
+      exact preorderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
     · -- at k=N, all voters prefer b > c, so society prefers b > c
       apply hunanimity
       intro i
       simp [pbc]
       -- i.val < N always, so all use preorderFromRanking c b a
-      exact preorderFromRanking_lt_12 a b c hab (Ne.symm hcb) (Ne.symm hca)
+      exact preorderFromRanking_lt_12 a b c hab hbc hac
 
 
-  obtain ⟨n_bc, h_nbc_pivot⟩ := exists_pivotal c b hcb N pbc hpbcflipping
+  obtain ⟨n_bc, h_nbc_pivot⟩ := exists_pivotal c b (Ne.symm hbc) N pbc hpbcflipping
 
   -- n_bc ≥ n_ab
   have h_nab_le_nbc : n_ab ≤ n_bc := by
