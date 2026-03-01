@@ -373,8 +373,7 @@ theorem Impossibility
     ¬ ∃ R : SocialWelfareFunction α N,
     (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
   by_contra h
-  obtain ⟨ R, h⟩ := h
-  rcases h with ⟨ hunanimity, hAIIA, hNonDictactor ⟩
+  obtain ⟨ R, ⟨ hunanimity, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
 
