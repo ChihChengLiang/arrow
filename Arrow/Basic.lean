@@ -72,16 +72,6 @@ abbrev socWeakPrefers {α : Type} {N : ℕ}
 abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
 
--- voter k isPivotal when their switch affects the society
-def isPivotal {α : Type} [LinearOrder α] {N : ℕ}
-    (R : SocialWelfareFunction α N) (k : Fin N) (f: profileGen α N) (a b : α): Prop :=
-  socPrefers R (f k.castSucc) a b ∧  -- a preferred before k
-  socPrefers R (f k.succ) b a        -- b preferred after k
-
--- profile generator f flips R when all or none voters change minds
-def isFlipping  {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (f: profileGen α N) (a b : α): Prop :=
-  socPrefers R (f 0) a b  ∧ socPrefers R (f (Fin.last N)) b a
-
 -- In society R, voter k dictate just ab
 def dictate_ab {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: PreferenceProfile α N ), voterPrefers (p k) a b → socPrefers R p a b
@@ -106,6 +96,29 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), dictate_ab R i a b)
 
+-- Everyone starts with a > b, then one by one from left b > a
+def swappingProfileAB
+  {α : Type} (N:ℕ) (k: Fin N)
+  (a b :α) :=
+  {
+    p: PreferenceProfile α N | ∀ (i: Fin N),
+    (i < k ↔ voterPrefers (p i) b a) ∧ (k ≤ i ↔ voterPrefers (p i) a b)
+  }
+
+def swappingProcessP {α : Type} (N:ℕ) (k: Fin (N+1)) (p: PreferenceProfile α N)
+  (a b :α) :=
+  {p' : PreferenceProfile α N |
+    p  ∈ swappingProfileAB N k a b ∧
+    p' ∈ {p' |∀ i: Fin N, (i = k ↔ voterPrefers (p' i) b a) ∧ i≠ k ↔ p' i = p i }
+  }
+
+def isABPivotal {α : Type} {N : ℕ}
+    (R : SocialWelfareFunction α N)
+    (k : Fin N)
+    (a b: α)
+    (p: PreferenceProfile α N): Prop :=
+    ∀ p': PreferenceProfile α N,
+      p' ∈ swappingProcessP N k.castSucc p a b → socPrefers R p a b ∧ socPrefers R p' b a
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
@@ -142,16 +155,17 @@ lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
 
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
-lemma exists_pivotal
+lemma swapping_exists_pivotal
   {α : Type}
   [LinearOrder α]
   (a b : α)
   (hab : a ≠ b)
   (N:ℕ)
   {R: SocialWelfareFunction α N}
-  (f: profileGen α N)
-  (hf: isFlipping R f a b):
-    ∃ k : Fin N, isPivotal R k f a b := by
+  (p: PreferenceProfile α N):
+    ∃ k : Fin N, p ∈ swappingProfileAB N k a b →  isABPivotal R k a b p := by
+  have h_flipping : socPrefers R (swappingProcessP N 0 p a b) a b  ∧ socPrefers R (f (Fin.last N)) b a := by sorry
+
   obtain ⟨ hStart, hEnd ⟩ := hf
   let P := fun k => socPrefers R (f k) b a
   have hp0: ¬ P 0 := by
@@ -171,10 +185,6 @@ lemma exists_pivotal
   exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
   exact hright
 
-def profileGen2
-  {α : Type} (N:ℕ) (p: PreferenceProfile α N) (k: Fin N)
-  (a b c:α) (hab: a≠ b) (hbc: b≠ c) (hac: a≠ c) :=
-  ∀ (i: Fin N), (i < k ↔ voterPrefers (p i) a b) ∧ (i < k ↔ voterPrefers (p i) a b)
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
