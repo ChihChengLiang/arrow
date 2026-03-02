@@ -68,6 +68,13 @@ abbrev socWeakPrefers {α : Type} {N : ℕ}
     (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
   (R p).le b a  -- b is below a, meaning a is preferred
 
+lemma not_socPrefers {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) :
+  ¬ socPrefers R p a b → socWeakPrefers R p b a := by
+  unfold socPrefers socWeakPrefers
+  intro h
+  apply Preorder'.not_lt at h
+  exact h
+
 -- voter prefers a over b
 abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
@@ -153,6 +160,11 @@ lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
       exact h
       exact hN
 
+def swapping_k
+  {α : Type} (N:ℕ) (p q: PreferenceProfile α N) (k: Fin (N+1))
+  : PreferenceProfile α N :=
+  fun i: Fin N => if i < k.val then p i else q i
+
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
 lemma swapping_exists_pivotal
@@ -162,12 +174,23 @@ lemma swapping_exists_pivotal
   (hab : a ≠ b)
   (N:ℕ)
   {R: SocialWelfareFunction α N}
-  (p: PreferenceProfile α N):
-    ∃ k : Fin N, p ∈ swappingProfileAB N k a b →  isABPivotal R k a b p := by
-  have h_flipping : socPrefers R (swappingProcessP N 0 p a b) a b  ∧ socPrefers R (f (Fin.last N)) b a := by sorry
+  (p q: PreferenceProfile α N)
+  (hp: ∀ i: Fin N, voterPrefers (p i) b a)
+  (hq: ∀ i: Fin N, voterPrefers (q i) a b)
+  (hunanimity: unanimity _ _ R)
+  :
+    ∃ k : Fin N, socPrefers R (swapping_k N p q k.castSucc) a b ∧ socPrefers R (swapping_k N p q k.succ) b a := by
 
-  obtain ⟨ hStart, hEnd ⟩ := hf
-  let P := fun k => socPrefers R (f k) b a
+  have h_flipping : socPrefers R (swapping_k N p q 0) a b  ∧ socPrefers R (swapping_k N p q (Fin.last N)) b a := by
+    have h0: swapping_k N p q 0 = q := by unfold swapping_k; simp
+    have hN: swapping_k N p q (Fin.last N) = p := by unfold swapping_k; simp
+    rw [h0, hN]
+    apply hunanimity at hq
+    apply hunanimity at hp
+    exact ⟨hq , hp⟩
+
+  obtain ⟨ hStart, hEnd ⟩ := h_flipping
+  let P := fun k => socPrefers R (swapping_k N p q k) b a
   have hp0: ¬ P 0 := by
     simp [P]
     apply  Preorder'.lt_asymm at hStart
@@ -177,9 +200,8 @@ lemma swapping_exists_pivotal
     exact hEnd
   have hh: ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
     exact flip_exists N P hp0 hpN
-  obtain ⟨ k, hk ⟩ := hh
-  simp [P] at hk
-  rcases hk with ⟨ hleft, hright ⟩
+  obtain ⟨ k, ⟨ hleft, hright ⟩ ⟩ := hh
+  simp [P] at hleft hright
   use k
   constructor
   exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
