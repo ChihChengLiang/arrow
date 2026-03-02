@@ -143,6 +143,16 @@ def swapping_k
   : PreferenceProfile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
+def swapping_k2
+  {α : Type} {N:ℕ} (r s t: PreferenceProfile α N) (k: Fin (N+1))
+  : PreferenceProfile α N :=
+  fun i: Fin N =>
+    if i < k.val
+    then r i
+    else if i = k.val
+      then s i
+      else t i
+
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
 lemma swapping_exists_pivotal
@@ -184,37 +194,57 @@ lemma swapping_exists_pivotal
   exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
   exact hright
 
-lemma ab_pivotal_abc
+lemma nab_pivotal_bc
   {α : Type}
+  {N:ℕ}
   (a b c: α)
   (hab : a ≠ b)
-  (N:ℕ)
+  (hac : a ≠ c)
+  (hbc : b ≠ c)
   {R: SocialWelfareFunction α N}
-  (p q: PreferenceProfile α N)
+  (p q r s t: PreferenceProfile α N)
   (hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a)
   (hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c)
+  (hr: ∀ i: Fin N, voterPrefers (r i) b a ∧ voterPrefers (r i) c a)
+  (hs: ∀ i: Fin N, voterPrefers (s i) a b ∧ voterPrefers (s i) a c)
+  (ht: ∀ i: Fin N, voterPrefers (t i) b a ∧ voterPrefers (t i) a c)
   (hunanimity: unanimity _ _ R)
+  (hAIIA: (AIIA _ _ R))
   :
-  ∃ n_ab: Fin N,
-    socPrefers R (swapping_k p q n_ab.castSucc) a b ∧
-    socPrefers R (swapping_k p q n_ab.castSucc) b c := by -- soc prefer a > b > c
+  ∃ n_ab: Fin N, ∀ pp: PreferenceProfile α N,
+    voterPrefers (pp n_ab) b c → socPrefers R pp b c := by
   have hpba: ∀ i: Fin N, voterPrefers (p i) b a := by intro i; exact (p i).lt_trans (hp i).2 (hp i).1
   have hqab: ∀ i: Fin N, voterPrefers (q i) a b := by intro i; exact (hq i).1
   obtain ⟨n_ab, h_nab_pivot_p ⟩ := swapping_exists_pivotal a b hab p q hpba hqab hunanimity
 
+  -- soc prefer a > b > c
+  have habc:
+    socPrefers R (swapping_k p q n_ab.castSucc) a b ∧
+    socPrefers R (swapping_k p q n_ab.castSucc) b c  := by
+    constructor
+    -- a > b by def of n_ab
+    . exact h_nab_pivot_p.1
+    -- b > c by def of n_ab
+    . have h: ∀ i: Fin N, voterPrefers (swapping_k p q n_ab.castSucc i) b c := by
+        intro i
+        unfold swapping_k
+        split_ifs
+        . exact (hp i).1
+        . exact (hq i).2
+      apply hunanimity at h
+      exact h
+
+  have hbac:
+    socPrefers R (swapping_k2 r s t n_ab.castSucc) a b ∧
+    socPrefers R (swapping_k2 r s t n_ab.castSucc) b c := by sorry
+
   use n_ab
-  constructor
-  -- a > b by def of n_ab
-  . exact h_nab_pivot_p.1
-  -- b > c by def of n_ab
-  . have h: ∀ i: Fin N, voterPrefers (swapping_k p q n_ab.castSucc i) b c := by
-      intro i
-      unfold swapping_k
-      split_ifs
-      . exact (hp i).1
-      . exact (hq i).2
-    apply hunanimity at h
-    exact h
+  intro pp h
+  have hSameCol:  sameCol pp (swapping_k2 r s t n_ab.castSucc) b c := by
+    unfold sameCol
+    sorry
+  have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
+  exact hSocPrefer.mpr hbac.2
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
@@ -230,6 +260,10 @@ theorem Impossibility
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
+  let P' := {p: PreferenceProfile α N | ∀ i : Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a}
+  let Q' := {q: PreferenceProfile α N | ∀ i : Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c}
+
+
   let p: profileGen α N :=
     fun k =>
       fun i =>
