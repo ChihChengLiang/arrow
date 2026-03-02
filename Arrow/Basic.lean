@@ -68,13 +68,6 @@ abbrev socWeakPrefers {α : Type} {N : ℕ}
     (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
   (R p).le b a  -- b is below a, meaning a is preferred
 
-lemma not_socPrefers {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) :
-  ¬ socPrefers R p a b → socWeakPrefers R p b a := by
-  unfold socPrefers socWeakPrefers
-  intro h
-  apply Preorder'.not_lt at h
-  exact h
-
 -- voter prefers a over b
 abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
@@ -111,21 +104,6 @@ def swappingProfileAB
     p: PreferenceProfile α N | ∀ (i: Fin N),
     (i < k ↔ voterPrefers (p i) b a) ∧ (k ≤ i ↔ voterPrefers (p i) a b)
   }
-
-def swappingProcessP {α : Type} (N:ℕ) (k: Fin (N+1)) (p: PreferenceProfile α N)
-  (a b :α) :=
-  {p' : PreferenceProfile α N |
-    p  ∈ swappingProfileAB N k a b ∧
-    p' ∈ {p' |∀ i: Fin N, (i = k ↔ voterPrefers (p' i) b a) ∧ i≠ k ↔ p' i = p i }
-  }
-
-def isABPivotal {α : Type} {N : ℕ}
-    (R : SocialWelfareFunction α N)
-    (k : Fin N)
-    (a b: α)
-    (p: PreferenceProfile α N): Prop :=
-    ∀ p': PreferenceProfile α N,
-      p' ∈ swappingProcessP N k.castSucc p a b → socPrefers R p a b ∧ socPrefers R p' b a
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
