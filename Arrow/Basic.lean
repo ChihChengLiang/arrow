@@ -161,7 +161,7 @@ lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
       exact hN
 
 def swapping_k
-  {α : Type} (N:ℕ) (p q: PreferenceProfile α N) (k: Fin (N+1))
+  {α : Type} {N:ℕ} (p q: PreferenceProfile α N) (k: Fin (N+1))
   : PreferenceProfile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
@@ -169,7 +169,6 @@ def swapping_k
 -- there must be a first index where it flips
 lemma swapping_exists_pivotal
   {α : Type}
-  [LinearOrder α]
   (a b : α)
   (hab : a ≠ b)
   (N:ℕ)
@@ -179,18 +178,18 @@ lemma swapping_exists_pivotal
   (hq: ∀ i: Fin N, voterPrefers (q i) a b)
   (hunanimity: unanimity _ _ R)
   :
-    ∃ k : Fin N, socPrefers R (swapping_k N p q k.castSucc) a b ∧ socPrefers R (swapping_k N p q k.succ) b a := by
+    ∃ k : Fin N, socPrefers R (swapping_k p q k.castSucc) a b ∧ socPrefers R (swapping_k p q k.succ) b a := by
 
-  have h_flipping : socPrefers R (swapping_k N p q 0) a b  ∧ socPrefers R (swapping_k N p q (Fin.last N)) b a := by
-    have h0: swapping_k N p q 0 = q := by unfold swapping_k; simp
-    have hN: swapping_k N p q (Fin.last N) = p := by unfold swapping_k; simp
+  have h_flipping : socPrefers R (swapping_k p q 0) a b  ∧ socPrefers R (swapping_k p q (Fin.last N)) b a := by
+    have h0: swapping_k p q 0 = q := by unfold swapping_k; simp
+    have hN: swapping_k p q (Fin.last N) = p := by unfold swapping_k; simp
     rw [h0, hN]
     apply hunanimity at hq
     apply hunanimity at hp
     exact ⟨hq , hp⟩
 
   obtain ⟨ hStart, hEnd ⟩ := h_flipping
-  let P := fun k => socPrefers R (swapping_k N p q k) b a
+  let P := fun k => socPrefers R (swapping_k p q k) b a
   have hp0: ¬ P 0 := by
     simp [P]
     apply  Preorder'.lt_asymm at hStart
