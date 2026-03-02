@@ -147,9 +147,9 @@ def swapping_k
 -- there must be a first index where it flips
 lemma swapping_exists_pivotal
   {α : Type}
+  {N:ℕ}
   (a b : α)
   (hab : a ≠ b)
-  (N:ℕ)
   {R: SocialWelfareFunction α N}
   (p q: PreferenceProfile α N)
   (hp: ∀ i: Fin N, voterPrefers (p i) b a)
@@ -184,6 +184,37 @@ lemma swapping_exists_pivotal
   exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
   exact hright
 
+lemma ab_pivotal_abc
+  {α : Type}
+  (a b c: α)
+  (hab : a ≠ b)
+  (N:ℕ)
+  {R: SocialWelfareFunction α N}
+  (p q: PreferenceProfile α N)
+  (hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a)
+  (hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c)
+  (hunanimity: unanimity _ _ R)
+  :
+  ∃ n_ab: Fin N,
+    socPrefers R (swapping_k p q n_ab.castSucc) a b ∧
+    socPrefers R (swapping_k p q n_ab.castSucc) b c := by -- soc prefer a > b > c
+  have hpba: ∀ i: Fin N, voterPrefers (p i) b a := by intro i; exact (p i).lt_trans (hp i).2 (hp i).1
+  have hqab: ∀ i: Fin N, voterPrefers (q i) a b := by intro i; exact (hq i).1
+  obtain ⟨n_ab, h_nab_pivot_p ⟩ := swapping_exists_pivotal a b hab p q hpba hqab hunanimity
+
+  use n_ab
+  constructor
+  -- a > b by def of n_ab
+  . exact h_nab_pivot_p.1
+  -- b > c by def of n_ab
+  . have h: ∀ i: Fin N, voterPrefers (swapping_k p q n_ab.castSucc i) b c := by
+      intro i
+      unfold swapping_k
+      split_ifs
+      . exact (hp i).1
+      . exact (hq i).2
+    apply hunanimity at h
+    exact h
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
