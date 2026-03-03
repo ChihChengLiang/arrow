@@ -383,7 +383,7 @@ lemma nab_pivotal_bc
       have hSameCol_ac: sameCol (swapping_k p q n_ab.castSucc) rr a c := by
         unfold sameCol rr swapping_k
         intro i
-        by_cases h: i.val < n_ab.val
+        by_cases h: i < n_ab.castSucc.val
         . have h2: i < n_ab:= by exact h
           simp [h2]
           unfold voterPrefers
@@ -400,19 +400,16 @@ lemma nab_pivotal_bc
           . intro h
             apply  Preorder'.lt_asymm
             exact (hp i).2
-        . simp
+        . push_neg at h
+          simp at *
+          have h2: ¬ (i < n_ab) := by omega
           split_ifs
-          . rw [← not_iff_not]
-            constructor
-            . intro h
-              apply  Preorder'.lt_asymm
-              exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
-            . intro h
-              apply  Preorder'.lt_asymm
-              exact (hp i).2
           . constructor
-            . intro h; exact preorderFromRanking_lt_02 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-          .  sorry
+            . intro h; exact preorderFromRanking_lt_02 a b c hab hbc hac
+            . intro h; exact (q i).lt_trans (hq i).2 (hq i).1
+          . constructor
+            . intro h; exact preorderFromRanking_lt_01 a c b hac (Ne.symm hbc) hab
+            . intro h; exact (q i).lt_trans (hq i).2 (hq i).1
       sorry
 
 
