@@ -304,14 +304,23 @@ lemma nab_pivotal_bc
   (hac : a ≠ c)
   (hbc : b ≠ c)
   {R: SocialWelfareFunction α N}
-  (p q: PreferenceProfile α N)
-  (hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a)
-  (hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c)
   (hunanimity: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   :
   ∃ n_ab: Fin N, ∀ pp: PreferenceProfile α N,
     voterPrefers (pp n_ab) b c → socPrefers R pp b c := by
+  let p: PreferenceProfile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
+  let q: PreferenceProfile α N := fun i => preorderFromRanking a b c hab hbc hac
+
+  have hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a := by
+    intro i; constructor
+    . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
+    . exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
+  have hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c := by
+    intro i; constructor
+    . exact preorderFromRanking_lt_01 a b c hab hbc hac
+    . exact preorderFromRanking_lt_12 a b c hab hbc hac
+
   have hpba: ∀ i: Fin N, voterPrefers (p i) b a := by intro i; exact (p i).lt_trans (hp i).2 (hp i).1
   have hqab: ∀ i: Fin N, voterPrefers (q i) a b := by intro i; exact (hq i).1
   obtain ⟨n_ab, h_nab_pivot_p ⟩ := swapping_exists_pivotal a b hab p q hpba hqab hunanimity
@@ -418,11 +427,6 @@ lemma nab_pivotal_bc
         simp at *
         split_ifs with hinab hppibc hieqnab hppibc
         . rw [← not_iff_not]
-          constructor
-          . intro h; apply Preorder'.lt_asymm
-            exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
-          . intro h; apply Preorder'.lt_asymm
-            exact (hp i).2
         . rw [← not_iff_not]
           constructor
           . intro h; apply Preorder'.lt_asymm
