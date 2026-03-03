@@ -323,6 +323,9 @@ lemma nab_pivotal_bc
 
   have hpba: ∀ i: Fin N, voterPrefers (p i) b a := by intro i; exact (p i).lt_trans (hp i).2 (hp i).1
   have hqab: ∀ i: Fin N, voterPrefers (q i) a b := by intro i; exact (hq i).1
+  -- 0...k-1 prefer b > c > a
+  -- k ... N prefer a > b > c
+  -- result: socPrefer a > b > c
   obtain ⟨n_ab, h_nab_pivot_p ⟩ := swapping_exists_pivotal a b hab p q hpba hqab hunanimity
 
   -- soc prefer a > b > c
@@ -345,6 +348,11 @@ lemma nab_pivotal_bc
   use n_ab
   intro pp h
 
+  -- let rr
+  -- 0...k-1 prefer b > a ∧ c > a
+  -- k prefer b > a > c
+  -- k+1 ... N prefer a > b ∧ c < a
+  -- result: socPrefer b ≥ a > c
   let rr : PreferenceProfile α N := fun i: Fin N =>
     if i < n_ab
       then
@@ -455,177 +463,13 @@ theorem Impossibility
   by_contra h
   obtain ⟨ R, ⟨ hunanimity, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
-  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
 
-  -- let p
-  -- 0...k-1 prefer b > c > a
-  -- k ... N prefer a > b > c
-  -- result: socPrefer a > b > c
-  let P' := {p: PreferenceProfile α N | ∀ i : Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a}
-  let Q' := {q: PreferenceProfile α N | ∀ i : Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c}
-
-
-  let p: profileGen α N :=
-    fun k =>
-      fun i =>
-        if i.val < k.val
-          then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
-          else preorderFromRanking a b c hab hbc hac
-  have hpflipping: isFlipping R p a b := by
-    simp only [isFlipping]
-    constructor
-    -- k = 0
-    . apply hunanimity
-      intro i
-      simp only [p]
-      have hi0: ¬ (i.val < 0) := Nat.not_lt_zero _
-      simp
-      exact preorderFromRanking_lt_01 a b c hab hbc hac
-    -- k = N
-    . apply hunanimity
-      intro i
-      simp only [p]
-      have : ((i.castSucc).val < (Fin.last N).val) := by
-        simp [Fin.castSucc, Fin.last]
-      simp
-      exact preorderFromRanking_lt_02 b c a hbc (Ne.symm hac) (Ne.symm hab)
-
-  obtain ⟨n_ab, h_nab_pivot_p ⟩ := exists_pivotal a b hab N p hpflipping
-
-  have habc: socPrefers R (p n_ab.castSucc) a b ∧ socPrefers R (p n_ab.castSucc) b c := by
-    constructor
-    -- by definiion of n_ab pivoting
-    . rw[isPivotal] at h_nab_pivot_p
-      exact h_nab_pivot_p.1
-    -- by hunanimity
-    . have hp: (∀ i: Fin N, voterPrefers (p n_ab.castSucc i) b c) := by
-        intro i
-        simp only [p]
-        split_ifs with h
-        . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
-        . exact preorderFromRanking_lt_12 a b c hab hbc hac
-      apply hunanimity at hp
-      exact hp
-
-  -- i j k
+  -- i j k | in the paper are translated into
   -- a b c
 
-  -- let q
-  -- 0...k-1 prefer b > a ∧ c > a
-  -- k prefer b > a > c
-  -- k+1 ... N prefer a > b ∧ c < a
-  -- result: socPrefer b ≥ a > c
+  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
 
-  -- let's see if we can ignore the square issue
-  let q: profileGen α N :=
-    fun k =>
-      fun i =>
-        if i.val < k.val
-          then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
-          else if i.val = k.val
-            then preorderFromRanking b a c (Ne.symm hab) hac hbc
-            else preorderFromRanking a b c hab hbc hac
-
-  -- For just a and b, q happens to be the situation p flip the social outcome.
-  -- AIIA guarentee n_ab is pivotal in q too.
-  -- But we don't have to show n_ab is pivotal, which requires wrangling with n_ab - 1 and troubles of Fin N.
-  -- We only interest in showing n_ab flip q's outcome part.
-  have hSocPreferQba: socPrefers R (q n_ab.castSucc) b a := by
-    have hSameCol: sameCol (p n_ab.succ) (q n_ab.castSucc) b a := by
-      simp only [sameCol]
-      intro i
-      simp only [p, q]
-      by_cases hh: i.val < n_ab.castSucc.val
-      . have hhh: i.val < n_ab.succ.val := by exact Nat.lt_succ_of_lt hh
-        simp only [hhh, if_true]
-        simp only [hh, if_true]
-      . by_cases hhh: i.val = n_ab.castSucc.val
-        . have hhhh: ¬ (i.val < n_ab.castSucc.val) := by omega
-          simp only [hhhh, if_false]
-          have hhhhh: (i.val < n_ab.succ.val) := by
-            rw[hhh]
-            exact Fin.castSucc_lt_succ
-          simp only [hhhhh, if_true]
-          simp only [hhh, if_true]
-          rw[voterPrefers, voterPrefers]
-          simp [preorderFromRanking_lt_01 b a c (Ne.symm hab) hac hbc]
-          simp [preorderFromRanking_lt_02 b c a hbc (Ne.symm hac) (Ne.symm hab)]
-        . have hhhh: i.val ≥ n_ab.succ.val := by
-            push_neg at hh
-            push_neg at hhh
-            have h1 : n_ab.castSucc.val < i.val := Nat.lt_of_le_of_ne hh (Ne.symm hhh)
-            exact Nat.succ_le_of_lt h1
-          have hhhh: ¬(i.val < n_ab.succ.val) := by omega
-          simp only [hhhh, if_false]
-          simp only [hh, if_false]
-          simp only [hhh, if_false]
-    apply hAIIA at hSameCol
-    exact hSameCol.mp h_nab_pivot_p.2
-
-  -- society of p prefer a over c, because of transit preference from a b and b c.
-  -- q has same preference of a and c with p. AIIA makes sure society of q prefers a over c too
-  have hSocPreferQac: socPrefers R (q n_ab.castSucc) a c := by
-    have hSameCol: sameCol (p n_ab.castSucc) (q n_ab.castSucc) a c := by
-      simp only [sameCol]
-      intro i
-      simp only [p, q]
-      by_cases hh: i.val < n_ab.castSucc.val
-      . simp only [hh, if_true]
-      . simp only [hh, if_false]
-        by_cases hhh: i.val = n_ab.castSucc.val
-        . simp only [hhh, if_true]
-          simp [preorderFromRanking_lt_02 a b c hab hbc hac]
-          simp [preorderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
-        . simp only [hhh, if_false]
-    have hSocPreferPac: socPrefers R (p n_ab.castSucc) a c := by
-      obtain ⟨ hab, hbc ⟩ := habc
-      exact (R (p n_ab.castSucc)).lt_trans hbc hab
-    apply hAIIA at hSameCol
-    exact hSameCol.mp hSocPreferPac
-
-  let pbc : profileGen α N  :=
-    fun k =>
-      fun i =>
-        if i.val < k.val
-          then preorderFromRanking a b c hab hbc hac  -- a > b > c
-          else preorderFromRanking c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac) -- c > b > a
-
-
-  let pbcProfile: PreferenceProfile α N := pbc n_ab.castSucc
-
-  -- focusing on b c
-  -- by AIIA with p q
-  -- n_ab dictate b c (*)
-  -- have h_n_ab_dictacte_bc:
-  --   voterPrefers ((p n_ab.castSucc) n_ab) b c → socPrefers R (p n_ab.castSucc) b c  := by sorry
-
-  have h_star : socPrefers R pbcProfile b c := by
-    -- AIIA from ξ (q n_ab.castSucc): the {b,c} columns match
-    have hSameCol : sameCol (q n_ab.castSucc) pbcProfile b c := by
-      intro i
-      simp [q]
-      -- voters < n_ab: both have b > c ✓
-      -- voters ≥ n_ab: both have c > b ✓
-      sorry
-    have hSocPreferQbc : socPrefers R (q n_ab.castSucc) b c := by
-      exact (R (q n_ab.castSucc)).lt_trans hSocPreferQac hSocPreferQba
-    exact (hAIIA _ _ _ _ hSameCol).mp hSocPreferQbc
-
-  have hpbcflipping : isFlipping R pbc c b := by
-    constructor
-    · -- at k=0, all voters prefer c > b, so society prefers c > b
-      apply hunanimity
-      intro i
-      simp [pbc]
-      -- i.val < 0 is false, so all use preorderFromRanking a b c
-      -- need: voterPrefers (preorderFromRanking a b c) b c
-      exact preorderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-    · -- at k=N, all voters prefer b > c, so society prefers b > c
-      apply hunanimity
-      intro i
-      simp [pbc]
-      -- i.val < N always, so all use preorderFromRanking c b a
-      exact preorderFromRanking_lt_12 a b c hab hbc hac
+  obtain ⟨n_ab, h_nab_dictate_bc ⟩ := nab_pivotal_bc a b c hab hac hbc hunanimity hAIIA
 
 
   obtain ⟨n_bc, h_nbc_pivot⟩ := exists_pivotal c b (Ne.symm hbc) N pbc hpbcflipping
