@@ -344,7 +344,9 @@ lemma nab_pivotal_bc
           then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
           else preorderFromRanking c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
       else
-        if  voterPrefers (pp i) b c
+        if i = n_ab
+        then preorderFromRanking b a c (Ne.symm hab) hac hbc
+        else if  voterPrefers (pp i) b c
           then preorderFromRanking a b c hab hbc hac
           else preorderFromRanking a c b hac (Ne.symm hbc) hab
 
@@ -352,7 +354,7 @@ lemma nab_pivotal_bc
     unfold sameCol
     intro i
     unfold rr
-    split_ifs with hi hppibc hppibc
+    split_ifs with hi hppibc hieqnab hppibc
     . simp [preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)]
       exact hppibc
     . rw [← not_iff_not]
@@ -363,6 +365,9 @@ lemma nab_pivotal_bc
         simp [preorderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
       . intro
         exact hppibc
+    . simp [preorderFromRanking_lt_02 b a c (Ne.symm hab) hac hbc]
+      rw [hieqnab]
+      exact h
     . simp [preorderFromRanking_lt_12 a b c hab hbc hac]; exact hppibc
     . rw [← not_iff_not]
       constructor
@@ -378,41 +383,34 @@ lemma nab_pivotal_bc
     socPrefers R rr a c := by
     constructor
     . exact h_nab_pivot_p.2
-    .
-      have hsoc_swp_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c := (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
+    . have hsoc_swp_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c :=
+        (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
       have hSameCol_ac: sameCol (swapping_k p q n_ab.castSucc) rr a c := by
         unfold sameCol rr swapping_k
         intro i
-        by_cases h: i < n_ab.castSucc.val
-        . have h2: i < n_ab:= by exact h
-          simp [h2]
-          unfold voterPrefers
-          rw [← not_iff_not]
+        simp at *
+        split_ifs with hinab hppibc hieqnab hppibc
+        . rw [← not_iff_not]
           constructor
-          . intro h
-            apply Preorder'.lt_of_not_lt at h
-            split_ifs
-            . apply  Preorder'.lt_asymm
-              exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
-            . apply  Preorder'.lt_asymm
-              exact preorderFromRanking_lt_02 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-            . exact hac
-          . intro h
-            apply  Preorder'.lt_asymm
+          . intro h; apply Preorder'.lt_asymm
+            exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
+          . intro h; apply Preorder'.lt_asymm
             exact (hp i).2
-        . push_neg at h
-          simp at *
-          have h2: ¬ (i < n_ab) := by omega
-          split_ifs
-          . constructor
-            . intro h; exact preorderFromRanking_lt_02 a b c hab hbc hac
-            . intro h; exact (q i).lt_trans (hq i).2 (hq i).1
-          . constructor
-            . intro h; exact preorderFromRanking_lt_01 a c b hac (Ne.symm hbc) hab
-            . intro h; exact (q i).lt_trans (hq i).2 (hq i).1
+        . rw [← not_iff_not]
+          constructor
+          . intro h; apply Preorder'.lt_asymm
+            exact preorderFromRanking_lt_02 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+          . intro h; apply Preorder'.lt_asymm
+            exact (hp i).2
+        . simp [preorderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
+          exact (q i).lt_trans (hq i).2 (hq i).1
+        . simp [preorderFromRanking_lt_02 a b c hab hbc hac]
+          exact (q i).lt_trans (hq i).2 (hq i).1
+        . simp [preorderFromRanking_lt_01 a c b hac (Ne.symm hbc) hab]
+          exact (q i).lt_trans (hq i).2 (hq i).1
+
       have hSoc_rr_ac := by apply hAIIA at hSameCol_ac; exact hSameCol_ac
       exact hSoc_rr_ac.mp hsoc_swp_ac
-
 
   have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
   have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
