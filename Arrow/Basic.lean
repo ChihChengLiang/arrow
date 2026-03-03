@@ -377,9 +377,9 @@ lemma nab_pivotal_bc
     socPrefers R rr b a ∧
     socPrefers R rr a c := by
     constructor
-    . sorry -- h_nab_pivot_p.2
+    . exact h_nab_pivot_p.2
     .
-      have hsoc_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c := (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
+      have hsoc_swp_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c := (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
       have hSameCol_ac: sameCol (swapping_k p q n_ab.castSucc) rr a c := by
         unfold sameCol rr swapping_k
         intro i
@@ -410,7 +410,8 @@ lemma nab_pivotal_bc
           . constructor
             . intro h; exact preorderFromRanking_lt_01 a c b hac (Ne.symm hbc) hab
             . intro h; exact (q i).lt_trans (hq i).2 (hq i).1
-      sorry
+      have hSoc_rr_ac := by apply hAIIA at hSameCol_ac; exact hSameCol_ac
+      exact hSoc_rr_ac.mp hsoc_swp_ac
 
 
   have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
