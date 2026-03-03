@@ -304,10 +304,9 @@ lemma nab_pivotal_bc
   (hac : a ≠ c)
   (hbc : b ≠ c)
   {R: SocialWelfareFunction α N}
-  (p q t: PreferenceProfile α N)
+  (p q: PreferenceProfile α N)
   (hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a)
   (hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c)
-  (ht: ∀ i: Fin N, voterPrefers (t i) b a ∧ voterPrefers (t i) a c)
   (hunanimity: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   :
@@ -382,7 +381,35 @@ lemma nab_pivotal_bc
     socPrefers R rr b a ∧
     socPrefers R rr a c := by
     constructor
-    . exact h_nab_pivot_p.2
+    -- By AIIA on nab pivoting defintion
+    . have hSameCol_ba: sameCol (swapping_k p q n_ab.succ) rr b a := by
+        unfold sameCol swapping_k
+        intro i
+        split_ifs with h
+        . simp [(p i).lt_trans (hp i).2 (hp i).1]
+          unfold rr
+          simp at *
+          have h2: ¬(i > n_ab) := by omega
+          split_ifs with hinab hppibc hieqnab hppibc
+          . exact preorderFromRanking_lt_02 b c a hbc (Ne.symm hac) (Ne.symm hab)
+          . exact preorderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+          . exact preorderFromRanking_lt_01 b a c (Ne.symm hab) hac hbc
+          . omega
+          . omega
+        . rw [← not_iff_not]
+          constructor
+          . intro h; apply Preorder'.lt_asymm
+            unfold rr
+            simp at *
+            have h2: ¬(i < n_ab) := by omega
+            split_ifs
+            . omega
+            . exact preorderFromRanking_lt_01 a b c hab hbc hac
+            . exact preorderFromRanking_lt_02 a c b hac (Ne.symm hbc) hab
+          . intro h; apply Preorder'.lt_asymm; exact (hq i).1
+      have hSocPrefer_rr_ba := by apply hAIIA at hSameCol_ba; exact hSameCol_ba;
+      exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
+    -- By AIIA
     . have hsoc_swp_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
       have hSameCol_ac: sameCol (swapping_k p q n_ab.castSucc) rr a c := by
