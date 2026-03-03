@@ -374,13 +374,14 @@ lemma nab_pivotal_bc
         exact hppibc
 
   have hbac:
-    socPrefers R rr a b ∧
-    socPrefers R rr b c := by
+    socPrefers R rr b a ∧
+    socPrefers R rr a c := by
 
     sorry
 
+  have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
   have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
-  exact hSocPrefer.mpr hbac.2
+  exact hSocPrefer.mpr hrr_bc
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
