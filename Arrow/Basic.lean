@@ -376,8 +376,45 @@ lemma nab_pivotal_bc
   have hbac:
     socPrefers R rr b a ∧
     socPrefers R rr a c := by
+    constructor
+    . sorry -- h_nab_pivot_p.2
+    .
+      have hsoc_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c := (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
+      have hSameCol_ac: sameCol (swapping_k p q n_ab.castSucc) rr a c := by
+        unfold sameCol rr swapping_k
+        intro i
+        by_cases h: i.val < n_ab.val
+        . have h2: i < n_ab:= by exact h
+          simp [h2]
+          unfold voterPrefers
+          rw [← not_iff_not]
+          constructor
+          . intro h
+            apply Preorder'.lt_of_not_lt at h
+            split_ifs
+            . apply  Preorder'.lt_asymm
+              exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
+            . apply  Preorder'.lt_asymm
+              exact preorderFromRanking_lt_02 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+            . exact hac
+          . intro h
+            apply  Preorder'.lt_asymm
+            exact (hp i).2
+        . simp
+          split_ifs
+          . rw [← not_iff_not]
+            constructor
+            . intro h
+              apply  Preorder'.lt_asymm
+              exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
+            . intro h
+              apply  Preorder'.lt_asymm
+              exact (hp i).2
+          . constructor
+            . intro h; exact preorderFromRanking_lt_02 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+          .  sorry
+      sorry
 
-    sorry
 
   have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
   have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
