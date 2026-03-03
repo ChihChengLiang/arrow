@@ -4,6 +4,9 @@ import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fintype.EquivFin
 
+open Classical in
+noncomputable section
+
 variable (α: Type) [Fintype α] [DecidableEq α] -- α is the type of alternatives
 variable (N: ℕ ) -- N is the number of voters
 variable (ha: Fintype.card α ≥ 3)
@@ -153,6 +156,105 @@ def swapping_k2
       then s i
       else t i
 
+
+def preorderFromRanking {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α)
+    (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) : Preorder' α where
+  le x y :=
+    -- first handle the 6 ordered pairs among a₀, a₁, a₂
+    if x = a₂ then True              -- a₂ is bottom, below everything
+    else if y = a₀ then True         -- a₀ is top, everything is below it
+    else if x = a₀ then y = a₀      -- a₀ only ≤ itself
+    else if y = a₂ then x = a₂      -- a₂ only ≥ itself
+    -- now x, y ∉ {a₀, a₂} handled, only a₁ vs others remain
+    else x ≤ y                        -- fallback to LinearOrder
+  refl := by
+    intro x
+    simp
+  trans := by
+    intro a b c ha hb
+    split_ifs with haa2 hca0 haa0 hca2
+    . split_ifs at hb with hba2 hba0 hca2
+      . split_ifs at ha with hba0
+        . rw[hba0] at hba2
+          exact absurd hba2 h02
+        . rw[ha] at hba2
+          exact absurd hba2 h02
+      . exact hb
+      . split_ifs at ha
+        rw[ha] at hb
+        exact absurd hb h02
+      . split_ifs at ha
+        exact absurd ha hba0
+    . split_ifs at ha with hba0 hba2
+      . split_ifs at hb with hba2
+        . rw[hba0] at hba2
+          exact absurd hba2 h02
+        . rw[hb] at hca2
+          exact absurd hca2 h02
+      . exact ha
+      . split_ifs at hb
+        . exact absurd hb hba2
+    . split_ifs at ha with hba0 hba2
+      . split_ifs at hb with hba2
+        . rw[hba0] at hba2
+          exact absurd hba2 h02
+        . exact absurd hb hca0
+      . exact absurd ha haa2
+      . split_ifs at hb
+        exact le_trans ha hb
+  total := by
+    intro a b
+    split_ifs with haa2 hba2 haa0 hba0 hba0 hba2 haa0 haa0 hba2 hba2
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    exact le_total a b
+  antisymm := by
+    intro a b ha hb
+    split_ifs at ha with haa2 hba0 haa0 hba2
+    . split_ifs at hb with hba2 haa0 hba0
+      . rw [haa2, hba2]
+      . rw[haa0] at haa2; exact absurd haa2 h02
+      . exact absurd hb haa0
+      . rw[hb, haa2]
+    . split_ifs at hb with hba2 haa0
+      . rw[hba0 ] at hba2; exact absurd hba2 h02
+      . rw[hba0, haa0]
+      .  exact absurd hb haa0
+    . rw[ha, haa0]
+    . rw[ha , hba2]
+    . split_ifs at hb
+      exact le_antisymm ha hb
+
+lemma preorderFromRanking_lt_01 {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
+    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₁ a₀ := by
+  simp [Preorder'.lt, preorderFromRanking]
+  exact ⟨h02, Ne.symm h01⟩
+
+lemma preorderFromRanking_lt_12 {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
+    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₁ := by
+  simp [Preorder'.lt, preorderFromRanking]
+  split_ifs with ha10
+  . exact absurd (Eq.symm ha10) h01
+  . exact ⟨ h12, Ne.symm h02, h12 ⟩
+
+
+lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
+    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₀ := by
+  simp [Preorder'.lt, preorderFromRanking]
+  exact ⟨h02, Ne.symm h02⟩
+
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
 lemma swapping_exists_pivotal
@@ -195,7 +297,7 @@ lemma swapping_exists_pivotal
   exact hright
 
 lemma nab_pivotal_bc
-  {α : Type}
+  {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ}
   (a b c: α)
   (hab : a ≠ b)
@@ -235,27 +337,48 @@ lemma nab_pivotal_bc
   use n_ab
   intro pp h
 
-  have hr: ∃ r: PreferenceProfile α N,
-    sameCol pp r b c ∧
-    (∀ i: Fin N,
-      voterPrefers (r i) b a ∧ voterPrefers (r i) c a) := by
-    let rr : PreferenceProfile α N := fun i: Fin N =>
-      if (pp i)
-    sorry
-  have hs: ∃ s: PreferenceProfile α N,
-    sameCol pp s b c ∧
-      (∀ i: Fin N,
-        voterPrefers (s i) b a ∧ voterPrefers (s i) c a) := sorry
+  let rr : PreferenceProfile α N := fun i: Fin N =>
+    if i < n_ab
+      then
+        if  voterPrefers (pp i) b c
+          then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
+          else preorderFromRanking c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+      else
+        if  voterPrefers (pp i) b c
+          then preorderFromRanking a b c hab hbc hac
+          else preorderFromRanking a c b hac (Ne.symm hbc) hab
 
-  have hbac:
-    socPrefers R (swapping_k2 r s t n_ab.castSucc) a b ∧
-    socPrefers R (swapping_k2 r s t n_ab.castSucc) b c := by sorry
-
-  have hSameCol:  sameCol pp (swapping_k2 r s t n_ab.castSucc) b c := by
+  have hSameCol: sameCol pp rr b c := by
     unfold sameCol
     intro i
+    unfold rr
+    split_ifs with hi hppibc hppibc
+    . simp [preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)]
+      exact hppibc
+    . rw [← not_iff_not]
+      constructor
+      . intro
+        unfold voterPrefers
+        apply  Preorder'.lt_asymm
+        simp [preorderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
+      . intro
+        exact hppibc
+    . simp [preorderFromRanking_lt_12 a b c hab hbc hac]; exact hppibc
+    . rw [← not_iff_not]
+      constructor
+      . intro
+        unfold voterPrefers
+        apply  Preorder'.lt_asymm
+        simp [preorderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
+      . intro
+        exact hppibc
+
+  have hbac:
+    socPrefers R rr a b ∧
+    socPrefers R rr b c := by
 
     sorry
+
   have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
   exact hSocPrefer.mpr hbac.2
 
