@@ -202,11 +202,9 @@ lemma nab_pivotal_bc
   (hac : a ≠ c)
   (hbc : b ≠ c)
   {R: SocialWelfareFunction α N}
-  (p q r s t: PreferenceProfile α N)
+  (p q t: PreferenceProfile α N)
   (hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a)
   (hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c)
-  (hr: ∀ i: Fin N, voterPrefers (r i) b a ∧ voterPrefers (r i) c a)
-  (hs: ∀ i: Fin N, voterPrefers (s i) a b ∧ voterPrefers (s i) a c)
   (ht: ∀ i: Fin N, voterPrefers (t i) b a ∧ voterPrefers (t i) a c)
   (hunanimity: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
@@ -234,14 +232,29 @@ lemma nab_pivotal_bc
       apply hunanimity at h
       exact h
 
+  use n_ab
+  intro pp h
+
+  have hr: ∃ r: PreferenceProfile α N,
+    sameCol pp r b c ∧
+    (∀ i: Fin N,
+      voterPrefers (r i) b a ∧ voterPrefers (r i) c a) := by
+    let rr : PreferenceProfile α N := fun i: Fin N =>
+      if (pp i)
+    sorry
+  have hs: ∃ s: PreferenceProfile α N,
+    sameCol pp s b c ∧
+      (∀ i: Fin N,
+        voterPrefers (s i) b a ∧ voterPrefers (s i) c a) := sorry
+
   have hbac:
     socPrefers R (swapping_k2 r s t n_ab.castSucc) a b ∧
     socPrefers R (swapping_k2 r s t n_ab.castSucc) b c := by sorry
 
-  use n_ab
-  intro pp h
   have hSameCol:  sameCol pp (swapping_k2 r s t n_ab.castSucc) b c := by
     unfold sameCol
+    intro i
+
     sorry
   have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
   exact hSocPrefer.mpr hbac.2
