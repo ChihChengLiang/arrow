@@ -332,7 +332,7 @@ lemma nab_pivotal_bc
     constructor
     -- a > b by def of n_ab
     . exact h_nab_pivot_p.1
-    -- b > c by def of n_ab
+    -- b > c by unanimity
     . have h: ∀ i: Fin N, voterPrefers (swapping_k p q n_ab.castSucc i) b c := by
         intro i
         unfold swapping_k
