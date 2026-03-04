@@ -109,7 +109,7 @@ def swappingProfileAB
   }
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
-    ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
+    ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
   induction N with
   | zero =>
     -- Fin.last 0 = 0, so hN and h0 contradict
@@ -123,23 +123,30 @@ lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
       have h0' : ¬ P' 0 := by
         simp [P']
         exact h0
-      by_cases h : P' (Fin.last n)
+      by_cases h2 : P' (Fin.last n)
       . -- P' flips somewhere in 0..n, use ih
         have hk := ih P' h0' h
         simp [P'] at hk
         obtain ⟨ k, hk2⟩ := hk
-        exact ⟨k.castSucc, hk2⟩
+        use k.castSucc
+        simp at *
+        constructor
+        . intro i h
+          exact hk
+        . exact hk2.2
       . -- P' is false at Fin.last n, so flip happens at last step
-        simp [P'] at h
+        simp [P'] at h2
         use Fin.last n
         constructor
-        exact h
+        exact absurd h h2
         exact hN
     · -- P flips at the last step
       use Fin.last n
       constructor
-      exact h
-      exact hN
+      . intro i h2;
+        have hk := ih
+        exact h
+      . exact hN
 
 def swapping_k
   {α : Type} {N:ℕ} (p q: PreferenceProfile α N) (k: Fin (N+1))
@@ -268,7 +275,9 @@ lemma swapping_exists_pivotal
   (hq: ∀ i: Fin N, voterPrefers (q i) a b)
   (hunanimity: unanimity _ _ R)
   :
-    ∃ k : Fin N, socPrefers R (swapping_k p q k.castSucc) a b ∧ socPrefers R (swapping_k p q k.succ) b a := by
+    ∃ k : Fin N,
+    (∀ i ≤ k, socPrefers R (swapping_k p q i.castSucc) a b) ∧
+    socPrefers R (swapping_k p q k.succ) b a := by
 
   have h_flipping : socPrefers R (swapping_k p q 0) a b  ∧ socPrefers R (swapping_k p q (Fin.last N)) b a := by
     have h0: swapping_k p q 0 = q := by unfold swapping_k; simp
@@ -287,7 +296,7 @@ lemma swapping_exists_pivotal
   have hpN: P (Fin.last N) := by
     simp [P]
     exact hEnd
-  have hh: ∃ k : Fin N, ¬ P k.castSucc ∧ P k.succ := by
+  have hh: ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
     exact flip_exists N P hp0 hpN
   obtain ⟨ k, ⟨ hleft, hright ⟩ ⟩ := hh
   simp [P] at hleft hright
