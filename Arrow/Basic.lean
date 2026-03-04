@@ -132,7 +132,7 @@ lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
         simp at *
         constructor
         . intro i h
-          exact hk
+          exact hk2.1 i.castPred
         . exact hk2.2
       . -- P' is false at Fin.last n, so flip happens at last step
         simp [P'] at h2
