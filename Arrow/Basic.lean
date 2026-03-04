@@ -480,26 +480,9 @@ theorem Impossibility
 
   -- n_bc ≥ n_ab
   have h_nab_le_nbc : n_ab ≤ n_bc := by
-    by_contra h
-    push_neg at h
-    -- h : n_bc < n_ab, meaning at castSucc of n_bc, society still prefers b > c
-    -- but h_nbc_pivot.1 says society prefers c > b at castSucc of n_bc
-    have : socPrefers R (swapping_k p q n_bc.castSucc) b c := h_nbc_pivot.1
-    have h_star := h_nab_dictate_bc (swapping_k p q n_ab.castSucc)
-    -- h_star says socPrefers R (pbc n_ab.castSucc) b c
-    -- but pbc n_bc.castSucc and pbc n_ab.castSucc have same {b,c} column
-    -- when n_bc < n_ab, because the split point is earlier
-    have hSameCol : sameCol (swapping_k p q n_bc.castSucc) (swapping_k p q n_ab.castSucc) b c := by
-      intro i
-      simp [swapping_k]
-      by_cases hh: i < n_bc
-      . have hhh: i < n_ab := by omega
-        simp only [hh, hhh]
-      . sorry
-
-    have := (hAIIA _ _ _ _ hSameCol).mp h_star
-    exact absurd this (Preorder'.lt_asymm _ _ _ this)
-
+    -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
+    -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
+    sorry
 
 
   -- n_cb ≤ n_ab
