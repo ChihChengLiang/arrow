@@ -507,7 +507,17 @@ theorem Impossibility
   have h_nab_le_nbc : n_ab ≤ n_bc := by
     -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
     -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
-    sorry
+    by_contra h
+    push_neg at h
+    let pp := (swapping_k p q n_bc.succ)
+    have h3 :  voterPrefers (pp n_ab) b c:= by
+      unfold pp swapping_k
+      split_ifs with hh
+      . simp at *; omega
+      . unfold q; exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
+    have h4 := h_nab_dictate_bc pp h3
+    have h5 := by apply Preorder'.lt_asymm at h4; exact h4
+    exact absurd  h_nbc_pivot.2 h5
 
 
   -- n_cb ≤ n_ab
