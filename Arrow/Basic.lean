@@ -521,8 +521,30 @@ theorem Impossibility
 
 
   -- n_cb ≤ n_ab
-  let n_cb: Fin N := sorry
-  have h_ncb_le_nab: n_cb ≤ n_ab := by sorry
+  obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hunanimity
+  have h_ncb_le_nab: n_cb ≤ n_ab := by
+    -- the society ranking of c > b should flip no later than n_ab does it.
+    by_contra h
+    push_neg at h
+    -- profile at n_cb column
+    let pp := (swapping_k q p n_cb.castSucc)
+    -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
+    have h1: socPrefers R pp c b := by
+      have h10: n_ab ≤  n_cb := by omega
+      exact h_ncb_pivot.1 n_cb (le_refl n_cb)
+    -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
+    have h2: socPrefers R pp b c := by
+      have h20:  voterPrefers (pp n_ab) b c := by
+        unfold pp swapping_k
+        simp
+        unfold q
+        split_ifs
+        . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
+        . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
+      exact h_nab_dictate_bc pp h20
+    have h3 := by apply Preorder'.lt_asymm at h2; exact h2
+    exact absurd h1 h3
+
   -- n_bc ≥ n_ab ≥ n_cb
   -- n_cb ≥ n_bc
   have h_nbc_le_ncb: n_bc ≤ n_cb := by sorry
