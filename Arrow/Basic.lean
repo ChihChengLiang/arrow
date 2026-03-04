@@ -110,43 +110,58 @@ def swappingProfileAB
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
-  induction N with
-  | zero =>
-    -- Fin.last 0 = 0, so hN and h0 contradict
-    simp [Fin.last] at hN h0
-    exact absurd hN h0
-  | succ n ih =>
-    -- either P flips somewhere in 0..n, or it flips at n→n+1
-    by_cases h : P (Fin.last n).castSucc
-    · -- P is true before the end, recurse on smaller range
-      let P' : Fin (n+1) → Prop := fun k => P k.castSucc
-      have h0' : ¬ P' 0 := by
-        simp [P']
-        exact h0
-      by_cases h2 : P' (Fin.last n)
-      . -- P' flips somewhere in 0..n, use ih
-        have hk := ih P' h0' h
-        simp [P'] at hk
-        obtain ⟨ k, hk2⟩ := hk
-        use k.castSucc
-        simp at *
-        constructor
-        . intro i h
-          exact hk2.1 i.castPred
-        . exact hk2.2
-      . -- P' is false at Fin.last n, so flip happens at last step
-        simp [P'] at h2
-        use Fin.last n
-        constructor
-        exact absurd h h2
-        exact hN
-    · -- P flips at the last step
-      use Fin.last n
-      constructor
-      . intro i h2;
-        have hk := ih
-        exact h
-      . exact hN
+  -- Define Q on natural numbers: Q m = P m for m ≤ N
+  let Q : ℕ → Prop := fun m => ∃ (h : m < N + 1), P ⟨m, h⟩
+  have hQ_dec : DecidablePred Q := by
+    intro m
+    by_cases hm : m < N + 1
+    · exact decidable_of_iff (P ⟨m, hm⟩) ⟨fun hp => ⟨hm, hp⟩, fun ⟨_, hp⟩ => hp⟩
+    · exact isFalse (fun ⟨h, _⟩ => hm h)
+  -- Q is true at N (since P (Fin.last N))
+  have hQN : Q N := ⟨Nat.lt_succ_self N, by convert hN⟩
+  -- There exists some m where Q m
+  have hex : ∃ m, Q m := ⟨N, hQN⟩
+  -- Find the minimum m where Q m
+  let m := @Nat.find Q hQ_dec hex
+  have hQm : Q m := @Nat.find_spec Q hQ_dec hex
+  have hm_min : ∀ k < m, ¬ Q k := fun k hk => @Nat.find_min Q hQ_dec hex k hk
+  -- m > 0 since Q 0 = P 0 is false
+  have hm_pos : 0 < m := by
+    by_contra hm0
+    push_neg at hm0
+    have hm_eq : m = 0 := Nat.le_zero.mp hm0
+    rw [hm_eq] at hQm
+    obtain ⟨_, hP0⟩ := hQm
+    have : (⟨0, Nat.zero_lt_succ N⟩ : Fin (N+1)) = 0 := rfl
+    rw [this] at hP0
+    exact h0 hP0
+  -- m ≤ N since Q m implies m < N + 1
+  have hm_le_N : m ≤ N := by
+    obtain ⟨hlt, _⟩ := hQm
+    omega
+  -- m - 1 < N
+  have hm_pred_lt : m - 1 < N := by omega
+  -- Define k as the predecessor of m
+  let k : Fin N := ⟨m - 1, hm_pred_lt⟩
+  use k
+  constructor
+  · -- ∀ i ≤ k, ¬ P i.castSucc
+    intro i hi
+    have hi_val : i.val ≤ m - 1 := by simp only [Fin.le_def] at hi; exact hi
+    have hi_lt_m : i.val < m := by omega
+    have hnotQ : ¬ Q i.val := hm_min i.val hi_lt_m
+    simp only [Q, not_exists] at hnotQ
+    have hi_lt : i.val < N + 1 := Nat.lt_of_lt_of_le i.isLt (Nat.le_succ N)
+    intro hPi
+    apply hnotQ hi_lt
+    have : i.castSucc = ⟨i.val, hi_lt⟩ := by simp [Fin.ext_iff]
+    rw [← this]
+    exact hPi
+  · -- P k.succ
+    obtain ⟨hm_lt, hPm⟩ := hQm
+    have hk_succ_val : k.succ.val = m := by simp only [k, Fin.val_succ]; omega
+    convert hPm using 1
+    simp only [Fin.ext_iff, hk_succ_val]
 
 def swapping_k
   {α : Type} {N:ℕ} (p q: PreferenceProfile α N) (k: Fin (N+1))
@@ -302,8 +317,9 @@ lemma swapping_exists_pivotal
   simp [P] at hleft hright
   use k
   constructor
-  exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) hleft
-  exact hright
+  · intro i hi
+    exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) (hleft i hi)
+  · exact hright
 
 lemma nab_pivotal_bc
   {α : Type} [DecidableEq α] [LinearOrder α]
@@ -343,7 +359,7 @@ lemma nab_pivotal_bc
     socPrefers R (swapping_k p q n_ab.castSucc) b c  := by
     constructor
     -- a > b by def of n_ab
-    . exact h_nab_pivot_p.1
+    . exact h_nab_pivot_p.1 n_ab (le_refl n_ab)
     -- b > c by unanimity
     . have h: ∀ i: Fin N, voterPrefers (swapping_k p q n_ab.castSucc i) b c := by
         intro i
