@@ -312,8 +312,7 @@ lemma nab_pivotal_bc
   (hunanimity: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   :
-  ∃ n_ab: Fin N, ∀ pp: PreferenceProfile α N,
-    voterPrefers (pp n_ab) b c → socPrefers R pp b c := by
+  ∃ n_ab: Fin N, dictate_two R n_ab b c := by
   let p: PreferenceProfile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
   let q: PreferenceProfile α N := fun i => preorderFromRanking a b c hab hbc hac
 
