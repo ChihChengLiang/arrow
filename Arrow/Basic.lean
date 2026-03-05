@@ -505,7 +505,7 @@ lemma nab_le_nbc
   have h5 := by apply Preorder'.lt_asymm at h4; exact h4
   exact absurd  h_nbc_pivot.2 h5
 
-lemma h_ncb_le_nab
+lemma ncb_le_nab
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ}
   {R: SocialWelfareFunction α N}
@@ -553,7 +553,7 @@ lemma nbc_le_ncb
   have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
 
   -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := h_ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
+  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
 
   exact le_trans h_ncb_le_nab h_nab_le_nbc
 
@@ -586,7 +586,7 @@ theorem Impossibility
   have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
 
   -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := h_ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
+  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
 
   have h_ncb_le_nbc: n_cb ≤ n_bc := nbc_le_ncb b c n_ab n_cb n_bc p q hq h_nab_dictate_bc h_nbc_pivot h_ncb_pivot
   -- n_bc ≥ n_ab ≥ n_cb
