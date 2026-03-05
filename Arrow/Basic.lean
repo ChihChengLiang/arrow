@@ -99,15 +99,6 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), dictate_ab R i a b)
 
--- Everyone starts with a > b, then one by one from left b > a
-def swappingProfileAB
-  {α : Type} (N:ℕ) (k: Fin N)
-  (a b :α) :=
-  {
-    p: PreferenceProfile α N | ∀ (i: Fin N),
-    (i < k ↔ voterPrefers (p i) b a) ∧ (k ≤ i ↔ voterPrefers (p i) a b)
-  }
-
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
   -- Define Q on natural numbers: Q m = P m for m ≤ N
