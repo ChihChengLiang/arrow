@@ -557,31 +557,24 @@ lemma nbc_le_ncb
 
   exact le_trans h_ncb_le_nab h_nab_le_nbc
 
-theorem Impossibility
-    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
-    (ha : Fintype.card α ≥ 3):
-    ¬ ∃ R : SocialWelfareFunction α N,
-    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
-  by_contra h
-  obtain ⟨ R, ⟨ hunanimity, hAIIA, hNonDictactor ⟩⟩ := h
-  apply hNonDictactor
-
-  -- i j k | in the paper are translated into
-  -- a b c
-
-  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
-
-  obtain ⟨n_ab, h_nab_dictate_bc ⟩ := nab_pivotal_bc a b c hab hac hbc hunanimity hAIIA
-
-    -- swapping process for b c
-  let p: PreferenceProfile α N := fun i => preorderFromRanking c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-  let q: PreferenceProfile α N := fun i => preorderFromRanking b c _ hbc (Ne.symm hac) (Ne.symm hab)
-  have hp: ∀ i: Fin N, voterPrefers (p i) c b:= by intro i; exact preorderFromRanking_lt_01 c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-  have hq: ∀ i: Fin N, voterPrefers (q i) b c := by intro i;  exact preorderFromRanking_lt_01 b c _ hbc (Ne.symm hac) (Ne.symm hab)
-
-  obtain ⟨n_bc, h_nbc_pivot ⟩ := swapping_exists_pivotal b c hbc p q hp hq hunanimity
-  obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hunanimity
-
+lemma n_ab_pivotal_bc_cb
+  {α : Type} [DecidableEq α] [LinearOrder α]
+  {N:ℕ}
+  {R: SocialWelfareFunction α N}
+  (a b c: α)
+  (hab : a ≠ b)
+  (hac : a ≠ c)
+  (hbc : b ≠ c)
+  (n_ab n_cb n_bc: Fin N)
+  (p q: PreferenceProfile α N)
+  (hp: ∀ i: Fin N, voterPrefers (p i) c b)
+  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
+  (hunanimity: unanimity _ _ R)
+  (hAIIA: (AIIA _ _ R))
+  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
+  (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
+  : n_bc = n_cb ∧ n_cb = n_ab := by
   -- n_bc ≥ n_ab
   have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
 
@@ -602,6 +595,42 @@ theorem Impossibility
     have h_nab_le_n_cb: n_ab ≤ n_cb := by exact le_trans h_nab_le_nbc h_nbc_le_ncb
     exact le_antisymm h_ncb_le_nab h_nab_le_n_cb
 
+  exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
+
+theorem Impossibility
+    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+    (ha : Fintype.card α ≥ 3):
+    ¬ ∃ R : SocialWelfareFunction α N,
+    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
+  by_contra h
+  obtain ⟨ R, ⟨ hunanimity, hAIIA, hNonDictactor ⟩⟩ := h
+  apply hNonDictactor
+
+  -- i j k | in the paper are translated into
+  -- a b c
+
+  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
+
+  obtain ⟨n_ab, h_nab_dictate_bc ⟩ := nab_pivotal_bc a b c hab hac hbc hunanimity hAIIA
+
+  -- swapping process for b c
+  let p: PreferenceProfile α N := fun i => preorderFromRanking c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+  let q: PreferenceProfile α N := fun i => preorderFromRanking b c _ hbc (Ne.symm hac) (Ne.symm hab)
+  have hp: ∀ i: Fin N, voterPrefers (p i) c b:= by intro i; exact preorderFromRanking_lt_01 c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+  have hq: ∀ i: Fin N, voterPrefers (q i) b c := by intro i;  exact preorderFromRanking_lt_01 b c _ hbc (Ne.symm hac) (Ne.symm hab)
+
+  obtain ⟨n_bc, h_nbc_pivot ⟩ := swapping_exists_pivotal b c hbc p q hp hq hunanimity
+  obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hunanimity
+
+  obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := (
+    n_ab_pivotal_bc_cb
+    a b c
+    hab hac hbc
+    n_ab n_cb n_bc
+    p q hp hq
+    hunanimity hAIIA
+    h_nab_dictate_bc h_nbc_pivot h_ncb_pivot
+  )
   -- n_bc = n_cb = n_ab can be extended to n_ts
 
   -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
