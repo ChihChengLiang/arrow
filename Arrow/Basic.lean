@@ -607,4 +607,11 @@ theorem Impossibility
   -- n_bc = n_cb = n_ab can be extended to n_ts
 
   -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
-  sorry
+  use n_ab
+  intro x y
+  have h_nab_dictate_xy: dictate_two R n_ab x y := by
+    unfold dictate_two
+    intro p
+    have h_nab_dictate_bc_at_p := by apply h_nab_dictate_bc at p; exact p
+    sorry
+  exact h_nab_dictate_xy
