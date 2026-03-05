@@ -168,17 +168,6 @@ def swapping_k
   : PreferenceProfile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
-def swapping_k2
-  {α : Type} {N:ℕ} (r s t: PreferenceProfile α N) (k: Fin (N+1))
-  : PreferenceProfile α N :=
-  fun i: Fin N =>
-    if i < k.val
-    then r i
-    else if i = k.val
-      then s i
-      else t i
-
-
 def preorderFromRanking {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α)
     (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) : Preorder' α where
