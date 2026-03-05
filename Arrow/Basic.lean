@@ -159,27 +159,99 @@ def swapping_k
   : PreferenceProfile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
-noncomputable def twoElemPref {α : Type} [LinearOrder α] (top bot : α) : Preorder' α where
-  le x y := if y = top then True
-            else if x = bot then True
-            else x ≤ y  -- fallback to LinearOrder for everything else
-  refl := by intro h; simp
+def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
+  le x y :=
+    if x = b then True           -- b is below everything
+    else if y = a then True      -- a is above everything
+    else if x = a then y = a     -- a is only ≤ itself (it's the top)
+    else if y = b then x = b     -- b is only ≥ itself (it's the bottom)
+    else x ≤ y                   -- everything else uses existing order
+  refl := by
+    intro x
+    simp
   trans := by
-    intro a b c hb hc
-    split_ifs with hctop hatop
-    simp at *
-    by_cases hbbot: ¬b = bot
-    . by_cases hbtop: ¬b = top
-      have hbc := hc hctop hbbot
-      . have hab := hb hbtop hatop
-        exact le_trans hab hbc
-      . simp at *
-        have hbc := hc hctop hbbot
+    intro x y z hxy hyz
+    simp
+    intro hxb hza
+    split_ifs with hxa hzb
+    split_ifs at hxy ⊢ with hya
+    split_ifs at hyz ⊢ with hyb
+    rw[hya] at hyb
+    exact absurd hyb hab
+    exact hyz
+    exact absurd hxy hya
+    split_ifs at hxy ⊢ with hya hyb
+    split_ifs at hyz ⊢ with hyb
+    rw[hya] at hyb
+    exact absurd hyb hab
+    exact absurd hyz hza
+    exact hxy
+    split_ifs at hyz
+    exact absurd hyz hyb
+    split_ifs at hxy ⊢ with hya hyb
+    split_ifs at hyz ⊢ with hyb
+    rw[hya] at hyb
+    exact absurd hyb hab
+    exact absurd hyz hza
+    exact absurd hxy hxb
+    split_ifs at hyz
+    exact le_trans hxy hyz
 
-        sorry
-    . sorry
-  total := sorry
-  antisymm := sorry
+  total := by
+    intro x y
+    split_ifs with hxb hyb hxa hya hya hyb hxa hxa hyb hyb
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    tauto
+    exact le_total x y
+
+  antisymm := by
+    intro x y hxb hyb
+    split_ifs at hxb ⊢ with hxb2 hya hxa hyb2
+    split_ifs at hyb ⊢ with hyb3 hxa hya
+    rw [ hyb3, hxb2]
+    rw[hxa] at hxb2
+    exact absurd hxb2 hab
+    rw[hya, hyb]
+    rw[hxb2, hyb]
+    split_ifs at hyb ⊢ with hyb2 hxa
+    rw[hya] at hyb2
+    exact absurd hyb2 hab
+    rw[hya, hxa]
+    exact absurd hyb hxa
+    rw[hxa, hxb]
+    rw[hyb2, hxb]
+    split_ifs at hyb
+    exact le_antisymm hxb hyb
+
+def preferBoverA {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α :=
+  preferAoverB b a (Ne.symm hab)
+
+omit [Fintype α] in
+lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferAoverB a b hab) a b := by
+  simp only [Preorder'.lt, preferAoverB]
+  constructor
+  split_ifs
+  split_ifs with hab2 hba
+  tauto
+  tauto
+  exact hba
+
+omit [Fintype α] in
+lemma preferBoverA_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferBoverA a b hab) b a := by
+  simp only [Preorder'.lt, preferBoverA, preferAoverB]
+  constructor
+  split_ifs
+  split_ifs with hab2
+  tauto
+  tauto
 
 def preorderFromRanking {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α)
