@@ -468,7 +468,7 @@ lemma nab_le_nbc
   (n_ab n_bc: Fin N)
   (p q: PreferenceProfile α N)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nab_dictate_bc: dictate_two R n_ab b c)
   (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
   : n_ab ≤ n_bc  := by
   -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
@@ -493,7 +493,7 @@ lemma ncb_le_nab
   (n_ab n_cb: Fin N)
   (p q: PreferenceProfile α N)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nab_dictate_bc: dictate_two R n_ab b c)
   (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
   : n_cb ≤ n_ab := by
   -- the society ranking of c > b should flip no later than n_ab does it.
@@ -525,7 +525,7 @@ lemma nbc_le_ncb
   (n_ab n_cb n_bc: Fin N)
   (p q: PreferenceProfile α N)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nab_dictate_bc: dictate_two R n_ab b c)
   (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
   (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
   : n_cb ≤ n_bc  := by
@@ -551,7 +551,7 @@ lemma n_ab_pivotal_bc_cb
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
   (hunanimity: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nab_dictate_bc: dictate_two R n_ab b c)
   (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
   (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
   : n_bc = n_cb ∧ n_cb = n_ab := by
