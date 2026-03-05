@@ -562,12 +562,12 @@ theorem Impossibility
   -- n_bc ≥ n_ab ≥ n_cb
   -- n_cb ≥ n_bc
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
-  have h_nbc_le_ncb: n_bc ≤ n_cb := by sorry
+  have h_nbc_le_ncb: n_bc ≤ n_cb := by
+    obtain ⟨n_ac, h_nac_dictate_cb ⟩ := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hunanimity hAIIA
+    exact nbc_le_ncb c b n_ac n_bc n_cb q p hp h_nac_dictate_cb h_ncb_pivot h_nbc_pivot
 
   -- n_bc = n_cb = n_ab
-  have h_nbc_eq_ncb: n_bc = n_cb := by
-    -- have h_ncb_le_nbc: n_cb ≤ n_bc := by exact le_trans h_ncb_le_nab h_nab_le_nbc
-    exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
+  have h_nbc_eq_ncb: n_bc = n_cb := by exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
   have h_ncb_eq_nab: n_cb = n_ab := by
     have h_nab_le_n_cb: n_ab ≤ n_cb := by exact le_trans h_nab_le_nbc h_nbc_le_ncb
     exact le_antisymm h_ncb_le_nab h_nab_le_n_cb
