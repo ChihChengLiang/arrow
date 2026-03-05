@@ -628,7 +628,8 @@ theorem Impossibility
       . -- y≠ a
         rcases eq_or_ne y c with hyc | hynec
         . -- y = c
-          sorry
+          rw[hxb, hyc]
+          exact h_nab_dictate_bc
         . -- y ∉ {a,b,c}
           sorry
     . --x≠b
