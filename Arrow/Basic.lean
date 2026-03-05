@@ -480,6 +480,63 @@ lemma nab_pivotal_bc
   have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
   exact hSocPrefer.mpr hrr_bc
 
+lemma nab_le_nbc
+  {α : Type} [DecidableEq α] [LinearOrder α]
+  {N:ℕ}
+  {R: SocialWelfareFunction α N}
+  (b c: α)
+  (n_ab n_bc: Fin N)
+  (p q: PreferenceProfile α N)
+  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
+  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
+  : n_ab ≤ n_bc  := by
+  -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
+  -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
+  by_contra h
+  push_neg at h
+  let pp := (swapping_k p q n_bc.succ)
+  have h3 :  voterPrefers (pp n_ab) b c:= by
+    unfold pp swapping_k
+    split_ifs with hh
+    . simp at *; omega
+    . exact hq n_ab
+  have h4 := h_nab_dictate_bc pp h3
+  have h5 := by apply Preorder'.lt_asymm at h4; exact h4
+  exact absurd  h_nbc_pivot.2 h5
+
+lemma h_ncb_le_nab
+  {α : Type} [DecidableEq α] [LinearOrder α]
+  {N:ℕ}
+  {R: SocialWelfareFunction α N}
+  (b c: α)
+  (n_ab n_cb: Fin N)
+  (p q: PreferenceProfile α N)
+  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
+  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
+  : n_cb ≤ n_ab := by
+  -- the society ranking of c > b should flip no later than n_ab does it.
+  by_contra h
+  push_neg at h
+  -- profile at n_cb column
+  let pp := (swapping_k q p n_cb.castSucc)
+  -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
+  have h1: socPrefers R pp c b := by
+    have h10: n_ab ≤  n_cb := by omega
+    exact h_ncb_pivot.1 n_cb (le_refl n_cb)
+  -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
+  have h2: socPrefers R pp b c := by
+    have h20:  voterPrefers (pp n_ab) b c := by
+      unfold pp swapping_k
+      simp
+      split_ifs
+      . exact hq n_ab
+      . exact hq n_ab
+    exact h_nab_dictate_bc pp h20
+  have h3 := by apply Preorder'.lt_asymm at h2; exact h2
+  exact absurd h1 h3
+
 lemma nbc_le_ncb
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ}
@@ -488,49 +545,16 @@ lemma nbc_le_ncb
   (n_ab n_cb n_bc: Fin N)
   (p q: PreferenceProfile α N)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc:  ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
+  (h_nab_dictate_bc: ∀ (pp : PreferenceProfile α N), voterPrefers (pp n_ab) b c → socPrefers R pp b c)
   (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
   (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
   : n_cb ≤ n_bc  := by
-
   -- n_bc ≥ n_ab
-  have h_nab_le_nbc : n_ab ≤ n_bc := by
-    -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
-    -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
-    by_contra h
-    push_neg at h
-    let pp := (swapping_k p q n_bc.succ)
-    have h3 :  voterPrefers (pp n_ab) b c:= by
-      unfold pp swapping_k
-      split_ifs with hh
-      . simp at *; omega
-      . exact hq n_ab
-    have h4 := h_nab_dictate_bc pp h3
-    have h5 := by apply Preorder'.lt_asymm at h4; exact h4
-    exact absurd  h_nbc_pivot.2 h5
+  have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
 
   -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := by
-    -- the society ranking of c > b should flip no later than n_ab does it.
-    by_contra h
-    push_neg at h
-    -- profile at n_cb column
-    let pp := (swapping_k q p n_cb.castSucc)
-    -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
-    have h1: socPrefers R pp c b := by
-      have h10: n_ab ≤  n_cb := by omega
-      exact h_ncb_pivot.1 n_cb (le_refl n_cb)
-    -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
-    have h2: socPrefers R pp b c := by
-      have h20:  voterPrefers (pp n_ab) b c := by
-        unfold pp swapping_k
-        simp
-        split_ifs
-        . exact hq n_ab
-        . exact hq n_ab
-      exact h_nab_dictate_bc pp h20
-    have h3 := by apply Preorder'.lt_asymm at h2; exact h2
-    exact absurd h1 h3
+  have h_ncb_le_nab: n_cb ≤ n_ab := h_ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
+
   exact le_trans h_ncb_le_nab h_nab_le_nbc
 
 theorem Impossibility
@@ -557,6 +581,12 @@ theorem Impossibility
 
   obtain ⟨n_bc, h_nbc_pivot ⟩ := swapping_exists_pivotal b c hbc p q hp hq hunanimity
   obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hunanimity
+
+  -- n_bc ≥ n_ab
+  have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
+
+  -- n_cb ≤ n_ab
+  have h_ncb_le_nab: n_cb ≤ n_ab := h_ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
 
   have h_ncb_le_nbc: n_cb ≤ n_bc := nbc_le_ncb b c n_ab n_cb n_bc p q hq h_nab_dictate_bc h_nbc_pivot h_ncb_pivot
   -- n_bc ≥ n_ab ≥ n_cb
