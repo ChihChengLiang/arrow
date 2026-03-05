@@ -609,17 +609,44 @@ theorem Impossibility
   -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
   use n_ab
   intro x y hxy
-  -- swapping process for x y
-  let p: PreferenceProfile α N := fun i => preorderFromRanking y x _ (Ne.symm hxy) (Ne.symm hab) (Ne.symm hac)
-  let q: PreferenceProfile α N := fun i => preorderFromRanking x y _ hxy (Ne.symm hac) (Ne.symm hab)
-  have hp: ∀ i: Fin N, voterPrefers (p i) c b:= by intro i; exact preorderFromRanking_lt_01 c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-  have hq: ∀ i: Fin N, voterPrefers (q i) b c := by intro i;  exact preorderFromRanking_lt_01 b c _ hbc (Ne.symm hac) (Ne.symm hab)
-
-  obtain ⟨n_xy, h_nxy_pivot ⟩ := swapping_exists_pivotal x y hxy p q hp hq hunanimity
-
-  have h_nab_dictate_xy: dictate_two R n_ab x y := by
-    unfold dictate_two
-    intro p
-    have h_nab_dictate_bc_at_p := by apply h_nab_dictate_bc at p; exact p
-    sorry
-  exact h_nab_dictate_xy
+  rcases eq_or_ne x a with hxa | hxnea
+  . --x=a
+    rcases eq_or_ne y b with hyb | hyneb
+    . -- y=b
+      sorry
+    . -- y≠b
+      rcases eq_or_ne y c with hyc | hynec
+      . -- y = c
+        sorry
+      . -- y ∉ {a,b,c}
+        sorry
+  . --x≠a
+    rcases eq_or_ne x b with hxb | hxneb
+    . -- x=b
+      rcases eq_or_ne y a with hya | hynea
+      . -- y=a
+        sorry
+      . -- y≠ a
+        rcases eq_or_ne y c with hyc | hynec
+        . -- y = c
+          sorry
+        . -- y ∉ {a,b,c}
+          sorry
+    . --x≠b
+      rcases eq_or_ne x c with hxc | hxnec
+      . --x=c
+        sorry
+      . --x  ∉ {a,b,c}
+        rcases eq_or_ne y a with hya | hynea
+        . -- y=a
+          sorry
+        . -- y≠a
+          rcases eq_or_ne y b with hyb | hyneb
+          . -- y=b
+            sorry
+          . -- y≠b
+            rcases eq_or_ne y c with hyc | hynec
+            . --y=c
+              sorry
+            . -- y ∉ {a,b,c}
+              sorry
