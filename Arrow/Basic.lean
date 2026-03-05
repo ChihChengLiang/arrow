@@ -97,7 +97,7 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
-  ¬ (∃ i: Fin N, ∀ (a b: α), dictate_two R i a b)
+  ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → dictate_two R i a b)
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
@@ -608,7 +608,15 @@ theorem Impossibility
 
   -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
   use n_ab
-  intro x y
+  intro x y hxy
+  -- swapping process for x y
+  let p: PreferenceProfile α N := fun i => preorderFromRanking y x _ (Ne.symm hxy) (Ne.symm hab) (Ne.symm hac)
+  let q: PreferenceProfile α N := fun i => preorderFromRanking x y _ hxy (Ne.symm hac) (Ne.symm hab)
+  have hp: ∀ i: Fin N, voterPrefers (p i) c b:= by intro i; exact preorderFromRanking_lt_01 c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+  have hq: ∀ i: Fin N, voterPrefers (q i) b c := by intro i;  exact preorderFromRanking_lt_01 b c _ hbc (Ne.symm hac) (Ne.symm hab)
+
+  obtain ⟨n_xy, h_nxy_pivot ⟩ := swapping_exists_pivotal x y hxy p q hp hq hunanimity
+
   have h_nab_dictate_xy: dictate_two R n_ab x y := by
     unfold dictate_two
     intro p
