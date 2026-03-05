@@ -76,7 +76,7 @@ abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
 
 -- In society R, voter k dictate just ab
-def dictate_ab {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
+def dictate_two {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: PreferenceProfile α N ), voterPrefers (p k) a b → socPrefers R p a b
 
 -- all voters in both profile p and q prefer a over b
@@ -97,7 +97,7 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
-  ¬ (∃ i: Fin N, ∀ (a b: α), dictate_ab R i a b)
+  ¬ (∃ i: Fin N, ∀ (a b: α), dictate_two R i a b)
 
 lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
     ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
