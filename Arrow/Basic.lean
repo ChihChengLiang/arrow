@@ -159,6 +159,28 @@ def swapping_k
   : PreferenceProfile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
+noncomputable def twoElemPref {α : Type} [LinearOrder α] (top bot : α) : Preorder' α where
+  le x y := if y = top then True
+            else if x = bot then True
+            else x ≤ y  -- fallback to LinearOrder for everything else
+  refl := by intro h; simp
+  trans := by
+    intro a b c hb hc
+    split_ifs with hctop hatop
+    simp at *
+    by_cases hbbot: ¬b = bot
+    . by_cases hbtop: ¬b = top
+      have hbc := hc hctop hbbot
+      . have hab := hb hbtop hatop
+        exact le_trans hab hbc
+      . simp at *
+        have hbc := hc hctop hbbot
+
+        sorry
+    . sorry
+  total := sorry
+  antisymm := sorry
+
 def preorderFromRanking {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α)
     (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) : Preorder' α where
@@ -256,6 +278,20 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
     (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₀ := by
   simp [Preorder'.lt, preorderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
+
+noncomputable def pivotalVoter
+  {α : Type} [DecidableEq α] [LinearOrder α] [Fintype α]
+  {N : ℕ}
+  (R : SocialWelfareFunction α N)
+  (a b : α) (hab : a ≠ b)
+  (hunanimity : unanimity _ _ R) : Fin N :=
+  -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
+  -- We use LinearOrder on α to build these without needing a third alternative
+  let p : PreferenceProfile α N := fun _ => canonicalPref b a  -- b on top
+  let q : PreferenceProfile α N := fun _ => canonicalPref a b  -- a on top
+  -- Find the minimum k where the flip happens
+  Fin.find
+
 
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
