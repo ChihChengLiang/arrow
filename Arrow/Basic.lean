@@ -448,59 +448,7 @@ lemma pivotalVoter_spec
     have hNotP : ¬ socPrefers R (swapping_k p q i.castSucc) b a := by
       by_cases hilt : i < n_ab
       · -- i < n_ab: use Fin.find_min
-        -- P uses k.succ, but here we have i.castSucc
-        -- Need to relate: P i says socPrefers (swapping_k p q i.succ) b a
-        -- But we have swapping_k p q i.castSucc
-        -- Note: i.castSucc.val = i.val, i.succ.val = i.val + 1
-        -- So i.castSucc ≠ i.succ in general
-        -- We need a different argument for column i.castSucc (= column i.val)
-        -- At column 0: everyone uses q (a > b), unanimity gives a > b
-        -- At column i.castSucc where i < n_ab:
-        -- swapping_k p q i.castSucc has voters j < i.val use p (b > a), voters j ≥ i.val use q (a > b)
-        -- This is NOT directly covered by P (which uses k.succ)
-        -- Actually, for i < n_ab, P i is ¬ (i.e. society prefers a > b at column i+1)
-        -- But i.castSucc.val = i.val, not i.val + 1
-        -- So we need: society prefers a > b at column i.val
-        -- Since i < n_ab, we have i.val < n_ab.val, so i.val + 1 ≤ n_ab.val
-        -- At column i.val, fewer voters have switched compared to column i.val + 1
-        -- If society doesn't prefer b > a at column i.val + 1, it shouldn't at column i.val either
-        -- Actually, we can show this via unanimity at column 0, and the pivotal structure
-        -- Let's use a different approach: show it contradicts the minimality of n_ab
         intro hcontra
-        -- If society prefers b > a at column i.castSucc where i < n_ab
-        -- Then consider what happens: swapping_k p q i.castSucc has i voters preferring b > a
-        -- and swapping_k p q i.succ has i+1 voters preferring b > a
-        -- By sameCol argument, if soc prefers b > a at i.castSucc, AIIA should preserve this...
-        -- Actually, the columns are different. Let me think again.
-        -- At column i.castSucc = i.val: voters 0..i-1 prefer b>a, voters i..N-1 prefer a>b
-        -- At column i.succ = i.val+1: voters 0..i prefer b>a, voters i+1..N-1 prefer a>b
-        -- These have different a,b columns, so AIIA doesn't directly apply between them
-        -- But we know: P i = soc prefers b>a at column i+1
-        -- hPmin i hilt says ¬P i, so soc does NOT prefer b>a at column i+1
-        -- Hence soc prefers a>b at column i+1 (by totality)
-        -- But this doesn't tell us about column i directly...
-        -- Wait, actually columns 0 through n_ab should all have soc prefer a>b
-        -- because at column 0, everyone prefers a>b (unanimity)
-        -- and the "flip" only happens at column n_ab+1
-        -- So for any column k ≤ n_ab, society should prefer a>b
-        -- Hmm, but this isn't directly what Fin.find_min gives us
-        -- Fin.find_min says: at column j+1 for j < n_ab, soc doesn't prefer b>a
-        -- So at columns 1, 2, ..., n_ab, soc prefers a>b
-        -- And at column 0? By unanimity, soc prefers a>b
-        -- So for i ≤ n_ab, at column i, soc should prefer a>b
-        -- i.castSucc.val = i.val, so column = i.val ≤ n_ab.val
-        -- If i.val = 0: unanimity
-        -- If i.val > 0: let j = i-1, then j+1 = i, and j < i ≤ n_ab
-        --   If j < n_ab, then by hPmin j, soc doesn't prefer b>a at column j+1 = i
-        -- Wait, but j might not be < n_ab if i = n_ab
-        -- Let me reconsider. We have i ≤ n_ab.
-        -- If i = n_ab: column = n_ab.val, and j = n_ab-1 (if n_ab > 0)
-        --   Then j < n_ab, so by hPmin, soc doesn't prefer b>a at column j+1 = n_ab
-        -- If i < n_ab: column = i.val, same argument with j = i-1 (if i > 0)
-        -- If i = 0: column = 0, unanimity
-        -- So in all cases, soc prefers a>b at column i.castSucc
-        -- But we assumed hcontra: soc prefers b>a at column i.castSucc
-        -- This is a contradiction via Preorder'.lt_asymm
         by_cases hizero : i.val = 0
         · -- Column 0: everyone prefers a > b by unanimity on q
           have hall : ∀ j : Fin N, voterPrefers (swapping_k p q i.castSucc j) a b := by
@@ -512,12 +460,6 @@ lemma pivotalVoter_spec
           exact Preorder'.lt_asymm _ _ _ hsoc hcontra
         · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
           have hipos : 0 < i.val := Nat.pos_of_ne_zero hizero
-          -- Actually, P uses k.succ, so P j is about column j+1
-          -- We want: soc doesn't prefer b>a at column i.val
-          -- If there exists j with j.succ.val = i.castSucc.val, then ¬P j gives us the result
-          -- j.succ.val = j.val + 1 = i.castSucc.val = i.val
-          -- So j.val = i.val - 1
-          -- Need j : Fin N, so need i.val - 1 < N, which holds since i.val ≤ N-1 < N implies i.val - 1 < N
           let j : Fin N := ⟨i.val - 1, by omega⟩
           have hjsucc : j.succ.val = i.castSucc.val := by simp [j]; omega
           have hjlt : j < n_ab := by
