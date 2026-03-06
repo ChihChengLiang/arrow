@@ -865,9 +865,6 @@ lemma n_ab_pivotal_bc_cb
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (p q: PreferenceProfile α N)
-  (hp: ∀ i: Fin N, voterPrefers (p i) c b)
-  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
   (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   :
@@ -880,19 +877,19 @@ lemma n_ab_pivotal_bc_cb
   let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
   -- n_bc ≥ n_ab
-  have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
+  have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
 
   -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
+  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hac hbc hu hAIIA
 
-  have h_ncb_le_nbc: n_cb ≤ n_bc := nbc_le_ncb b c n_ab n_cb n_bc p q hq h_nab_dictate_bc h_nbc_pivot h_ncb_pivot
+  have h_ncb_le_nbc: n_cb ≤ n_bc := nbc_le_ncb a b c hab hac hbc hu hAIIA
   -- n_bc ≥ n_ab ≥ n_cb
   -- n_cb ≥ n_bc
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
   have h_nbc_le_ncb: n_bc ≤ n_cb := by
     let n_ac := pivotalVoter R a c hac hu
     have h_nac_dictate_cb := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-    exact nbc_le_ncb c b n_ac n_bc n_cb q p hp h_nac_dictate_cb h_ncb_pivot h_nbc_pivot
+    exact nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
 
   -- n_bc = n_cb = n_ab
   have h_nbc_eq_ncb: n_bc = n_cb := by exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
@@ -920,24 +917,7 @@ theorem Impossibility
   let n_ab := pivotalVoter R a b hab hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
 
-  -- swapping process for b c
-  let p: PreferenceProfile α N := fun i => preorderFromRanking c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-  let q: PreferenceProfile α N := fun i => preorderFromRanking b c _ hbc (Ne.symm hac) (Ne.symm hab)
-  have hp: ∀ i: Fin N, voterPrefers (p i) c b:= by intro i; exact preorderFromRanking_lt_01 c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-  have hq: ∀ i: Fin N, voterPrefers (q i) b c := by intro i;  exact preorderFromRanking_lt_01 b c _ hbc (Ne.symm hac) (Ne.symm hab)
-
-  obtain ⟨n_bc, h_nbc_pivot ⟩ := swapping_exists_pivotal b c hbc p q hp hq hu
-  obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hu
-
-  obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := (
-    n_ab_pivotal_bc_cb
-    a b c
-    hab hac hbc
-    n_ab n_cb n_bc
-    p q hp hq
-    hu hAIIA
-    h_nab_dictate_bc h_nbc_pivot h_ncb_pivot
-  )
+  obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
   -- n_bc = n_cb = n_ab can be extended to n_ts
 
   -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
