@@ -353,16 +353,24 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
 
 noncomputable def pivotalVoter
   {α : Type} [DecidableEq α] [LinearOrder α] [Fintype α]
-  {N : ℕ}
+  {N : ℕ} [NeZero N]
   (R : SocialWelfareFunction α N)
   (a b : α) (hab : a ≠ b)
   (hunanimity : unanimity _ _ R) : Fin N :=
   -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
   -- We use LinearOrder on α to build these without needing a third alternative
-  let p : PreferenceProfile α N := fun _ => canonicalPref b a  -- b on top
-  let q : PreferenceProfile α N := fun _ => canonicalPref a b  -- a on top
+  let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
+  let q : PreferenceProfile α N := fun _ => preferAoverB a b hab -- a on top
+  let P := fun k: Fin N => socPrefers R (swapping_k p q k.succ) b a
+  let hN: ∃ k, P k := by
+    use (0:Fin N).rev
+    unfold P swapping_k p
+    have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
+    simp [Nat.sub_add_cancel this]
+    apply hunanimity
+    simp [preferAoverB_lt b a (Ne.symm hab)]
   -- Find the minimum k where the flip happens
-  Fin.find
+  Fin.find P hN
 
 
 -- if a property holds at 0 and not at N (or vice versa),
