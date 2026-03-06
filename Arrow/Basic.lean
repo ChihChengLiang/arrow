@@ -424,26 +424,19 @@ lemma pivotalVoter_spec
 
   -- Helper: sameCol for any column k between f and canonical swapping process
   have hSameColGen : ∀ k : Fin (N+1), sameCol (f k) (swapping_k p q k) a b := by
-    intro k i
-    unfold swapping_k
-    constructor
-    · intro hfi
-      split_ifs with hik
-      · -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
-        exfalso
-        have hfba := (hf k i).1 hik
-        exact Preorder'.lt_asymm _ _ _ hfba hfi
-      · -- i ≥ k.val: swapping_k uses q, which has a > b
-        exact preferAoverB_lt a b hab
-    · intro hswap
-      split_ifs at hswap with hik
-      · -- i < k.val: swapping_k uses p (b > a), but hswap says a > b - contradiction
-        exfalso
-        have hpba : voterPrefers (p i) b a := preferAoverB_lt b a (Ne.symm hab)
-        exact Preorder'.lt_asymm _ _ _ hpba hswap
-      · -- i ≥ k.val: f k i prefers a > b by isSwappingProcessAB
-        push_neg at hik
-        exact (hf k i).2 hik
+    intro k i; unfold swapping_k
+    split_ifs with hik
+    . -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
+      rw [← not_iff_not]
+      have hfba := (hf k i).1 hik
+      constructor
+      . intro h; apply Preorder'.lt_asymm; exact preferAoverB_lt b a (Ne.symm hab)
+      . intro h; apply Preorder'.lt_asymm; exact hfba
+    . -- i ≥ k.val: swapping_k uses q, which has a > b
+      simp at hik
+      have hfba := (hf k i).2 hik
+      simp [hfba]
+      exact preferAoverB_lt a b hab
 
   have hSameCol: sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) a b := hSameColGen n_ab.succ
 
