@@ -370,20 +370,28 @@ def isPivotalAB
   (∀ i ≤ n_ab,  socPrefers R (f i.castSucc) a b) ∧
   socPrefers R (f n_ab.succ) b a
 
+-- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
+def canonSwappingProcess
+  {α : Type} [LinearOrder α]
+  {N : ℕ}
+  (a b : α)
+  (hab : a ≠ b)
+  : profileGen α N :=
+  let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
+  let q : PreferenceProfile α N := fun _ => preferAoverB a b hab           -- a on top
+  swapping_k p q
+
 noncomputable def pivotalVoter
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SocialWelfareFunction α N)
   (a b : α) (hab : a ≠ b)
   (hu : unanimity _ _ R) : Fin N :=
-  -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
-  -- We use LinearOrder on α to build these without needing a third alternative
-  let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
-  let q : PreferenceProfile α N := fun _ => preferAoverB a b hab -- a on top
-  let P := fun k: Fin N => socPrefers R (swapping_k p q k.succ) b a
+  let sp := canonSwappingProcess a b hab
+  let P := fun k: Fin N => socPrefers R (sp k.succ) b a
   let hN: ∃ k, P k := by
     use (0:Fin N).rev
-    unfold P swapping_k p
+    unfold P sp canonSwappingProcess swapping_k
     have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel this]
     apply hu
@@ -768,16 +776,24 @@ lemma nab_le_nbc
 
 lemma ncb_le_nab
   {α : Type} [DecidableEq α] [LinearOrder α]
-  {N:ℕ}
+  {N:ℕ} [NeZero N]
   {R: SocialWelfareFunction α N}
-  (b c: α)
-  (n_ab n_cb: Fin N)
+  (a b c: α)
+  (hab : a ≠ b)
+  (hac : a ≠ c)
+  (hbc : b ≠ c)
   (p q: PreferenceProfile α N)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc: dictate_two R n_ab b c)
-  (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
-  : n_cb ≤ n_ab := by
+  (hu: unanimity _ _ R)
+  (hAIIA: (AIIA _ _ R))
+  -- n_cb ≤ n_ab
+  : pivotalVoter R c b (Ne.symm hbc) hu  ≤ pivotalVoter R a b hab hu := by
   -- the society ranking of c > b should flip no later than n_ab does it.
+  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
+  let n_ab := pivotalVoter R a b hab hu
+  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
+  have hSpec := pivotalVoter_spec R c b (Ne.symm hbc) f hf hAIIA hu
+
   by_contra h
   push_neg at h
   -- profile at n_cb column
@@ -793,7 +809,7 @@ lemma ncb_le_nab
 
 lemma nbc_le_ncb
   {α : Type} [DecidableEq α] [LinearOrder α]
-  {N:ℕ}
+  {N:ℕ} [NeZero N]
   {R: SocialWelfareFunction α N}
   (b c: α)
   (n_ab n_cb n_bc: Fin N)
@@ -819,16 +835,20 @@ lemma n_ab_pivotal_bc_cb
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (n_ab n_cb n_bc: Fin N)
   (p q: PreferenceProfile α N)
   (hp: ∀ i: Fin N, voterPrefers (p i) c b)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
   (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  (h_nab_dictate_bc: dictate_two R n_ab b c)
-  (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
-  (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
-  : n_bc = n_cb ∧ n_cb = n_ab := by
+  :
+  -- n_bc = n_cb = n_ab
+  (pivotalVoter R b c hbc hu) = (pivotalVoter R c b (Ne.symm hbc) hu) ∧
+  (pivotalVoter R c b (Ne.symm hbc) hu) = pivotalVoter R a b hab hu := by
+
+  let n_ab := pivotalVoter R a b hab hu
+  let n_bc := pivotalVoter R b c hbc hu
+  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
+  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
   -- n_bc ≥ n_ab
   have h_nab_le_nbc : n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
 
