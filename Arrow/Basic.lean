@@ -540,7 +540,27 @@ lemma pivotalVoter_spec
         exact Preorder'.lt_asymm _ _ _ hba haf
     exact (hAIIA (f n_ab.succ) (sp n_ab.succ) b a hSameCol_ba).mpr hPn
 
+lemma pivotalVoter_pivot_canon
+  {α : Type} [DecidableEq α] [LinearOrder α]
+  {N : ℕ} [NeZero N]
+  (R : SocialWelfareFunction α N)
+  (a b : α) (hab : a ≠ b)
+  (hAIIA: AIIA _ _ R )
+  (hu : unanimity _ _ R) :
+  isPivotalAB R (canonSwappingProcess a b hab) a b (pivotalVoter R a b hab hu) := by
+  let n_ab := pivotalVoter R a b hab hu
+  let sp: profileGen α N := canonSwappingProcess a b hab
 
+  have hf : isSwappingProcessAB a b sp := by
+    unfold isSwappingProcessAB sp canonSwappingProcess swapping_k
+    intro k i
+    constructor
+    . intro h; simp [h]; exact preferAoverB_lt b a (Ne.symm hab)
+    . intro h;
+      have :¬ i < k.val := by omega
+      simp [this]
+      exact preferAoverB_lt a b hab
+  exact pivotalVoter_spec R a b hab sp hf hAIIA hu
 
 -- if a property holds at 0 and not at N (or vice versa),
 -- there must be a first index where it flips
@@ -781,8 +801,6 @@ lemma ncb_le_nab
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (p q: PreferenceProfile α N)
-  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
   (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   -- n_cb ≤ n_ab
@@ -791,17 +809,21 @@ lemma ncb_le_nab
   let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
   let n_ab := pivotalVoter R a b hab hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  have hSpec := pivotalVoter_spec R c b (Ne.symm hbc) f hf hAIIA hu
+  have h_ncb_pivot := pivotalVoter_pivot_canon R c b (Ne.symm hbc) hAIIA hu
 
   by_contra h
   push_neg at h
   -- profile at n_cb column
-  let pp := (swapping_k q p n_cb.castSucc)
+  let pp := (canonSwappingProcess c b (Ne.symm hbc)) n_cb.castSucc
   -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
   have h1: socPrefers R pp c b := h_ncb_pivot.1 n_cb (le_refl n_cb)
   -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
   have h2: socPrefers R pp b c := by
-    have h20: voterPrefers (pp n_ab) b c := by unfold pp swapping_k; simp [h]; exact hq n_ab
+    have h20: voterPrefers (pp n_ab) b c := by
+      unfold pp canonSwappingProcess swapping_k
+      have: n_ab < n_cb.val := by omega
+      simp [this]
+      exact preferAoverB_lt b c hbc
     exact h_nab_dictate_bc pp h20
   have h3 := by apply Preorder'.lt_asymm at h2; exact h2
   exact absurd h1 h3
@@ -822,7 +844,7 @@ lemma nbc_le_ncb
   have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
 
   -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab b c n_ab n_cb p q hq h_nab_dictate_bc h_ncb_pivot
+  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hbc hac
 
   exact le_trans h_ncb_le_nab h_nab_le_nbc
 
