@@ -813,7 +813,7 @@ lemma nbc_le_ncb
 
 lemma n_ab_pivotal_bc_cb
   {α : Type} [DecidableEq α] [LinearOrder α]
-  {N:ℕ}
+  {N:ℕ} [NeZero N]
   {R: SocialWelfareFunction α N}
   (a b c: α)
   (hab : a ≠ b)
@@ -823,7 +823,7 @@ lemma n_ab_pivotal_bc_cb
   (p q: PreferenceProfile α N)
   (hp: ∀ i: Fin N, voterPrefers (p i) c b)
   (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (hunanimity: unanimity _ _ R)
+  (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   (h_nab_dictate_bc: dictate_two R n_ab b c)
   (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
@@ -840,7 +840,8 @@ lemma n_ab_pivotal_bc_cb
   -- n_cb ≥ n_bc
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
   have h_nbc_le_ncb: n_bc ≤ n_cb := by
-    obtain ⟨n_ac, h_nac_dictate_cb ⟩ := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hunanimity hAIIA
+    let n_ac := pivotalVoter R a c hac hu
+    have h_nac_dictate_cb := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
     exact nbc_le_ncb c b n_ac n_bc n_cb q p hp h_nac_dictate_cb h_ncb_pivot h_nbc_pivot
 
   -- n_bc = n_cb = n_ab
