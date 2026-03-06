@@ -838,19 +838,22 @@ lemma nbc_le_ncb
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SocialWelfareFunction α N}
-  (b c: α)
-  (n_ab n_cb n_bc: Fin N)
-  (p q: PreferenceProfile α N)
-  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc: dictate_two R n_ab b c)
-  (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
-  (h_ncb_pivot : (∀ i ≤ n_cb, socPrefers R (swapping_k q p i.castSucc) c b) ∧ socPrefers R (swapping_k q p n_cb.succ) b c)
-  : n_cb ≤ n_bc  := by
+  (a b c: α)
+  (hab : a ≠ b)
+  (hac : a ≠ c)
+  (hbc : b ≠ c)
+  (hu: unanimity _ _ R)
+  (hAIIA: (AIIA _ _ R))
+  : -- n_cb ≤ n_bc
+  pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu := by
+  let n_ab := pivotalVoter R a b hab hu
+  let n_bc := pivotalVoter R b c hbc hu
+  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
   -- n_bc ≥ n_ab
-  have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc b c n_ab n_bc p q hq h_nab_dictate_bc h_nbc_pivot
+  have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
 
   -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hbc hac
+  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hac hbc hu hAIIA
 
   exact le_trans h_ncb_le_nab h_nab_le_nbc
 
