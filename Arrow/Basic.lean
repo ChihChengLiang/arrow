@@ -99,61 +99,6 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
 def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → dictate_two R i a b)
 
-lemma flip_exists (P : Fin (N+1) → Prop) (h0 : ¬ P 0) (hN : P (Fin.last N)) :
-    ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
-  -- Define Q on natural numbers: Q m = P m for m ≤ N
-  let Q : ℕ → Prop := fun m => ∃ (h : m < N + 1), P ⟨m, h⟩
-  have hQ_dec : DecidablePred Q := by
-    intro m
-    by_cases hm : m < N + 1
-    · exact decidable_of_iff (P ⟨m, hm⟩) ⟨fun hp => ⟨hm, hp⟩, fun ⟨_, hp⟩ => hp⟩
-    · exact isFalse (fun ⟨h, _⟩ => hm h)
-  -- Q is true at N (since P (Fin.last N))
-  have hQN : Q N := ⟨Nat.lt_succ_self N, by convert hN⟩
-  -- There exists some m where Q m
-  have hex : ∃ m, Q m := ⟨N, hQN⟩
-  -- Find the minimum m where Q m
-  let m := @Nat.find Q hQ_dec hex
-  have hQm : Q m := @Nat.find_spec Q hQ_dec hex
-  have hm_min : ∀ k < m, ¬ Q k := fun k hk => @Nat.find_min Q hQ_dec hex k hk
-  -- m > 0 since Q 0 = P 0 is false
-  have hm_pos : 0 < m := by
-    by_contra hm0
-    push_neg at hm0
-    have hm_eq : m = 0 := Nat.le_zero.mp hm0
-    rw [hm_eq] at hQm
-    obtain ⟨_, hP0⟩ := hQm
-    have : (⟨0, Nat.zero_lt_succ N⟩ : Fin (N+1)) = 0 := rfl
-    rw [this] at hP0
-    exact h0 hP0
-  -- m ≤ N since Q m implies m < N + 1
-  have hm_le_N : m ≤ N := by
-    obtain ⟨hlt, _⟩ := hQm
-    omega
-  -- m - 1 < N
-  have hm_pred_lt : m - 1 < N := by omega
-  -- Define k as the predecessor of m
-  let k : Fin N := ⟨m - 1, hm_pred_lt⟩
-  use k
-  constructor
-  · -- ∀ i ≤ k, ¬ P i.castSucc
-    intro i hi
-    have hi_val : i.val ≤ m - 1 := by simp only [Fin.le_def] at hi; exact hi
-    have hi_lt_m : i.val < m := by omega
-    have hnotQ : ¬ Q i.val := hm_min i.val hi_lt_m
-    simp only [Q, not_exists] at hnotQ
-    have hi_lt : i.val < N + 1 := Nat.lt_of_lt_of_le i.isLt (Nat.le_succ N)
-    intro hPi
-    apply hnotQ hi_lt
-    have : i.castSucc = ⟨i.val, hi_lt⟩ := by simp [Fin.ext_iff]
-    rw [← this]
-    exact hPi
-  · -- P k.succ
-    obtain ⟨hm_lt, hPm⟩ := hQm
-    have hk_succ_val : k.succ.val = m := by simp only [k, Fin.val_succ]; omega
-    convert hPm using 1
-    simp only [Fin.ext_iff, hk_succ_val]
-
 def swapping_k
   {α : Type} {N:ℕ} (p q: PreferenceProfile α N) (k: Fin (N+1))
   : PreferenceProfile α N :=
@@ -562,49 +507,6 @@ lemma pivotalVoter_pivot_canon
       exact preferAoverB_lt a b hab
   exact pivotalVoter_spec R a b hab sp hf hAIIA hu
 
--- if a property holds at 0 and not at N (or vice versa),
--- there must be a first index where it flips
-lemma swapping_exists_pivotal
-  {α : Type}
-  {N:ℕ}
-  (a b : α)
-  (hab : a ≠ b)
-  {R: SocialWelfareFunction α N}
-  (p q: PreferenceProfile α N)
-  (hp: ∀ i: Fin N, voterPrefers (p i) b a)
-  (hq: ∀ i: Fin N, voterPrefers (q i) a b)
-  (hunanimity: unanimity _ _ R)
-  :
-    ∃ k : Fin N,
-    (∀ i ≤ k, socPrefers R (swapping_k p q i.castSucc) a b) ∧
-    socPrefers R (swapping_k p q k.succ) b a := by
-
-  have h_flipping : socPrefers R (swapping_k p q 0) a b  ∧ socPrefers R (swapping_k p q (Fin.last N)) b a := by
-    have h0: swapping_k p q 0 = q := by unfold swapping_k; simp
-    have hN: swapping_k p q (Fin.last N) = p := by unfold swapping_k; simp
-    rw [h0, hN]
-    apply hunanimity at hq
-    apply hunanimity at hp
-    exact ⟨hq , hp⟩
-
-  obtain ⟨ hStart, hEnd ⟩ := h_flipping
-  let P := fun k => socPrefers R (swapping_k p q k) b a
-  have hp0: ¬ P 0 := by
-    simp [P]
-    apply  Preorder'.lt_asymm at hStart
-    exact hStart
-  have hpN: P (Fin.last N) := by
-    simp [P]
-    exact hEnd
-  have hh: ∃ k : Fin N, (∀ i ≤ k, ¬ P i.castSucc) ∧ P k.succ := by
-    exact flip_exists N P hp0 hpN
-  obtain ⟨ k, ⟨ hleft, hright ⟩ ⟩ := hh
-  simp [P] at hleft hright
-  use k
-  constructor
-  · intro i hi
-    exact Preorder'.lt_of_not_lt _ b a (Ne.symm hab) (hleft i hi)
-  · exact hright
 
 lemma nab_pivotal_bc
   {α : Type} [DecidableEq α] [LinearOrder α]
