@@ -357,8 +357,8 @@ def isSwappingProcessAB
   (a b : α)
   (f: profileGen α N): Prop :=
     ∀ (k: Fin (N+1)) (i: Fin N),
-    (i ≤ k.val → voterPrefers (f k i) b a ) ∧
-    (k.val > i → voterPrefers (f k i) a b )
+    (i.val < k.val → voterPrefers (f k i) b a ) ∧
+    (i.val ≥ k.val → voterPrefers (f k i) a b )
 
 def isPivotalAB
   {α : Type}
@@ -407,22 +407,196 @@ lemma pivotalVoter_spec
   let q : PreferenceProfile α N := fun _ => preferAoverB a b hab -- a on top
   let P := fun k: Fin N => socPrefers R (swapping_k p q k.succ) b a
 
-  -- theorem Fin.find_spec {n : ℕ} {p : Fin n → Prop} [DecidablePred p] (h : ∃ (k : Fin n), p k) :
-  -- p (Fin.find p h)
-  -- Fin.find p h satisfies p.
+  -- Get the existence witness for Fin.find
+  have hN: ∃ k, P k := by
+    use (0:Fin N).rev
+    unfold P swapping_k p
+    have hpos: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
+    simp [Nat.sub_add_cancel hpos]
+    apply hu
+    simp [preferAoverB_lt b a (Ne.symm hab)]
 
-  -- theorem Fin.find_min {n : ℕ} {p : Fin n → Prop} [DecidablePred p] (h : ∃ (k : Fin n), p k) {j : Fin n} :
-  -- j < Fin.find p h → ¬p j
+  -- P n_ab holds: society prefers b > a at column n_ab.succ
+  have hPn : P n_ab := Fin.find_spec hN
 
-  -- For m : Fin n, if m < Fin.find p h then m does not satisfy p.
+  -- For j < n_ab, ¬P j: society doesn't prefer b > a, hence prefers a > b
+  have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
 
-  have hSameCol: sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) a b:= sorry
+  -- Helper: sameCol for any column k between f and canonical swapping process
+  have hSameColGen : ∀ k : Fin (N+1), sameCol (f k) (swapping_k p q k) a b := by
+    intro k i
+    unfold swapping_k
+    constructor
+    · intro hfi
+      split_ifs with hik
+      · -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
+        exfalso
+        have hfba := (hf k i).1 hik
+        exact Preorder'.lt_asymm _ _ _ hfba hfi
+      · -- i ≥ k.val: swapping_k uses q, which has a > b
+        exact preferAoverB_lt a b hab
+    · intro hswap
+      split_ifs at hswap with hik
+      · -- i < k.val: swapping_k uses p (b > a), but hswap says a > b - contradiction
+        exfalso
+        have hpba : voterPrefers (p i) b a := preferAoverB_lt b a (Ne.symm hab)
+        exact Preorder'.lt_asymm _ _ _ hpba hswap
+      · -- i ≥ k.val: f k i prefers a > b by isSwappingProcessAB
+        push_neg at hik
+        exact (hf k i).2 hik
+
+  have hSameCol: sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) a b := hSameColGen n_ab.succ
+
   constructor
-  . intro i h
-    unfold isSwappingProcessAB at hf
-
-    sorry
-  . sorry
+  · -- Part 1: ∀ i ≤ n_ab, socPrefers R (f i.castSucc) a b
+    intro i hi
+    have hSameCol_i : sameCol (f i.castSucc) (swapping_k p q i.castSucc) a b := hSameColGen i.castSucc
+    -- Need to show society prefers a > b at swapping_k p q i.castSucc
+    have hNotP : ¬ socPrefers R (swapping_k p q i.castSucc) b a := by
+      by_cases hilt : i < n_ab
+      · -- i < n_ab: use Fin.find_min
+        -- P uses k.succ, but here we have i.castSucc
+        -- Need to relate: P i says socPrefers (swapping_k p q i.succ) b a
+        -- But we have swapping_k p q i.castSucc
+        -- Note: i.castSucc.val = i.val, i.succ.val = i.val + 1
+        -- So i.castSucc ≠ i.succ in general
+        -- We need a different argument for column i.castSucc (= column i.val)
+        -- At column 0: everyone uses q (a > b), unanimity gives a > b
+        -- At column i.castSucc where i < n_ab:
+        -- swapping_k p q i.castSucc has voters j < i.val use p (b > a), voters j ≥ i.val use q (a > b)
+        -- This is NOT directly covered by P (which uses k.succ)
+        -- Actually, for i < n_ab, P i is ¬ (i.e. society prefers a > b at column i+1)
+        -- But i.castSucc.val = i.val, not i.val + 1
+        -- So we need: society prefers a > b at column i.val
+        -- Since i < n_ab, we have i.val < n_ab.val, so i.val + 1 ≤ n_ab.val
+        -- At column i.val, fewer voters have switched compared to column i.val + 1
+        -- If society doesn't prefer b > a at column i.val + 1, it shouldn't at column i.val either
+        -- Actually, we can show this via unanimity at column 0, and the pivotal structure
+        -- Let's use a different approach: show it contradicts the minimality of n_ab
+        intro hcontra
+        -- If society prefers b > a at column i.castSucc where i < n_ab
+        -- Then consider what happens: swapping_k p q i.castSucc has i voters preferring b > a
+        -- and swapping_k p q i.succ has i+1 voters preferring b > a
+        -- By sameCol argument, if soc prefers b > a at i.castSucc, AIIA should preserve this...
+        -- Actually, the columns are different. Let me think again.
+        -- At column i.castSucc = i.val: voters 0..i-1 prefer b>a, voters i..N-1 prefer a>b
+        -- At column i.succ = i.val+1: voters 0..i prefer b>a, voters i+1..N-1 prefer a>b
+        -- These have different a,b columns, so AIIA doesn't directly apply between them
+        -- But we know: P i = soc prefers b>a at column i+1
+        -- hPmin i hilt says ¬P i, so soc does NOT prefer b>a at column i+1
+        -- Hence soc prefers a>b at column i+1 (by totality)
+        -- But this doesn't tell us about column i directly...
+        -- Wait, actually columns 0 through n_ab should all have soc prefer a>b
+        -- because at column 0, everyone prefers a>b (unanimity)
+        -- and the "flip" only happens at column n_ab+1
+        -- So for any column k ≤ n_ab, society should prefer a>b
+        -- Hmm, but this isn't directly what Fin.find_min gives us
+        -- Fin.find_min says: at column j+1 for j < n_ab, soc doesn't prefer b>a
+        -- So at columns 1, 2, ..., n_ab, soc prefers a>b
+        -- And at column 0? By unanimity, soc prefers a>b
+        -- So for i ≤ n_ab, at column i, soc should prefer a>b
+        -- i.castSucc.val = i.val, so column = i.val ≤ n_ab.val
+        -- If i.val = 0: unanimity
+        -- If i.val > 0: let j = i-1, then j+1 = i, and j < i ≤ n_ab
+        --   If j < n_ab, then by hPmin j, soc doesn't prefer b>a at column j+1 = i
+        -- Wait, but j might not be < n_ab if i = n_ab
+        -- Let me reconsider. We have i ≤ n_ab.
+        -- If i = n_ab: column = n_ab.val, and j = n_ab-1 (if n_ab > 0)
+        --   Then j < n_ab, so by hPmin, soc doesn't prefer b>a at column j+1 = n_ab
+        -- If i < n_ab: column = i.val, same argument with j = i-1 (if i > 0)
+        -- If i = 0: column = 0, unanimity
+        -- So in all cases, soc prefers a>b at column i.castSucc
+        -- But we assumed hcontra: soc prefers b>a at column i.castSucc
+        -- This is a contradiction via Preorder'.lt_asymm
+        by_cases hizero : i.val = 0
+        · -- Column 0: everyone prefers a > b by unanimity on q
+          have hall : ∀ j : Fin N, voterPrefers (swapping_k p q i.castSucc j) a b := by
+            intro j
+            unfold swapping_k
+            simp [hizero]
+            exact preferAoverB_lt a b hab
+          have hsoc := hu (swapping_k p q i.castSucc) a b hall
+          exact Preorder'.lt_asymm _ _ _ hsoc hcontra
+        · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
+          have hipos : 0 < i.val := Nat.pos_of_ne_zero hizero
+          -- Actually, P uses k.succ, so P j is about column j+1
+          -- We want: soc doesn't prefer b>a at column i.val
+          -- If there exists j with j.succ.val = i.castSucc.val, then ¬P j gives us the result
+          -- j.succ.val = j.val + 1 = i.castSucc.val = i.val
+          -- So j.val = i.val - 1
+          -- Need j : Fin N, so need i.val - 1 < N, which holds since i.val ≤ N-1 < N implies i.val - 1 < N
+          let j : Fin N := ⟨i.val - 1, by omega⟩
+          have hjsucc : j.succ.val = i.castSucc.val := by simp [j]; omega
+          have hjlt : j < n_ab := by
+            simp only [Fin.lt_def, j]
+            have : i.val < n_ab.val := hilt
+            omega
+          have hnotPj := hPmin j hjlt
+          simp only [P] at hnotPj
+          -- hnotPj : ¬ socPrefers R (swapping_k p q j.succ) b a
+          -- We need: socPrefers R (swapping_k p q i.castSucc) b a → False
+          -- Since j.succ.val = i.castSucc.val, the profiles are the same
+          have heq : j.succ = i.castSucc := by
+            apply Fin.ext
+            exact hjsucc
+          rw [← heq] at hcontra
+          exact hnotPj hcontra
+      · -- i = n_ab case (since i ≤ n_ab and ¬(i < n_ab))
+        push_neg at hilt
+        have hieq : i = n_ab := le_antisymm hi hilt
+        subst hieq
+        intro hcontra
+        -- At column n_ab.castSucc.val = n_ab.val
+        -- By the same argument as above:
+        by_cases hnzero : n_ab.val = 0
+        · -- Column 0: unanimity
+          have hall : ∀ j : Fin N, voterPrefers (swapping_k p q n_ab.castSucc j) a b := by
+            intro j
+            unfold swapping_k
+            simp [hnzero]
+            exact preferAoverB_lt a b hab
+          have hsoc := hu (swapping_k p q n_ab.castSucc) a b hall
+          exact Preorder'.lt_asymm _ _ _ hsoc hcontra
+        · -- Column n_ab.val > 0: use j = n_ab - 1
+          have hnpos : 0 < n_ab.val := Nat.pos_of_ne_zero hnzero
+          let j : Fin N := ⟨n_ab.val - 1, by omega⟩
+          have hjsucc : j.succ.val = n_ab.castSucc.val := by simp [j]; omega
+          have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
+          have hnotPj := hPmin j hjlt
+          simp only [P] at hnotPj
+          have heq : j.succ = n_ab.castSucc := by
+            apply Fin.ext
+            exact hjsucc
+          rw [heq] at hnotPj
+          exact hnotPj hcontra
+    -- Now use AIIA to transfer to f
+    -- socPrefers R p a b = (R p).lt b a, so hNotP : ¬(R ...).lt a b
+    -- We want (R ...).lt b a, use lt_of_not_lt with swapped arguments
+    have hsoc_swp : socPrefers R (swapping_k p q i.castSucc) a b :=
+      Preorder'.lt_of_not_lt (R (swapping_k p q i.castSucc)) b a (Ne.symm hab) hNotP
+    exact (hAIIA (f i.castSucc) (swapping_k p q i.castSucc) a b hSameCol_i).mpr hsoc_swp
+  · -- Part 2: socPrefers R (f n_ab.succ) b a
+    -- hPn : socPrefers R (swapping_k p q n_ab.succ) b a
+    -- Need: socPrefers R (f n_ab.succ) b a
+    -- Use AIIA with sameCol for b a (which follows from sameCol for a b)
+    have hSameCol_ba : sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) b a := by
+      intro i
+      -- In a total preorder, a>b ↔ ¬(b>a) for a ≠ b
+      have h := hSameCol i
+      constructor
+      · intro hba
+        by_contra hnotba
+        have haq : voterPrefers (swapping_k p q n_ab.succ i) a b := by
+          exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
+        have haf : voterPrefers (f n_ab.succ i) a b := h.mpr haq
+        exact Preorder'.lt_asymm _ _ _ hba haf
+      · intro hba
+        by_contra hnotba
+        have haq : voterPrefers (f n_ab.succ i) a b := by
+          exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
+        have haf : voterPrefers (swapping_k p q n_ab.succ i) a b := h.mp haq
+        exact Preorder'.lt_asymm _ _ _ hba haf
+    exact (hAIIA (f n_ab.succ) (swapping_k p q n_ab.succ) b a hSameCol_ba).mpr hPn
 
 
 
