@@ -770,25 +770,31 @@ lemma nab_pivotal_bc
 
 lemma nab_le_nbc
   {α : Type} [DecidableEq α] [LinearOrder α]
-  {N:ℕ}
+  {N:ℕ} [NeZero N]
   {R: SocialWelfareFunction α N}
-  (b c: α)
-  (n_ab n_bc: Fin N)
-  (p q: PreferenceProfile α N)
-  (hq: ∀ i: Fin N, voterPrefers (q i) b c)
-  (h_nab_dictate_bc: dictate_two R n_ab b c)
-  (h_nbc_pivot : (∀ i ≤ n_bc, socPrefers R (swapping_k p q i.castSucc) b c) ∧ socPrefers R (swapping_k p q n_bc.succ) c b)
-  : n_ab ≤ n_bc  := by
+  (a b c: α)
+  (hab : a ≠ b)
+  (hac : a ≠ c)
+  (hbc : b ≠ c)
+  (hu: unanimity _ _ R)
+  (hAIIA: (AIIA _ _ R))
+  :
+  -- n_ab ≤ n_bc
+  pivotalVoter R a b hab hu ≤ pivotalVoter R b c hbc hu  := by
   -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
   -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
+  let n_ab := pivotalVoter R a b hab hu
+  let n_bc := pivotalVoter R b c hbc hu
+  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
+  have h_nbc_pivot := pivotalVoter_pivot_canon R b c hbc hAIIA hu
   by_contra h
   push_neg at h
-  let pp := (swapping_k p q n_bc.succ)
+  let pp := (canonSwappingProcess b c hbc) n_bc.succ
   have h3 :  voterPrefers (pp n_ab) b c:= by
-    unfold pp swapping_k
+    unfold pp canonSwappingProcess swapping_k
     split_ifs with hh
     . simp at *; omega
-    . exact hq n_ab
+    . exact preferAoverB_lt b c hbc
   have h4 := h_nab_dictate_bc pp h3
   have h5 := by apply Preorder'.lt_asymm at h4; exact h4
   exact absurd  h_nbc_pivot.2 h5
