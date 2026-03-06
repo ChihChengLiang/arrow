@@ -351,12 +351,31 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
   simp [Preorder'.lt, preorderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
 
+def isSwappingProcessAB
+  {α : Type}
+  {N : ℕ}
+  (a b : α)
+  (f: profileGen α N): Prop :=
+    ∀ (k: Fin (N+1)) (i: Fin N),
+    (i ≤ k.val → voterPrefers (f k i) b a ) ∧
+    (k.val > i → voterPrefers (f k i) a b )
+
+def isPivotalAB
+  {α : Type}
+  {N : ℕ}
+  (R : SocialWelfareFunction α N)
+  (f: profileGen α N)
+  (a b : α)
+  (n_ab: Fin N): Prop :=
+  (∀ i ≤ n_ab,  socPrefers R (f i.castSucc) a b) ∧
+  socPrefers R (f n_ab.succ) b a
+
 noncomputable def pivotalVoter
   {α : Type} [DecidableEq α] [LinearOrder α] [Fintype α]
   {N : ℕ} [NeZero N]
   (R : SocialWelfareFunction α N)
   (a b : α) (hab : a ≠ b)
-  (hunanimity : unanimity _ _ R) : Fin N :=
+  (hu : unanimity _ _ R) : Fin N :=
   -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
   -- We use LinearOrder on α to build these without needing a third alternative
   let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
@@ -367,10 +386,44 @@ noncomputable def pivotalVoter
     unfold P swapping_k p
     have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel this]
-    apply hunanimity
+    apply hu
     simp [preferAoverB_lt b a (Ne.symm hab)]
   -- Find the minimum k where the flip happens
   Fin.find P hN
+
+-- pivotalVoter is independent of profile
+lemma pivotalVoter_spec
+  {α : Type} [DecidableEq α] [LinearOrder α] [Fintype α]
+  {N : ℕ} [NeZero N]
+  (R : SocialWelfareFunction α N)
+  (a b : α) (hab : a ≠ b)
+  (f : Fin (N+1) → PreferenceProfile α N)
+  (hf: isSwappingProcessAB a b f)
+  (hAIIA: AIIA _ _ R )
+  (hu : unanimity _ _ R) :
+  isPivotalAB R f a b (pivotalVoter R a b hab hu) := by
+  let n_ab := pivotalVoter R a b hab hu
+  let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
+  let q : PreferenceProfile α N := fun _ => preferAoverB a b hab -- a on top
+  let P := fun k: Fin N => socPrefers R (swapping_k p q k.succ) b a
+
+  -- theorem Fin.find_spec {n : ℕ} {p : Fin n → Prop} [DecidablePred p] (h : ∃ (k : Fin n), p k) :
+  -- p (Fin.find p h)
+  -- Fin.find p h satisfies p.
+
+  -- theorem Fin.find_min {n : ℕ} {p : Fin n → Prop} [DecidablePred p] (h : ∃ (k : Fin n), p k) {j : Fin n} :
+  -- j < Fin.find p h → ¬p j
+
+  -- For m : Fin n, if m < Fin.find p h then m does not satisfy p.
+
+  have hSameCol: sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) a b:= sorry
+  constructor
+  . intro i h
+    unfold isSwappingProcessAB at hf
+
+    sorry
+  . sorry
+
 
 
 -- if a property holds at 0 and not at N (or vice versa),
