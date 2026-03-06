@@ -371,7 +371,7 @@ def isPivotalAB
   socPrefers R (f n_ab.succ) b a
 
 noncomputable def pivotalVoter
-  {α : Type} [DecidableEq α] [LinearOrder α] [Fintype α]
+  {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SocialWelfareFunction α N)
   (a b : α) (hab : a ≠ b)
@@ -393,7 +393,7 @@ noncomputable def pivotalVoter
 
 -- pivotalVoter is independent of profile
 lemma pivotalVoter_spec
-  {α : Type} [DecidableEq α] [LinearOrder α] [Fintype α]
+  {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SocialWelfareFunction α N)
   (a b : α) (hab : a ≠ b)
@@ -581,16 +581,16 @@ lemma swapping_exists_pivotal
 
 lemma nab_pivotal_bc
   {α : Type} [DecidableEq α] [LinearOrder α]
-  {N:ℕ}
+  {N:ℕ} [NeZero N]
   (a b c: α)
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
   {R: SocialWelfareFunction α N}
-  (hunanimity: unanimity _ _ R)
+  (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  :
-  ∃ n_ab: Fin N, dictate_two R n_ab b c := by
+  : dictate_two R (pivotalVoter R a b hab hu) b c := by
+  let n_ab := pivotalVoter R a b hab hu
   let p: PreferenceProfile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
   let q: PreferenceProfile α N := fun i => preorderFromRanking a b c hab hbc hac
 
@@ -603,12 +603,18 @@ lemma nab_pivotal_bc
     . exact preorderFromRanking_lt_01 a b c hab hbc hac
     . exact preorderFromRanking_lt_12 a b c hab hbc hac
 
-  have hpba: ∀ i: Fin N, voterPrefers (p i) b a := by intro i; exact (p i).lt_trans (hp i).2 (hp i).1
-  have hqab: ∀ i: Fin N, voterPrefers (q i) a b := by intro i; exact (hq i).1
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
-  obtain ⟨n_ab, h_nab_pivot_p ⟩ := swapping_exists_pivotal a b hab p q hpba hqab hunanimity
+  have hf : isSwappingProcessAB a b (swapping_k p q) := by
+    unfold isSwappingProcessAB swapping_k
+    intro k i
+    constructor
+    . intro h; simp [h]; exact ((p i).lt_trans (hp i).2 (hp i).1)
+    . intro h; split_ifs
+      . omega
+      . exact (hq i).1
+  have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hAIIA hu
 
   -- soc prefer a > b > c
   have habc:
@@ -624,10 +630,8 @@ lemma nab_pivotal_bc
         split_ifs
         . exact (hp i).1
         . exact (hq i).2
-      apply hunanimity at h
+      apply hu at h
       exact h
-
-  use n_ab
   intro pp h
 
   -- let rr
@@ -849,11 +853,12 @@ lemma n_ab_pivotal_bc_cb
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+    {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SocialWelfareFunction α N,
     (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
   by_contra h
-  obtain ⟨ R, ⟨ hunanimity, hAIIA, hNonDictactor ⟩⟩ := h
+  obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
 
   -- i j k | in the paper are translated into
@@ -861,7 +866,8 @@ theorem Impossibility
 
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
 
-  obtain ⟨n_ab, h_nab_dictate_bc ⟩ := nab_pivotal_bc a b c hab hac hbc hunanimity hAIIA
+  let n_ab := pivotalVoter R a b hab hu
+  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
 
   -- swapping process for b c
   let p: PreferenceProfile α N := fun i => preorderFromRanking c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
@@ -869,8 +875,8 @@ theorem Impossibility
   have hp: ∀ i: Fin N, voterPrefers (p i) c b:= by intro i; exact preorderFromRanking_lt_01 c b _ (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
   have hq: ∀ i: Fin N, voterPrefers (q i) b c := by intro i;  exact preorderFromRanking_lt_01 b c _ hbc (Ne.symm hac) (Ne.symm hab)
 
-  obtain ⟨n_bc, h_nbc_pivot ⟩ := swapping_exists_pivotal b c hbc p q hp hq hunanimity
-  obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hunanimity
+  obtain ⟨n_bc, h_nbc_pivot ⟩ := swapping_exists_pivotal b c hbc p q hp hq hu
+  obtain ⟨n_cb, h_ncb_pivot ⟩ := swapping_exists_pivotal c b (Ne.symm hbc) q p hq hp hu
 
   obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := (
     n_ab_pivotal_bc_cb
@@ -878,7 +884,7 @@ theorem Impossibility
     hab hac hbc
     n_ab n_cb n_bc
     p q hp hq
-    hunanimity hAIIA
+    hu hAIIA
     h_nab_dictate_bc h_nbc_pivot h_ncb_pivot
   )
   -- n_bc = n_cb = n_ab can be extended to n_ts
