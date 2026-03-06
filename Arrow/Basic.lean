@@ -411,14 +411,13 @@ lemma pivotalVoter_spec
   (hu : unanimity _ _ R) :
   isPivotalAB R f a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
-  let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
-  let q : PreferenceProfile α N := fun _ => preferAoverB a b hab -- a on top
-  let P := fun k: Fin N => socPrefers R (swapping_k p q k.succ) b a
+  let sp: profileGen α N := canonSwappingProcess a b hab
+  let P := fun k: Fin N => socPrefers R (sp k.succ) b a
 
   -- Get the existence witness for Fin.find
   have hN: ∃ k, P k := by
     use (0:Fin N).rev
-    unfold P swapping_k p
+    unfold P sp canonSwappingProcess swapping_k
     have hpos: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel hpos]
     apply hu
@@ -431,8 +430,8 @@ lemma pivotalVoter_spec
   have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
 
   -- Helper: sameCol for any column k between f and canonical swapping process
-  have hSameColGen : ∀ k : Fin (N+1), sameCol (f k) (swapping_k p q k) a b := by
-    intro k i; unfold swapping_k
+  have hSameColGen : ∀ k : Fin (N+1), sameCol (f k) (sp k) a b := by
+    intro k i; unfold sp canonSwappingProcess swapping_k
     split_ifs with hik
     . -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
       rw [← not_iff_not]
@@ -446,25 +445,25 @@ lemma pivotalVoter_spec
       simp [hfba]
       exact preferAoverB_lt a b hab
 
-  have hSameCol: sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) a b := hSameColGen n_ab.succ
+  have hSameCol: sameCol (f n_ab.succ) (sp n_ab.succ) a b := hSameColGen n_ab.succ
 
   constructor
   · -- Part 1: ∀ i ≤ n_ab, socPrefers R (f i.castSucc) a b
     intro i hi
-    have hSameCol_i : sameCol (f i.castSucc) (swapping_k p q i.castSucc) a b := hSameColGen i.castSucc
+    have hSameCol_i : sameCol (f i.castSucc) (sp i.castSucc) a b := hSameColGen i.castSucc
     -- Need to show society prefers a > b at swapping_k p q i.castSucc
-    have hNotP : ¬ socPrefers R (swapping_k p q i.castSucc) b a := by
+    have hNotP : ¬ socPrefers R (sp i.castSucc) b a := by
       by_cases hilt : i < n_ab
       · -- i < n_ab: use Fin.find_min
         intro hcontra
         by_cases hizero : i.val = 0
         · -- Column 0: everyone prefers a > b by unanimity on q
-          have hall : ∀ j : Fin N, voterPrefers (swapping_k p q i.castSucc j) a b := by
+          have hall : ∀ j : Fin N, voterPrefers (sp i.castSucc j) a b := by
             intro j
-            unfold swapping_k
+            unfold sp canonSwappingProcess swapping_k
             simp [hizero]
             exact preferAoverB_lt a b hab
-          have hsoc := hu (swapping_k p q i.castSucc) a b hall
+          have hsoc := hu (sp i.castSucc) a b hall
           exact Preorder'.lt_asymm _ _ _ hsoc hcontra
         · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
           have hipos : 0 < i.val := Nat.pos_of_ne_zero hizero
@@ -493,12 +492,12 @@ lemma pivotalVoter_spec
         -- By the same argument as above:
         by_cases hnzero : n_ab.val = 0
         · -- Column 0: unanimity
-          have hall : ∀ j : Fin N, voterPrefers (swapping_k p q n_ab.castSucc j) a b := by
+          have hall : ∀ j : Fin N, voterPrefers (sp n_ab.castSucc j) a b := by
             intro j
-            unfold swapping_k
+            unfold sp canonSwappingProcess swapping_k
             simp [hnzero]
             exact preferAoverB_lt a b hab
-          have hsoc := hu (swapping_k p q n_ab.castSucc) a b hall
+          have hsoc := hu (sp n_ab.castSucc) a b hall
           exact Preorder'.lt_asymm _ _ _ hsoc hcontra
         · -- Column n_ab.val > 0: use j = n_ab - 1
           have hnpos : 0 < n_ab.val := Nat.pos_of_ne_zero hnzero
@@ -515,21 +514,21 @@ lemma pivotalVoter_spec
     -- Now use AIIA to transfer to f
     -- socPrefers R p a b = (R p).lt b a, so hNotP : ¬(R ...).lt a b
     -- We want (R ...).lt b a, use lt_of_not_lt with swapped arguments
-    have hsoc_swp : socPrefers R (swapping_k p q i.castSucc) a b :=
-      Preorder'.lt_of_not_lt (R (swapping_k p q i.castSucc)) b a (Ne.symm hab) hNotP
-    exact (hAIIA (f i.castSucc) (swapping_k p q i.castSucc) a b hSameCol_i).mpr hsoc_swp
+    have hsoc_swp : socPrefers R (sp i.castSucc) a b :=
+      Preorder'.lt_of_not_lt (R (sp i.castSucc)) b a (Ne.symm hab) hNotP
+    exact (hAIIA (f i.castSucc) (sp i.castSucc) a b hSameCol_i).mpr hsoc_swp
   · -- Part 2: socPrefers R (f n_ab.succ) b a
     -- hPn : socPrefers R (swapping_k p q n_ab.succ) b a
     -- Need: socPrefers R (f n_ab.succ) b a
     -- Use AIIA with sameCol for b a (which follows from sameCol for a b)
-    have hSameCol_ba : sameCol (f n_ab.succ) (swapping_k p q n_ab.succ) b a := by
+    have hSameCol_ba : sameCol (f n_ab.succ) (sp n_ab.succ) b a := by
       intro i
       -- In a total preorder, a>b ↔ ¬(b>a) for a ≠ b
       have h := hSameCol i
       constructor
       · intro hba
         by_contra hnotba
-        have haq : voterPrefers (swapping_k p q n_ab.succ i) a b := by
+        have haq : voterPrefers (sp n_ab.succ i) a b := by
           exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
         have haf : voterPrefers (f n_ab.succ i) a b := h.mpr haq
         exact Preorder'.lt_asymm _ _ _ hba haf
@@ -537,9 +536,9 @@ lemma pivotalVoter_spec
         by_contra hnotba
         have haq : voterPrefers (f n_ab.succ i) a b := by
           exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
-        have haf : voterPrefers (swapping_k p q n_ab.succ i) a b := h.mp haq
+        have haf : voterPrefers (sp n_ab.succ i) a b := h.mp haq
         exact Preorder'.lt_asymm _ _ _ hba haf
-    exact (hAIIA (f n_ab.succ) (swapping_k p q n_ab.succ) b a hSameCol_ba).mpr hPn
+    exact (hAIIA (f n_ab.succ) (sp n_ab.succ) b a hSameCol_ba).mpr hPn
 
 
 
