@@ -96,7 +96,7 @@ def AIIA (R : SocialWelfareFunction α N) : Prop :=
   ∀ (p q: PreferenceProfile α N) (a b: α),
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
-def NonDictactorship (R : SocialWelfareFunction α N): Prop :=
+def NonDictatorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → dictate_two R i a b)
 
 def swapping_k
@@ -914,7 +914,7 @@ theorem Impossibility
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SocialWelfareFunction α N,
-    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
+    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictatorship _ _ R) := by
   by_contra h
   obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
