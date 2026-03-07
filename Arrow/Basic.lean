@@ -77,7 +77,7 @@ abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
 
 -- In society R, voter k dictate just ab
-def dictate_two {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :=
+def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: Profile α N ), voterPrefers (p k) a b → socPrefers R p a b
 
 -- all voters in both profile p and q prefer a over b
@@ -98,7 +98,7 @@ def AIIA (R : SWF α N) : Prop :=
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictatorship (R : SWF α N): Prop :=
-  ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → dictate_two R i a b)
+  ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
 
 def swapping_k
   {α : Type} {N:ℕ} (p q: Profile α N) (k: Fin (N+1))
@@ -519,7 +519,7 @@ lemma nab_pivotal_bc
   {R: SWF α N}
   (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  : dictate_two R (pivotalVoter R a b hab hu) b c := by
+  : Dictates R (pivotalVoter R a b hab hu) b c := by
   let n_ab := pivotalVoter R a b hab hu
   let p: Profile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
   let q: Profile α N := fun i => preorderFromRanking a b c hab hbc hac
@@ -814,7 +814,7 @@ lemma n_ab_dictate_xy
   (hxy : x ≠ y)
   (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R)):
-  dictate_two R (pivotalVoter R a b hab hu) x y := by
+  Dictates R (pivotalVoter R a b hab hu) x y := by
 
   let n_ab := pivotalVoter R a b hab hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
