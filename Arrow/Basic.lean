@@ -104,91 +104,8 @@ def swapping_k
   : Profile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
-def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
-  le x y :=
-    if x = b then True           -- b is below everything
-    else if y = a then True      -- a is above everything
-    else if x = a then y = a     -- a is only ≤ itself (it's the top)
-    else if y = b then x = b     -- b is only ≥ itself (it's the bottom)
-    else x ≤ y                   -- everything else uses existing order
-  refl := by
-    intro x
-    simp
-  trans := by
-    intro x y z hxy hyz
-    simp
-    intro hxb hza
-    split_ifs with hxa hzb
-    split_ifs at hxy ⊢ with hya
-    split_ifs at hyz ⊢ with hyb
-    rw[hya] at hyb
-    exact absurd hyb hab
-    exact hyz
-    exact absurd hxy hya
-    split_ifs at hxy ⊢ with hya hyb
-    split_ifs at hyz ⊢ with hyb
-    rw[hya] at hyb
-    exact absurd hyb hab
-    exact absurd hyz hza
-    exact hxy
-    split_ifs at hyz
-    exact absurd hyz hyb
-    split_ifs at hxy ⊢ with hya hyb
-    split_ifs at hyz ⊢ with hyb
-    rw[hya] at hyb
-    exact absurd hyb hab
-    exact absurd hyz hza
-    exact absurd hxy hxb
-    split_ifs at hyz
-    exact le_trans hxy hyz
-
-  total := by
-    intro x y
-    split_ifs with hxb hyb hxa hya hya hyb hxa hxa hyb hyb
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    exact le_total x y
-
-  antisymm := by
-    intro x y hxb hyb
-    split_ifs at hxb ⊢ with hxb2 hya hxa hyb2
-    split_ifs at hyb ⊢ with hyb3 hxa hya
-    rw [ hyb3, hxb2]
-    rw[hxa] at hxb2
-    exact absurd hxb2 hab
-    rw[hya, hyb]
-    rw[hxb2, hyb]
-    split_ifs at hyb ⊢ with hyb2 hxa
-    rw[hya] at hyb2
-    exact absurd hyb2 hab
-    rw[hya, hxa]
-    exact absurd hyb hxa
-    rw[hxa, hxb]
-    rw[hyb2, hxb]
-    split_ifs at hyb
-    exact le_antisymm hxb hyb
-
-omit [Fintype α] in
-lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferAoverB a b hab) a b := by
-  simp only [Preorder'.lt, preferAoverB]
-  constructor
-  split_ifs
-  split_ifs with hab2 hba
-  tauto
-  tauto
-  exact hba
-
 def preorderFromRanking {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α)
-    (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) : Preorder' α where
+    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) : Preorder' α where
   le x y :=
     -- first handle the 6 ordered pairs among a₀, a₁, a₂
     if x = a₂ then True              -- a₂ is bottom, below everything
@@ -264,14 +181,14 @@ def preorderFromRanking {α : Type} [LinearOrder α]
       exact le_antisymm ha hb
 
 lemma preorderFromRanking_lt_01 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₁ a₀ := by
+    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
+    (preorderFromRanking a₀ a₁ a₂ h02).lt a₁ a₀ := by
   simp [Preorder'.lt, preorderFromRanking]
   exact ⟨h02, Ne.symm h01⟩
 
 lemma preorderFromRanking_lt_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₁ := by
+    (preorderFromRanking a₀ a₁ a₂ h02).lt a₂ a₁ := by
   simp [Preorder'.lt, preorderFromRanking]
   split_ifs with ha10
   . exact absurd (Eq.symm ha10) h01
@@ -279,8 +196,8 @@ lemma preorderFromRanking_lt_12 {α : Type} [LinearOrder α]
 
 
 lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (preorderFromRanking a₀ a₁ a₂ h01 h12 h02).lt a₂ a₀ := by
+    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (preorderFromRanking a₀ a₁ a₂ h02).lt a₂ a₀ := by
   simp [Preorder'.lt, preorderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
 
@@ -310,8 +227,9 @@ def canonicalSwap
   (a b : α)
   (hab : a ≠ b)
   : SwapSequence α N :=
-  let p : Profile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
-  let q : Profile α N := fun _ => preferAoverB a b hab           -- a on top
+  -- put extra b or a just to reuse a 3 items ranking
+  let p : Profile α N := fun _ => preorderFromRanking b b a (Ne.symm hab) -- b on top
+  let q : Profile α N := fun _ => preorderFromRanking a b b hab           -- a on top
   swapping_k p q
 
 noncomputable def pivotalVoter
@@ -328,7 +246,7 @@ noncomputable def pivotalVoter
     have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel this]
     apply hu
-    simp [preferAoverB_lt b a (Ne.symm hab)]
+    simp [preorderFromRanking_lt_02 b _ a (Ne.symm hab)]
   -- Find the minimum k where the flip happens
   Fin.find P hN
 
@@ -354,7 +272,7 @@ lemma pivotalVoter_spec
     have hpos: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel hpos]
     apply hu
-    simp [preferAoverB_lt b a (Ne.symm hab)]
+    simp [preorderFromRanking_lt_02 b _ a (Ne.symm hab)]
 
   -- P n_ab holds: society prefers b > a at column n_ab.succ
   have hPn : P n_ab := Fin.find_spec hN
@@ -370,13 +288,13 @@ lemma pivotalVoter_spec
       rw [← not_iff_not]
       have hfba := (hf k i).1 hik
       constructor
-      . intro h; apply Preorder'.lt_asymm; exact preferAoverB_lt b a (Ne.symm hab)
+      . intro h; apply Preorder'.lt_asymm; exact preorderFromRanking_lt_02 b _ a (Ne.symm hab)
       . intro h; apply Preorder'.lt_asymm; exact hfba
     . -- i ≥ k.val: swapping_k uses q, which has a > b
       simp at hik
       have hfba := (hf k i).2 hik
       simp [hfba]
-      exact preferAoverB_lt a b hab
+      exact preorderFromRanking_lt_02 a _ b hab
 
   have hSameCol: AgreeOn (f n_ab.succ) (cs n_ab.succ) a b := hSameColGen n_ab.succ
 
@@ -395,7 +313,7 @@ lemma pivotalVoter_spec
             intro j
             unfold cs canonicalSwap swapping_k
             simp [hizero]
-            exact preferAoverB_lt a b hab
+            exact preorderFromRanking_lt_02 a _ b hab
           have hsoc := hu (cs i.castSucc) a b hall
           exact Preorder'.lt_asymm _ _ _ hsoc hcontra
         · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
@@ -429,7 +347,7 @@ lemma pivotalVoter_spec
             intro j
             unfold cs canonicalSwap swapping_k
             simp [hnzero]
-            exact preferAoverB_lt a b hab
+            exact preorderFromRanking_lt_02 a _ b hab
           have hsoc := hu (cs n_ab.castSucc) a b hall
           exact Preorder'.lt_asymm _ _ _ hsoc hcontra
         · -- Column n_ab.val > 0: use j = n_ab - 1
@@ -488,11 +406,11 @@ lemma pivotalVoter_pivot_canon
     unfold IsSequentialSwap cs canonicalSwap swapping_k
     intro k i
     constructor
-    . intro h; simp [h]; exact preferAoverB_lt b a (Ne.symm hab)
+    . intro h; simp [h]; exact preorderFromRanking_lt_02 b _ a (Ne.symm hab)
     . intro h;
       have :¬ i < k.val := by omega
       simp [this]
-      exact preferAoverB_lt a b hab
+      exact preorderFromRanking_lt_02 a _ b hab
   exact pivotalVoter_spec R a b hab cs hf hAIIA hu
 
 
@@ -508,16 +426,16 @@ lemma nab_pivotal_bc
   (hAIIA: (AIIA _ _ R))
   : Dictates R (pivotalVoter R a b hab hu) b c := by
   let n_ab := pivotalVoter R a b hab hu
-  let p: Profile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
-  let q: Profile α N := fun i => preorderFromRanking a b c hab hbc hac
+  let p: Profile α N := fun i => preorderFromRanking b c a (Ne.symm hab)
+  let q: Profile α N := fun i => preorderFromRanking a b c hac
 
   have hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a := by
     intro i; constructor
-    . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)
+    . exact preorderFromRanking_lt_01 b c a hbc (Ne.symm hab)
     . exact preorderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
   have hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c := by
     intro i; constructor
-    . exact preorderFromRanking_lt_01 a b c hab hbc hac
+    . exact preorderFromRanking_lt_01 a b c hab hac
     . exact preorderFromRanking_lt_12 a b c hab hbc hac
 
   -- 0...k-1 prefer b > c > a
@@ -560,31 +478,31 @@ lemma nab_pivotal_bc
     if i < n_ab
       then
         if  voterPrefers (pp i) b c
-          then preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
-          else preorderFromRanking c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+          then preorderFromRanking b c a (Ne.symm hab)
+          else preorderFromRanking c b a (Ne.symm hac)
       else
         if i = n_ab
-        then preorderFromRanking b a c (Ne.symm hab) hac hbc
+        then preorderFromRanking b a c hbc
         else if  voterPrefers (pp i) b c
-          then preorderFromRanking a b c hab hbc hac
-          else preorderFromRanking a c b hac (Ne.symm hbc) hab
+          then preorderFromRanking a b c hac
+          else preorderFromRanking a c b hab
 
   have hSameCol: AgreeOn pp rr b c := by
     unfold AgreeOn
     intro i
     unfold rr
     split_ifs with hi hppibc hieqnab hppibc
-    . simp [preorderFromRanking_lt_01 b c a hbc (Ne.symm hac) (Ne.symm hab)]
+    . simp [preorderFromRanking_lt_01 b c a hbc (Ne.symm hab)]
       exact hppibc
     . rw [← not_iff_not]
       constructor
       . intro
         unfold voterPrefers
         apply  Preorder'.lt_asymm
-        simp [preorderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
+        simp [preorderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
       . intro
         exact hppibc
-    . simp [preorderFromRanking_lt_02 b a c (Ne.symm hab) hac hbc]
+    . simp [preorderFromRanking_lt_02 b a c hbc]
       rw [hieqnab]
       exact h
     . simp [preorderFromRanking_lt_12 a b c hab hbc hac]; exact hppibc
@@ -611,9 +529,9 @@ lemma nab_pivotal_bc
           simp at *
           have h2: ¬(i > n_ab) := by omega
           split_ifs with hinab hppibc hieqnab hppibc
-          . exact preorderFromRanking_lt_02 b c a hbc (Ne.symm hac) (Ne.symm hab)
+          . exact preorderFromRanking_lt_02 b c a (Ne.symm hab)
           . exact preorderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-          . exact preorderFromRanking_lt_01 b a c (Ne.symm hab) hac hbc
+          . exact preorderFromRanking_lt_01 b a c (Ne.symm hab) hbc
           . omega
           . omega
         . rw [← not_iff_not]
@@ -624,8 +542,8 @@ lemma nab_pivotal_bc
             have h2: ¬(i < n_ab) := by omega
             split_ifs
             . omega
-            . exact preorderFromRanking_lt_01 a b c hab hbc hac
-            . exact preorderFromRanking_lt_02 a c b hac (Ne.symm hbc) hab
+            . exact preorderFromRanking_lt_01 a b c hab hac
+            . exact preorderFromRanking_lt_02 a c b hab
           . intro h; apply Preorder'.lt_asymm; exact (hq i).1
       have hSocPrefer_rr_ba := by apply hAIIA at hSameCol_ba; exact hSameCol_ba;
       exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
@@ -641,14 +559,14 @@ lemma nab_pivotal_bc
         . rw [← not_iff_not]
           constructor
           . intro h; apply Preorder'.lt_asymm
-            exact preorderFromRanking_lt_02 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
+            exact preorderFromRanking_lt_02 c b a (Ne.symm hac)
           . intro h; apply Preorder'.lt_asymm
             exact (hp i).2
         . simp [preorderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
           exact (q i).lt_trans (hq i).2 (hq i).1
-        . simp [preorderFromRanking_lt_02 a b c hab hbc hac]
+        . simp [preorderFromRanking_lt_02 a b c hac]
           exact (q i).lt_trans (hq i).2 (hq i).1
-        . simp [preorderFromRanking_lt_01 a c b hac (Ne.symm hbc) hab]
+        . simp [preorderFromRanking_lt_01 a c b hac hab]
           exact (q i).lt_trans (hq i).2 (hq i).1
 
       have hSoc_rr_ac := by apply hAIIA at hSameCol_ac; exact hSameCol_ac
@@ -684,7 +602,7 @@ lemma nab_le_nbc
     unfold pp canonicalSwap swapping_k
     split_ifs with hh
     . simp at *; omega
-    . exact preferAoverB_lt b c hbc
+    . exact preorderFromRanking_lt_02 b _ c hbc
   have h4 := h_nab_dictate_bc pp h3
   have h5 := by apply Preorder'.lt_asymm at h4; exact h4
   exact absurd  h_nbc_pivot.2 h5
@@ -719,7 +637,7 @@ lemma ncb_le_nab
       unfold pp canonicalSwap swapping_k
       have: n_ab < n_cb.val := by omega
       simp [this]
-      exact preferAoverB_lt b c hbc
+      exact preorderFromRanking_lt_02 b _ c hbc
     exact h_nab_dictate_bc pp h20
   have h3 := by apply Preorder'.lt_asymm at h2; exact h2
   exact absurd h1 h3
