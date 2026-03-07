@@ -114,9 +114,7 @@ def preorderFromRanking {α : Type} [LinearOrder α]
     else if y = a₂ then x = a₂      -- a₂ only ≥ itself
     -- now x, y ∉ {a₀, a₂} handled, only a₁ vs others remain
     else x ≤ y                        -- fallback to LinearOrder
-  refl := by
-    intro x
-    simp
+  refl := by intro x; simp
   trans := by
     intro a b c ha hb
     split_ifs with haa2 hca0 haa0 hca2
@@ -149,20 +147,7 @@ def preorderFromRanking {α : Type} [LinearOrder α]
       . exact absurd ha haa2
       . split_ifs at hb
         exact le_trans ha hb
-  total := by
-    intro a b
-    split_ifs with haa2 hba2 haa0 hba0 hba0 hba2 haa0 haa0 hba2 hba2
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    tauto
-    exact le_total a b
+  total := by intro a b; split_ifs <;> simp_all [le_total a b]
   antisymm := by
     intro a b ha hb
     split_ifs at ha with haa2 hba0 haa0 hba2
