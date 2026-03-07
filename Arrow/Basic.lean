@@ -364,26 +364,21 @@ lemma pivotalVoter_spec
       Preorder'.lt_of_not_lt (R (cs i.castSucc)) b a (Ne.symm hab) hNotP
     exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hsoc_swp
   · -- Part 2: socPrefers R (f n_ab.succ) b a
-    -- hPn : socPrefers R (swapping_k p q n_ab.succ) b a
-    -- Need: socPrefers R (f n_ab.succ) b a
-    -- Use AIIA with sameCol for b a (which follows from sameCol for a b)
     have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
       intro i
-      -- In a total preorder, a>b ↔ ¬(b>a) for a ≠ b
       have h := hSameCol i
+      rw [← not_iff_not]
       constructor
-      · intro hba
-        by_contra hnotba
-        have haq : voterPrefers (cs n_ab.succ i) a b := by
-          exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
-        have haf : voterPrefers (f n_ab.succ i) a b := h.mpr haq
-        exact Preorder'.lt_asymm _ _ _ hba haf
-      · intro hba
-        by_contra hnotba
-        have haq : voterPrefers (f n_ab.succ i) a b := by
-          exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
-        have haf : voterPrefers (cs n_ab.succ i) a b := h.mp haq
-        exact Preorder'.lt_asymm _ _ _ hba haf
+      . intro hba
+        apply Preorder'.lt_of_not_lt at hba
+        apply Preorder'.lt_asymm
+        exact h.mp hba
+        exact Ne.symm hab
+      . intro hba
+        apply Preorder'.lt_of_not_lt at hba
+        apply Preorder'.lt_asymm
+        exact h.mpr hba
+        exact Ne.symm hab
     exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a hSameCol_ba).mpr hPn
 
 lemma pivotalVoter_pivot_canon
