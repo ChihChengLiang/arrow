@@ -30,6 +30,7 @@ lemma Preorder'.lt_irrefl {α : Type} (p : Preorder' α) (a : α) :
   intro ⟨h, hn⟩
   exact hn h
 
+@[simp]
 lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
     ¬ p.lt a b ↔ p.le b a := by
   unfold Preorder'.lt
@@ -217,28 +218,41 @@ def canonicalSwap
   let q : Profile α N := fun _ => orderFromRanking a b b hab           -- a on top
   swapping_k p q
 
+def functionToFind
+  {α : Type} [LinearOrder α]
+  {N : ℕ}
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b) :=
+  let cs := canonicalSwap a b hab
+  fun k: Fin N => socWeakPrefers R (cs k.succ) b a
+
+lemma functionCanBeFound
+  {α : Type} [LinearOrder α]
+  {N : ℕ} [NeZero N]
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b)
+  (hu : Unanimity _ _ R):
+  ∃ k, functionToFind R a b hab k := by
+  let cs: SwapSequence α N := canonicalSwap a b hab
+  use (0:Fin N).rev
+  unfold functionToFind canonicalSwap swapping_k
+  have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
+  simp [Nat.sub_add_cancel this]
+  have hstrong: socPrefers R (fun i => orderFromRanking b b a (Ne.symm hab)) b a := by
+    apply hu
+    simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+  unfold socWeakPrefers
+  apply Preorder'.le_of_lt at hstrong
+  exact hstrong
+
 noncomputable def pivotalVoter
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (hu : Unanimity _ _ R) : Fin N :=
-  let cs := canonicalSwap a b hab
-  let P := fun k: Fin N => socWeakPrefers R (cs k.succ) b a
-  let hN: ∃ k, P k := by
-    use (0:Fin N).rev
-    unfold P cs canonicalSwap swapping_k
-    have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
-    simp [Nat.sub_add_cancel this]
-    have hstrong: socPrefers R (fun i => orderFromRanking b b a (Ne.symm hab)) b a := by
-      apply hu
-      simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
-    unfold socWeakPrefers
-    apply Preorder'.le_of_lt at hstrong
-    exact hstrong
-
   -- Find the minimum k where the flip happens
-  Fin.find P hN
+  Fin.find (functionToFind R a b hab) (functionCanBeFound R a b hab hu)
 
 -- pivotalVoter is independent of profile
 lemma pivotalVoter_spec
@@ -253,16 +267,10 @@ lemma pivotalVoter_spec
   IsPivotal R f a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
-  let P := fun k: Fin N => socPrefers R (cs k.succ) b a
+  let P := functionToFind R a b hab
 
   -- Get the existence witness for Fin.find
-  have hN: ∃ k, P k := by
-    use (0:Fin N).rev
-    unfold P cs canonicalSwap swapping_k
-    have hpos: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-    simp [Nat.sub_add_cancel hpos]
-    apply hu
-    simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+  have hN := functionCanBeFound R a b hab hu
 
   -- P n_ab holds: society prefers b > a at column n_ab.succ
   have hPn : P n_ab := Fin.find_spec hN
@@ -309,12 +317,11 @@ lemma pivotalVoter_spec
             have : i.val < n_ab.val := hilt
             omega
           have hnotPj := hPmin j hjlt
-          simp only [P] at hnotPj
+          simp only [P, functionToFind] at hnotPj
           have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
           rw [heq] at hnotPj
-          apply Preorder'.not_lt at hnotPj
+          simp [← Preorder'.not_lt] at hnotPj
           exact hnotPj
-          exact Ne.symm hab
       . have hieq: i = n_ab := by omega
         subst hieq
         by_cases hnzero : n_ab.val = 0
@@ -331,12 +338,11 @@ lemma pivotalVoter_spec
           let j : Fin N := ⟨n_ab.val - 1, by omega⟩
           have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
           have hnotPj := hPmin j hjlt
-          simp only [P] at hnotPj
+          simp only [P, functionToFind] at hnotPj
           have heq : j.succ = n_ab.castSucc := by apply Fin.ext; simp [j]; omega
           rw [heq] at hnotPj
-          apply Preorder'.lt_of_not_lt at hnotPj
+          simp [← Preorder'.not_lt] at hnotPj
           exact hnotPj
-          exact Ne.symm hab
     exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hgoal
   . -- Part 2: socPrefers R (f n_ab.succ) b a
     have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
