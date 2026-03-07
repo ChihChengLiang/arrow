@@ -60,8 +60,8 @@ def Profile (α : Type) (N : ℕ) :=
 def SWF (α : Type) (N : ℕ) :=
   (Fin N → Preorder' α) → Preorder' α
 
--- profile generating function. Useful for building profile with a pivotal voter
-abbrev profileGen: Type := Fin (N+1) →  Profile α N
+-- Useful for building profile with a pivotal voter
+abbrev SwapSequence: Type := Fin (N+1) →  Profile α N
 
 -- society prefers a over b in profile p
 abbrev socPrefers {α : Type} {N : ℕ}
@@ -301,7 +301,7 @@ def IsSequentialSwap
   {α : Type}
   {N : ℕ}
   (a b : α)
-  (f: profileGen α N): Prop :=
+  (f: SwapSequence α N): Prop :=
     ∀ (k: Fin (N+1)) (i: Fin N),
     (i.val < k.val → voterPrefers (f k i) b a ) ∧
     (i.val ≥ k.val → voterPrefers (f k i) a b )
@@ -310,7 +310,7 @@ def IsPivotal
   {α : Type}
   {N : ℕ}
   (R : SWF α N)
-  (f: profileGen α N)
+  (f: SwapSequence α N)
   (a b : α)
   (n_ab: Fin N): Prop :=
   (∀ i ≤ n_ab,  socPrefers R (f i.castSucc) a b) ∧
@@ -322,7 +322,7 @@ def canonicalSwap
   {N : ℕ}
   (a b : α)
   (hab : a ≠ b)
-  : profileGen α N :=
+  : SwapSequence α N :=
   let p : Profile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
   let q : Profile α N := fun _ => preferAoverB a b hab           -- a on top
   swapping_k p q
@@ -357,7 +357,7 @@ lemma pivotalVoter_spec
   (hu : Unanimity _ _ R) :
   IsPivotal R f a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
-  let cs: profileGen α N := canonicalSwap a b hab
+  let cs: SwapSequence α N := canonicalSwap a b hab
   let P := fun k: Fin N => socPrefers R (cs k.succ) b a
 
   -- Get the existence witness for Fin.find
@@ -495,7 +495,7 @@ lemma pivotalVoter_pivot_canon
   (hu : Unanimity _ _ R) :
   IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
-  let cs: profileGen α N := canonicalSwap a b hab
+  let cs: SwapSequence α N := canonicalSwap a b hab
 
   have hf : IsSequentialSwap a b cs := by
     unfold IsSequentialSwap cs canonicalSwap swapping_k
