@@ -297,7 +297,7 @@ lemma preorderFromRanking_lt_02 {α : Type} [LinearOrder α]
   simp [Preorder'.lt, preorderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
 
-def isSwappingProcessAB
+def IsSequentialSwap
   {α : Type}
   {N : ℕ}
   (a b : α)
@@ -352,7 +352,7 @@ lemma pivotalVoter_spec
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (f : Fin (N+1) → Profile α N)
-  (hf: isSwappingProcessAB a b f)
+  (hf: IsSequentialSwap a b f)
   (hAIIA: AIIA _ _ R )
   (hu : Unanimity _ _ R) :
   isPivotalAB R f a b (pivotalVoter R a b hab hu) := by
@@ -497,8 +497,8 @@ lemma pivotalVoter_pivot_canon
   let n_ab := pivotalVoter R a b hab hu
   let sp: profileGen α N := canonSwappingProcess a b hab
 
-  have hf : isSwappingProcessAB a b sp := by
-    unfold isSwappingProcessAB sp canonSwappingProcess swapping_k
+  have hf : IsSequentialSwap a b sp := by
+    unfold IsSequentialSwap sp canonSwappingProcess swapping_k
     intro k i
     constructor
     . intro h; simp [h]; exact preferAoverB_lt b a (Ne.symm hab)
@@ -536,8 +536,8 @@ lemma nab_pivotal_bc
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
-  have hf : isSwappingProcessAB a b (swapping_k p q) := by
-    unfold isSwappingProcessAB swapping_k
+  have hf : IsSequentialSwap a b (swapping_k p q) := by
+    unfold IsSequentialSwap swapping_k
     intro k i
     constructor
     . intro h; simp [h]; exact ((p i).lt_trans (hp i).2 (hp i).1)
