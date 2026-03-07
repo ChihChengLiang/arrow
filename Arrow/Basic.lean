@@ -823,7 +823,11 @@ lemma n_ab_dictate_xy
   . --x=a
     rcases eq_or_ne y b with hyb | hyneb
     . -- y=b
-      sorry
+      rw[hxa, hyb]
+      have h_nca_dictate_ab := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab  hu hAIIA
+      obtain ⟨ h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+      rw [← h_nba_eq_nca,← h_nab_eq_nba ] at h_nca_dictate_ab
+      exact h_nca_dictate_ab
     . -- y≠b
       rcases eq_or_ne y c with hyc | hynec
       . -- y = c
