@@ -815,6 +815,7 @@ lemma n_ab_dictate_xy
   (hAIIA: (AIIA _ _ R)):
   dictate_two R (pivotalVoter R a b hab hu) x y := by
 
+  let n_ab := pivotalVoter R a b hab hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
   obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
 
@@ -859,10 +860,13 @@ lemma n_ab_dictate_xy
             . --y=c
               sorry
             . -- y ∉ {a,b,c}
-              have h_nax_dictate_xy := nab_pivotal_bc a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
-              have h_nax_dictate_xy := nab_pivotal_bc a x y (Ne.symm hxnea) (Ne.symm hynea) hxy hu hAIIA
-              obtain ⟨ h_nxy_eq_nyx, h_nyx_eq_nax⟩ := n_ab_pivotal_bc_cb a x y (Ne.symm hxnea) (Ne.symm hynea) hxy hu hAIIA
-              sorry
+              have h_nab_dictate_bx := nab_pivotal_bc a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
+              have h_nbx_dictate_xy := nab_pivotal_bc b x y (Ne.symm hxneb) (Ne.symm hyneb) hxy hu hAIIA
+              obtain ⟨ h_nxy_eq_nyx, h_nyx_eq_nax⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
+              have h_nbx_eq_nab: pivotalVoter R b x (Ne.symm hxneb) hu = n_ab := by
+                rw[h_nxy_eq_nyx, h_nyx_eq_nax]
+              rw[h_nbx_eq_nab] at h_nbx_dictate_xy
+              exact h_nbx_dictate_xy
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
