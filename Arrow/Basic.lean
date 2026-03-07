@@ -823,20 +823,24 @@ lemma n_ab_dictate_xy
 
   rcases eq_or_ne x a with hxa | hxnea
   . --x=a
+    rw[hxa]
     rcases eq_or_ne y b with hyb | hyneb
     . -- y=b
-      rw[hxa, hyb]
+      rw[hyb]
       rw [← h_nba_eq_nca,← h_nab_eq_nba ] at h_nca_dictate_ab
       exact h_nca_dictate_ab
     . -- y≠b
       rcases eq_or_ne y c with hyc | hynec
       . -- y = c
-        rw[hxa, hyc]
+        rw[hyc]
         have h_nba_dictate_ac := nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
         rw[← h_nab_eq_nba] at h_nba_dictate_ac
         exact h_nba_dictate_ac
       . -- y ∉ {a,b,c}
-        sorry
+        rw[hxa] at hxy
+        have h_nba_dictate_ay := nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyneb) hxy hu hAIIA
+        rw[← h_nab_eq_nba] at h_nba_dictate_ay
+        exact h_nba_dictate_ay
   . --x≠a
     rcases eq_or_ne x b with hxb | hxneb
     . -- x=b
