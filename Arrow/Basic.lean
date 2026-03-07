@@ -801,30 +801,23 @@ lemma n_ab_pivotal_bc_cb
 
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
-theorem Impossibility
-    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
-    {N:ℕ } [NeZero N]
-    (ha : Fintype.card α ≥ 3):
-    ¬ ∃ R : SocialWelfareFunction α N,
-    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
-  by_contra h
-  obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
-  apply hNonDictactor
+-- n_bc = n_cb = n_ab can be extended to n_ts
+lemma n_ab_dictate_xy
+  {α : Type} [DecidableEq α] [LinearOrder α]
+  {N:ℕ} [NeZero N]
+  {R: SocialWelfareFunction α N}
+  (a b c x y: α)
+  (hab : a ≠ b)
+  (hac : a ≠ c)
+  (hbc : b ≠ c)
+  (hxy : x ≠ y)
+  (hu: unanimity _ _ R)
+  (hAIIA: (AIIA _ _ R)):
+  dictate_two R (pivotalVoter R a b hab hu) x y := by
 
-  -- i j k | in the paper are translated into
-  -- a b c
-
-  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
-
-  let n_ab := pivotalVoter R a b hab hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-
   obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
-  -- n_bc = n_cb = n_ab can be extended to n_ts
 
-  -- but (*) requires n_ab holds dictatorship over all ordered pairs of alternatives
-  use n_ab
-  intro x y hxy
   rcases eq_or_ne x a with hxa | hxnea
   . --x=a
     rcases eq_or_ne y b with hyb | hyneb
@@ -866,4 +859,28 @@ theorem Impossibility
             . --y=c
               sorry
             . -- y ∉ {a,b,c}
+              have h_nax_dictate_xy := nab_pivotal_bc a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
+              have h_nax_dictate_xy := nab_pivotal_bc a x y (Ne.symm hxnea) (Ne.symm hynea) hxy hu hAIIA
+              obtain ⟨ h_nxy_eq_nyx, h_nyx_eq_nax⟩ := n_ab_pivotal_bc_cb a x y (Ne.symm hxnea) (Ne.symm hynea) hxy hu hAIIA
               sorry
+
+theorem Impossibility
+    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+    {N:ℕ } [NeZero N]
+    (ha : Fintype.card α ≥ 3):
+    ¬ ∃ R : SocialWelfareFunction α N,
+    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictactorship _ _ R) := by
+  by_contra h
+  obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
+  apply hNonDictactor
+
+  -- i j k | in the paper are translated into
+  -- a b c
+
+  obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
+
+  let n_ab := pivotalVoter R a b hab hu
+
+  use n_ab
+  intro x y hxy
+  exact n_ab_dictate_xy a b c x y hab hac hbc hxy hu hAIIA
