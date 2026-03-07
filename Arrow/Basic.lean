@@ -15,7 +15,6 @@ structure Preorder' (α : Type) where
   refl : ∀ a, le a a
   trans : ∀ a b c, le a b → le b c → le a c
   total : ∀ a b, le a b ∨ le b a
-  antisymm : ∀ a b, le a b → le b a → a = b
 
 def Preorder'.lt {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
@@ -162,22 +161,6 @@ def orderFromRanking {α : Type} [LinearOrder α]
       . split_ifs at hb
         exact le_trans ha hb
   total := by intro a b; split_ifs <;> simp_all [le_total a b]
-  antisymm := by
-    intro a b ha hb
-    split_ifs at ha with haa2 hba0 haa0 hba2
-    . split_ifs at hb with hba2 haa0 hba0
-      . rw [haa2, hba2]
-      . rw[haa0] at haa2; exact absurd haa2 h02
-      . exact absurd hb haa0
-      . rw[hb, haa2]
-    . split_ifs at hb with hba2 haa0
-      . rw[hba0 ] at hba2; exact absurd hba2 h02
-      . rw[hba0, haa0]
-      .  exact absurd hb haa0
-    . rw[ha, haa0]
-    . rw[ha , hba2]
-    . split_ifs at hb
-      exact le_antisymm ha hb
 
 lemma orderFromRanking_lt_01 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
