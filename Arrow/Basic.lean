@@ -56,7 +56,8 @@ lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
 def Profile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
 
-def SocialWelfareFunction (α : Type) (N : ℕ) :=
+-- Social Welfare Function
+def SWF (α : Type) (N : ℕ) :=
   (Fin N → Preorder' α) → Preorder' α
 
 -- profile generating function. Useful for building profile with a pivotal voter
@@ -64,11 +65,11 @@ abbrev profileGen: Type := Fin (N+1) →  Profile α N
 
 -- society prefers a over b in profile p
 abbrev socPrefers {α : Type} {N : ℕ}
-    (R : SocialWelfareFunction α N) (p : Profile α N) (a b : α) : Prop :=
+    (R : SWF α N) (p : Profile α N) (a b : α) : Prop :=
   (R p).lt b a  -- b is below a, meaning a is preferred
 
 abbrev socWeakPrefers {α : Type} {N : ℕ}
-    (R : SocialWelfareFunction α N) (p : Profile α N) (a b : α) : Prop :=
+    (R : SWF α N) (p : Profile α N) (a b : α) : Prop :=
   (R p).le b a  -- b is below a, meaning a is preferred
 
 -- voter prefers a over b
@@ -76,7 +77,7 @@ abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
   p.lt b a  -- b is below a, meaning a is preferred
 
 -- In society R, voter k dictate just ab
-def dictate_two {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
+def dictate_two {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: Profile α N ), voterPrefers (p k) a b → socPrefers R p a b
 
 -- all voters in both profile p and q prefer a over b
@@ -85,18 +86,18 @@ def sameCol {α : Type} {N : ℕ}
   ∀ i, voterPrefers (p i) a b ↔ voterPrefers (q i) a b  -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
-def unanimity (R : SocialWelfareFunction α N) : Prop :=
+def unanimity (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α),
     (∀ i: Fin N, voterPrefers (p i) a b) → socPrefers R p a b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
 -- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
-def AIIA (R : SocialWelfareFunction α N) : Prop :=
+def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
-def NonDictatorship (R : SocialWelfareFunction α N): Prop :=
+def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → dictate_two R i a b)
 
 def swapping_k
@@ -308,7 +309,7 @@ def isSwappingProcessAB
 def isPivotalAB
   {α : Type}
   {N : ℕ}
-  (R : SocialWelfareFunction α N)
+  (R : SWF α N)
   (f: profileGen α N)
   (a b : α)
   (n_ab: Fin N): Prop :=
@@ -329,7 +330,7 @@ def canonSwappingProcess
 noncomputable def pivotalVoter
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
-  (R : SocialWelfareFunction α N)
+  (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (hu : unanimity _ _ R) : Fin N :=
   let sp := canonSwappingProcess a b hab
@@ -348,7 +349,7 @@ noncomputable def pivotalVoter
 lemma pivotalVoter_spec
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
-  (R : SocialWelfareFunction α N)
+  (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (f : Fin (N+1) → Profile α N)
   (hf: isSwappingProcessAB a b f)
@@ -488,7 +489,7 @@ lemma pivotalVoter_spec
 lemma pivotalVoter_pivot_canon
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N : ℕ} [NeZero N]
-  (R : SocialWelfareFunction α N)
+  (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (hAIIA: AIIA _ _ R )
   (hu : unanimity _ _ R) :
@@ -515,7 +516,7 @@ lemma nab_pivotal_bc
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  {R: SocialWelfareFunction α N}
+  {R: SWF α N}
   (hu: unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   : dictate_two R (pivotalVoter R a b hab hu) b c := by
@@ -673,7 +674,7 @@ lemma nab_pivotal_bc
 lemma nab_le_nbc
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
-  {R: SocialWelfareFunction α N}
+  {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b)
   (hac : a ≠ c)
@@ -704,7 +705,7 @@ lemma nab_le_nbc
 lemma ncb_le_nab
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
-  {R: SocialWelfareFunction α N}
+  {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b)
   (hac : a ≠ c)
@@ -739,7 +740,7 @@ lemma ncb_le_nab
 lemma nbc_le_ncb
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
-  {R: SocialWelfareFunction α N}
+  {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b)
   (hac : a ≠ c)
@@ -762,7 +763,7 @@ lemma nbc_le_ncb
 lemma n_ab_pivotal_bc_cb
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
-  {R: SocialWelfareFunction α N}
+  {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b)
   (hac : a ≠ c)
@@ -805,7 +806,7 @@ lemma n_ab_pivotal_bc_cb
 lemma n_ab_dictate_xy
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
-  {R: SocialWelfareFunction α N}
+  {R: SWF α N}
   (a b c x y: α)
   (hab : a ≠ b)
   (hac : a ≠ c)
@@ -913,7 +914,7 @@ theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
-    ¬ ∃ R : SocialWelfareFunction α N,
+    ¬ ∃ R : SWF α N,
     (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictatorship _ _ R) := by
   by_contra h
   obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
