@@ -306,7 +306,7 @@ def IsSequentialSwap
     (i.val < k.val → voterPrefers (f k i) b a ) ∧
     (i.val ≥ k.val → voterPrefers (f k i) a b )
 
-def isPivotalAB
+def IsPivotal
   {α : Type}
   {N : ℕ}
   (R : SWF α N)
@@ -355,7 +355,7 @@ lemma pivotalVoter_spec
   (hf: IsSequentialSwap a b f)
   (hAIIA: AIIA _ _ R )
   (hu : Unanimity _ _ R) :
-  isPivotalAB R f a b (pivotalVoter R a b hab hu) := by
+  IsPivotal R f a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let sp: profileGen α N := canonSwappingProcess a b hab
   let P := fun k: Fin N => socPrefers R (sp k.succ) b a
@@ -493,7 +493,7 @@ lemma pivotalVoter_pivot_canon
   (a b : α) (hab : a ≠ b)
   (hAIIA: AIIA _ _ R )
   (hu : Unanimity _ _ R) :
-  isPivotalAB R (canonSwappingProcess a b hab) a b (pivotalVoter R a b hab hu) := by
+  IsPivotal R (canonSwappingProcess a b hab) a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let sp: profileGen α N := canonSwappingProcess a b hab
 
