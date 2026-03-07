@@ -176,9 +176,6 @@ def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preor
     split_ifs at hyb
     exact le_antisymm hxb hyb
 
-def preferBoverA {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α :=
-  preferAoverB b a (Ne.symm hab)
-
 omit [Fintype α] in
 lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferAoverB a b hab) a b := by
   simp only [Preorder'.lt, preferAoverB]
@@ -188,15 +185,6 @@ lemma preferAoverB_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : 
   tauto
   tauto
   exact hba
-
-omit [Fintype α] in
-lemma preferBoverA_lt {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : voterPrefers (preferBoverA a b hab) b a := by
-  simp only [Preorder'.lt, preferBoverA, preferAoverB]
-  constructor
-  split_ifs
-  split_ifs with hab2
-  tauto
-  tauto
 
 def preorderFromRanking {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α)
