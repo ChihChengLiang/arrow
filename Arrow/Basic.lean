@@ -4,12 +4,11 @@ import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fintype.EquivFin
 
-open Classical in
 noncomputable section
+open Classical
 
-variable (α: Type) [Fintype α] [DecidableEq α] -- α is the type of alternatives
+variable (α: Type) [Fintype α]-- α is the type of alternatives
 variable (N: ℕ ) -- N is the number of voters
-variable (ha: Fintype.card α ≥ 3)
 
 structure Preorder' (α : Type) where
   le : α → α → Prop
