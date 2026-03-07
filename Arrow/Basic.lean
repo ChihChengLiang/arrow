@@ -344,23 +344,11 @@ lemma pivotalVoter_spec
           simp [← Preorder'.not_lt] at hnotPj
           exact hnotPj
     exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hgoal
-  . -- Part 2: socPrefers R (f n_ab.succ) b a
-    have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
-      intro i
-      have h := hSameCol i
-      rw [← not_iff_not]
-      constructor
-      . intro hba
-        apply Preorder'.lt_of_not_lt at hba
-        apply Preorder'.lt_asymm
-        exact h.mp hba
-        exact Ne.symm hab
-      . intro hba
-        apply Preorder'.lt_of_not_lt at hba
-        apply Preorder'.lt_asymm
-        exact h.mpr hba
-        exact Ne.symm hab
-    exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a hSameCol_ba).mpr hPn
+  . -- Part 2: socWeakPrefers R (f n_ab.succ) b a
+    apply hAIIA at hSameCol
+    rw [← not_iff_not, Preorder'.not_lt, Preorder'.not_lt] at hSameCol
+    apply hSameCol.mpr
+    exact hPn
 
 lemma pivotalVoter_pivot_canon
   {α : Type} [DecidableEq α] [LinearOrder α]
