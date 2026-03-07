@@ -882,24 +882,31 @@ lemma n_ab_dictate_xy
             rw[h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_cy
             exact h_nbc_dictate_cy
       . --x  ∉ {a,b,c}
+        obtain ⟨ h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
+        obtain ⟨ _, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxnea) hab hxneb hu hAIIA
         rcases eq_or_ne y a with hya | hynea
         . -- y=a
-          sorry
+          rw[hya]
+          have h_nbx_dictate_xa := nab_pivotal_bc b x a (Ne.symm hxneb) (Ne.symm hab) hxnea hu hAIIA
+          rw[h_nbx_eq_nxb, h_nxb_eq_nab] at h_nbx_dictate_xa
+          exact h_nbx_dictate_xa
         . -- y≠a
           rcases eq_or_ne y b with hyb | hyneb
           . -- y=b
-            sorry
+            rw[hyb]
+            have h_nax_dictate_xb := nab_pivotal_bc a x b (Ne.symm hxnea) hab hxneb hu hAIIA
+            rw[← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] at h_nax_dictate_xb
+            exact h_nax_dictate_xb
           . -- y≠b
             rcases eq_or_ne y c with hyc | hynec
             . --y=c
-              sorry
+              rw[hyc]
+              have h_nax_dictate_xc := nab_pivotal_bc a x c (Ne.symm hxnea) hac hxnec hu hAIIA
+              rw[← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] at h_nax_dictate_xc
+              exact h_nax_dictate_xc
             . -- y ∉ {a,b,c}
-              have h_nab_dictate_bx := nab_pivotal_bc a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
               have h_nbx_dictate_xy := nab_pivotal_bc b x y (Ne.symm hxneb) (Ne.symm hyneb) hxy hu hAIIA
-              obtain ⟨ h_nxy_eq_nyx, h_nyx_eq_nax⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
-              have h_nbx_eq_nab: pivotalVoter R b x (Ne.symm hxneb) hu = n_ab := by
-                rw[h_nxy_eq_nyx, h_nyx_eq_nax]
-              rw[h_nbx_eq_nab] at h_nbx_dictate_xy
+              rw[h_nbx_eq_nxb, h_nxb_eq_nab] at h_nbx_dictate_xy
               exact h_nbx_dictate_xy
 
 theorem Impossibility
