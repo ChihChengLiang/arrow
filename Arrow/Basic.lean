@@ -818,20 +818,23 @@ lemma n_ab_dictate_xy
   let n_ab := pivotalVoter R a b hab hu
   have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
   obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
+  have h_nca_dictate_ab := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab  hu hAIIA
+  obtain ⟨ h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
 
   rcases eq_or_ne x a with hxa | hxnea
   . --x=a
     rcases eq_or_ne y b with hyb | hyneb
     . -- y=b
       rw[hxa, hyb]
-      have h_nca_dictate_ab := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab  hu hAIIA
-      obtain ⟨ h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
       rw [← h_nba_eq_nca,← h_nab_eq_nba ] at h_nca_dictate_ab
       exact h_nca_dictate_ab
     . -- y≠b
       rcases eq_or_ne y c with hyc | hynec
       . -- y = c
-        sorry
+        rw[hxa, hyc]
+        have h_nba_dictate_ac := nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
+        rw[← h_nab_eq_nba] at h_nba_dictate_ac
+        exact h_nba_dictate_ac
       . -- y ∉ {a,b,c}
         sorry
   . --x≠a
