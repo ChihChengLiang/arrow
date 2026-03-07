@@ -820,7 +820,7 @@ lemma n_ab_dictate_xy
   obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
   have h_nca_dictate_ab := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab  hu hAIIA
   obtain ⟨ h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-
+  obtain ⟨ _ , h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
   rcases eq_or_ne x a with hxa | hxnea
   . --x=a
     rw[hxa]
@@ -844,20 +844,43 @@ lemma n_ab_dictate_xy
   . --x≠a
     rcases eq_or_ne x b with hxb | hxneb
     . -- x=b
+      rw[hxb]
       rcases eq_or_ne y a with hya | hynea
       . -- y=a
-        sorry
+        rw[hya]
+        have h_ncb_dictate_ba := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+        rw[h_ncb_eq_nab] at h_ncb_dictate_ba
+        exact h_ncb_dictate_ba
       . -- y≠ a
         rcases eq_or_ne y c with hyc | hynec
         . -- y = c
-          rw[hxb, hyc]
+          rw[hyc]
           exact h_nab_dictate_bc
         . -- y ∉ {a,b,c}
-          sorry
+          rw[hxb] at hxy
+          exact nab_pivotal_bc a b y hab (Ne.symm hynea) hxy hu hAIIA
     . --x≠b
       rcases eq_or_ne x c with hxc | hxnec
       . --x=c
-        sorry
+        rw[hxc]
+        rcases eq_or_ne y a with hya | hynea
+        . -- y=a
+          rw[hya]
+          have h_nbc_dictate_ca := nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
+          rw [h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_ca
+          exact h_nbc_dictate_ca
+        . -- y≠a
+          rcases eq_or_ne y b with hyb | hyneb
+          . -- y=b
+            rw[hyb]
+            have h_nac_dictate_cb := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
+            rw[← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] at h_nac_dictate_cb
+            exact h_nac_dictate_cb
+          . -- y≠b
+            rw[hxc] at hxy
+            have h_nbc_dictate_cy := nab_pivotal_bc b c y hbc (Ne.symm hyneb) hxy hu hAIIA
+            rw[h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_cy
+            exact h_nbc_dictate_cy
       . --x  ∉ {a,b,c}
         rcases eq_or_ne y a with hya | hynea
         . -- y=a
