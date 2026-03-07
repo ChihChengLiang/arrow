@@ -86,7 +86,7 @@ def AgreeOn {α : Type} {N : ℕ}
   ∀ i, voterPrefers (p i) a b ↔ voterPrefers (q i) a b  -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
-def unanimity (R : SWF α N) : Prop :=
+def Unanimity (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α),
     (∀ i: Fin N, voterPrefers (p i) a b) → socPrefers R p a b
 
@@ -332,7 +332,7 @@ noncomputable def pivotalVoter
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
-  (hu : unanimity _ _ R) : Fin N :=
+  (hu : Unanimity _ _ R) : Fin N :=
   let sp := canonSwappingProcess a b hab
   let P := fun k: Fin N => socPrefers R (sp k.succ) b a
   let hN: ∃ k, P k := by
@@ -354,7 +354,7 @@ lemma pivotalVoter_spec
   (f : Fin (N+1) → Profile α N)
   (hf: isSwappingProcessAB a b f)
   (hAIIA: AIIA _ _ R )
-  (hu : unanimity _ _ R) :
+  (hu : Unanimity _ _ R) :
   isPivotalAB R f a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let sp: profileGen α N := canonSwappingProcess a b hab
@@ -492,7 +492,7 @@ lemma pivotalVoter_pivot_canon
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (hAIIA: AIIA _ _ R )
-  (hu : unanimity _ _ R) :
+  (hu : Unanimity _ _ R) :
   isPivotalAB R (canonSwappingProcess a b hab) a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let sp: profileGen α N := canonSwappingProcess a b hab
@@ -517,7 +517,7 @@ lemma nab_pivotal_bc
   (hac : a ≠ c)
   (hbc : b ≠ c)
   {R: SWF α N}
-  (hu: unanimity _ _ R)
+  (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   : Dictates R (pivotalVoter R a b hab hu) b c := by
   let n_ab := pivotalVoter R a b hab hu
@@ -679,7 +679,7 @@ lemma nab_le_nbc
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (hu: unanimity _ _ R)
+  (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   :
   -- n_ab ≤ n_bc
@@ -710,7 +710,7 @@ lemma ncb_le_nab
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (hu: unanimity _ _ R)
+  (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   -- n_cb ≤ n_ab
   : pivotalVoter R c b (Ne.symm hbc) hu  ≤ pivotalVoter R a b hab hu := by
@@ -745,7 +745,7 @@ lemma nbc_le_ncb
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (hu: unanimity _ _ R)
+  (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   : -- n_cb ≤ n_bc
   pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu := by
@@ -768,7 +768,7 @@ lemma n_ab_pivotal_bc_cb
   (hab : a ≠ b)
   (hac : a ≠ c)
   (hbc : b ≠ c)
-  (hu: unanimity _ _ R)
+  (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
   :
   -- n_bc = n_cb = n_ab
@@ -812,7 +812,7 @@ lemma n_ab_dictate_xy
   (hac : a ≠ c)
   (hbc : b ≠ c)
   (hxy : x ≠ y)
-  (hu: unanimity _ _ R)
+  (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R)):
   Dictates R (pivotalVoter R a b hab hu) x y := by
 
@@ -915,7 +915,7 @@ theorem Impossibility
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N,
-    (unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictatorship _ _ R) := by
+    (Unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictatorship _ _ R) := by
   by_contra h
   obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
