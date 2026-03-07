@@ -81,7 +81,7 @@ def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :
   ∀ (p: Profile α N ), voterPrefers (p k) a b → socPrefers R p a b
 
 -- all voters in both profile p and q prefer a over b
-def sameCol {α : Type} {N : ℕ}
+def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, voterPrefers (p i) a b ↔ voterPrefers (q i) a b  -- voter i prefers a over b in p iff in q
 
@@ -95,7 +95,7 @@ def unanimity (R : SWF α N) : Prop :=
 -- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
 def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
-    sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
+    AgreeOn p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
@@ -376,7 +376,7 @@ lemma pivotalVoter_spec
   have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
 
   -- Helper: sameCol for any column k between f and canonical swapping process
-  have hSameColGen : ∀ k : Fin (N+1), sameCol (f k) (sp k) a b := by
+  have hSameColGen : ∀ k : Fin (N+1), AgreeOn (f k) (sp k) a b := by
     intro k i; unfold sp canonSwappingProcess swapping_k
     split_ifs with hik
     . -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
@@ -391,12 +391,12 @@ lemma pivotalVoter_spec
       simp [hfba]
       exact preferAoverB_lt a b hab
 
-  have hSameCol: sameCol (f n_ab.succ) (sp n_ab.succ) a b := hSameColGen n_ab.succ
+  have hSameCol: AgreeOn (f n_ab.succ) (sp n_ab.succ) a b := hSameColGen n_ab.succ
 
   constructor
   · -- Part 1: ∀ i ≤ n_ab, socPrefers R (f i.castSucc) a b
     intro i hi
-    have hSameCol_i : sameCol (f i.castSucc) (sp i.castSucc) a b := hSameColGen i.castSucc
+    have hSameCol_i : AgreeOn (f i.castSucc) (sp i.castSucc) a b := hSameColGen i.castSucc
     -- Need to show society prefers a > b at swapping_k p q i.castSucc
     have hNotP : ¬ socPrefers R (sp i.castSucc) b a := by
       by_cases hilt : i < n_ab
@@ -467,7 +467,7 @@ lemma pivotalVoter_spec
     -- hPn : socPrefers R (swapping_k p q n_ab.succ) b a
     -- Need: socPrefers R (f n_ab.succ) b a
     -- Use AIIA with sameCol for b a (which follows from sameCol for a b)
-    have hSameCol_ba : sameCol (f n_ab.succ) (sp n_ab.succ) b a := by
+    have hSameCol_ba : AgreeOn (f n_ab.succ) (sp n_ab.succ) b a := by
       intro i
       -- In a total preorder, a>b ↔ ¬(b>a) for a ≠ b
       have h := hSameCol i
@@ -582,8 +582,8 @@ lemma nab_pivotal_bc
           then preorderFromRanking a b c hab hbc hac
           else preorderFromRanking a c b hac (Ne.symm hbc) hab
 
-  have hSameCol: sameCol pp rr b c := by
-    unfold sameCol
+  have hSameCol: AgreeOn pp rr b c := by
+    unfold AgreeOn
     intro i
     unfold rr
     split_ifs with hi hppibc hieqnab hppibc
@@ -615,8 +615,8 @@ lemma nab_pivotal_bc
     socPrefers R rr a c := by
     constructor
     -- By AIIA on nab pivoting defintion
-    . have hSameCol_ba: sameCol (swapping_k p q n_ab.succ) rr b a := by
-        unfold sameCol swapping_k
+    . have hSameCol_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
+        unfold AgreeOn swapping_k
         intro i
         split_ifs with h
         . simp [(p i).lt_trans (hp i).2 (hp i).1]
@@ -645,8 +645,8 @@ lemma nab_pivotal_bc
     -- By AIIA
     . have hsoc_swp_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
-      have hSameCol_ac: sameCol (swapping_k p q n_ab.castSucc) rr a c := by
-        unfold sameCol rr swapping_k
+      have hSameCol_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
+        unfold AgreeOn rr swapping_k
         intro i
         simp at *
         split_ifs with hinab hppibc hieqnab hppibc
