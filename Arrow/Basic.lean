@@ -765,7 +765,6 @@ lemma n_ab_pivotal_bc_cb
   let n_ab := pivotalVoter R a b hab hu
   let n_bc := pivotalVoter R b c hbc hu
   let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
   -- n_bc ≥ n_ab
   have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
 
@@ -776,10 +775,7 @@ lemma n_ab_pivotal_bc_cb
   -- n_bc ≥ n_ab ≥ n_cb
   -- n_cb ≥ n_bc
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
-  have h_nbc_le_ncb: n_bc ≤ n_cb := by
-    let n_ac := pivotalVoter R a c hac hu
-    have h_nac_dictate_cb := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-    exact nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
+  have h_nbc_le_ncb: n_bc ≤ n_cb := nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
 
   -- n_bc = n_cb = n_ab
   have h_nbc_eq_ncb: n_bc = n_cb := by exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
