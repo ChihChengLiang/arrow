@@ -52,23 +52,23 @@ lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
     . intro h
       exact h1.2 (p.trans _ _ _ h2.1 h)
 
--- Map individual i to their preferences
-def PreferenceProfile (α : Type) (N : ℕ) :=
+-- A preference profile maps individual i to their preferences
+def Profile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
 
 def SocialWelfareFunction (α : Type) (N : ℕ) :=
   (Fin N → Preorder' α) → Preorder' α
 
 -- profile generating function. Useful for building profile with a pivotal voter
-abbrev profileGen: Type := Fin (N+1) →  PreferenceProfile α N
+abbrev profileGen: Type := Fin (N+1) →  Profile α N
 
 -- society prefers a over b in profile p
 abbrev socPrefers {α : Type} {N : ℕ}
-    (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
+    (R : SocialWelfareFunction α N) (p : Profile α N) (a b : α) : Prop :=
   (R p).lt b a  -- b is below a, meaning a is preferred
 
 abbrev socWeakPrefers {α : Type} {N : ℕ}
-    (R : SocialWelfareFunction α N) (p : PreferenceProfile α N) (a b : α) : Prop :=
+    (R : SocialWelfareFunction α N) (p : Profile α N) (a b : α) : Prop :=
   (R p).le b a  -- b is below a, meaning a is preferred
 
 -- voter prefers a over b
@@ -77,31 +77,31 @@ abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
 
 -- In society R, voter k dictate just ab
 def dictate_two {α : Type} {N : ℕ} (R : SocialWelfareFunction α N) (k : Fin N) (a b : α): Prop :=
-  ∀ (p: PreferenceProfile α N ), voterPrefers (p k) a b → socPrefers R p a b
+  ∀ (p: Profile α N ), voterPrefers (p k) a b → socPrefers R p a b
 
 -- all voters in both profile p and q prefer a over b
 def sameCol {α : Type} {N : ℕ}
-    (p q : PreferenceProfile α N) (a b : α) : Prop :=
+    (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, voterPrefers (p i) a b ↔ voterPrefers (q i) a b  -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
 def unanimity (R : SocialWelfareFunction α N) : Prop :=
-  ∀ (p: PreferenceProfile α N) (a b: α),
+  ∀ (p: Profile α N) (a b: α),
     (∀ i: Fin N, voterPrefers (p i) a b) → socPrefers R p a b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
 -- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
 def AIIA (R : SocialWelfareFunction α N) : Prop :=
-  ∀ (p q: PreferenceProfile α N) (a b: α),
+  ∀ (p q: Profile α N) (a b: α),
     sameCol p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
 
 def NonDictatorship (R : SocialWelfareFunction α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → dictate_two R i a b)
 
 def swapping_k
-  {α : Type} {N:ℕ} (p q: PreferenceProfile α N) (k: Fin (N+1))
-  : PreferenceProfile α N :=
+  {α : Type} {N:ℕ} (p q: Profile α N) (k: Fin (N+1))
+  : Profile α N :=
   fun i: Fin N => if i < k.val then p i else q i
 
 def preferAoverB {α : Type} [LinearOrder α] (a b : α) (hab : a ≠ b) : Preorder' α where
@@ -322,8 +322,8 @@ def canonSwappingProcess
   (a b : α)
   (hab : a ≠ b)
   : profileGen α N :=
-  let p : PreferenceProfile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
-  let q : PreferenceProfile α N := fun _ => preferAoverB a b hab           -- a on top
+  let p : Profile α N := fun _ => preferAoverB b a (Ne.symm hab) -- b on top
+  let q : Profile α N := fun _ => preferAoverB a b hab           -- a on top
   swapping_k p q
 
 noncomputable def pivotalVoter
@@ -350,7 +350,7 @@ lemma pivotalVoter_spec
   {N : ℕ} [NeZero N]
   (R : SocialWelfareFunction α N)
   (a b : α) (hab : a ≠ b)
-  (f : Fin (N+1) → PreferenceProfile α N)
+  (f : Fin (N+1) → Profile α N)
   (hf: isSwappingProcessAB a b f)
   (hAIIA: AIIA _ _ R )
   (hu : unanimity _ _ R) :
@@ -520,8 +520,8 @@ lemma nab_pivotal_bc
   (hAIIA: (AIIA _ _ R))
   : dictate_two R (pivotalVoter R a b hab hu) b c := by
   let n_ab := pivotalVoter R a b hab hu
-  let p: PreferenceProfile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
-  let q: PreferenceProfile α N := fun i => preorderFromRanking a b c hab hbc hac
+  let p: Profile α N := fun i => preorderFromRanking b c a hbc (Ne.symm hac) (Ne.symm hab)
+  let q: Profile α N := fun i => preorderFromRanking a b c hab hbc hac
 
   have hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a := by
     intro i; constructor
@@ -568,7 +568,7 @@ lemma nab_pivotal_bc
   -- k prefer b > a > c
   -- k+1 ... N prefer a > b ∧ c < a
   -- result: socPrefer b ≥ a > c
-  let rr : PreferenceProfile α N := fun i: Fin N =>
+  let rr : Profile α N := fun i: Fin N =>
     if i < n_ab
       then
         if  voterPrefers (pp i) b c
