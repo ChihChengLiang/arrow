@@ -294,76 +294,56 @@ lemma pivotalVoter_spec
   have hSameCol: AgreeOn (f n_ab.succ) (cs n_ab.succ) a b := hSameColGen n_ab.succ
 
   constructor
-  · -- Part 1: ∀ i ≤ n_ab, socPrefers R (f i.castSucc) a b
+  . -- Part 1: ∀ i ≤ n_ab, socPrefers R (f i.castSucc) a b
     intro i hi
     have hSameCol_i : AgreeOn (f i.castSucc) (cs i.castSucc) a b := hSameColGen i.castSucc
     -- Need to show society prefers a > b at swapping_k p q i.castSucc
-    have hNotP : ¬ socPrefers R (cs i.castSucc) b a := by
+    have hgoal: socPrefers R (cs i.castSucc) a b := by
       by_cases hilt : i < n_ab
-      · -- i < n_ab: use Fin.find_min
-        intro hcontra
-        by_cases hizero : i.val = 0
+      . by_cases hizero : i.val = 0
         · -- Column 0: everyone prefers a > b by unanimity on q
           have hall : ∀ j : Fin N, voterPrefers (cs i.castSucc j) a b := by
-            intro j
-            unfold cs canonicalSwap swapping_k
-            simp [hizero]
+            intro j; unfold cs canonicalSwap swapping_k; simp [hizero]
             exact orderFromRanking_lt_02 a _ b hab
-          have hsoc := hu (cs i.castSucc) a b hall
-          exact Preorder'.lt_asymm _ _ _ hsoc hcontra
+          exact hu (cs i.castSucc) a b hall
         · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
           have hipos : 0 < i.val := Nat.pos_of_ne_zero hizero
           let j : Fin N := ⟨i.val - 1, by omega⟩
-          have hjsucc : j.succ.val = i.castSucc.val := by simp [j]; omega
           have hjlt : j < n_ab := by
             simp only [Fin.lt_def, j]
             have : i.val < n_ab.val := hilt
             omega
           have hnotPj := hPmin j hjlt
           simp only [P] at hnotPj
-          -- hnotPj : ¬ socPrefers R (swapping_k p q j.succ) b a
-          -- We need: socPrefers R (swapping_k p q i.castSucc) b a → False
-          -- Since j.succ.val = i.castSucc.val, the profiles are the same
-          have heq : j.succ = i.castSucc := by
-            apply Fin.ext
-            exact hjsucc
-          rw [← heq] at hcontra
-          exact hnotPj hcontra
-      · -- i = n_ab case (since i ≤ n_ab and ¬(i < n_ab))
-        push_neg at hilt
-        have hieq : i = n_ab := le_antisymm hi hilt
+          have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
+          rw [heq] at hnotPj
+          apply Preorder'.lt_of_not_lt at hnotPj
+          exact hnotPj
+          exact Ne.symm hab
+      . have hieq: i = n_ab := by omega
         subst hieq
-        intro hcontra
-        -- At column n_ab.castSucc.val = n_ab.val
-        -- By the same argument as above:
         by_cases hnzero : n_ab.val = 0
-        · -- Column 0: unanimity
+        . -- Column 0: unanimity
           have hall : ∀ j : Fin N, voterPrefers (cs n_ab.castSucc j) a b := by
             intro j
             unfold cs canonicalSwap swapping_k
             simp [hnzero]
             exact orderFromRanking_lt_02 a _ b hab
           have hsoc := hu (cs n_ab.castSucc) a b hall
-          exact Preorder'.lt_asymm _ _ _ hsoc hcontra
-        · -- Column n_ab.val > 0: use j = n_ab - 1
+          exact hsoc
+        . -- Column n_ab.val > 0: use j = n_ab - 1
           have hnpos : 0 < n_ab.val := Nat.pos_of_ne_zero hnzero
           let j : Fin N := ⟨n_ab.val - 1, by omega⟩
-          have hjsucc : j.succ.val = n_ab.castSucc.val := by simp [j]; omega
           have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
           have hnotPj := hPmin j hjlt
           simp only [P] at hnotPj
-          have heq : j.succ = n_ab.castSucc := by
-            apply Fin.ext
-            exact hjsucc
+          have heq : j.succ = n_ab.castSucc := by apply Fin.ext; simp [j]; omega
           rw [heq] at hnotPj
-          exact hnotPj hcontra
-    -- Now use AIIA to transfer to f
-    -- socPrefers R p a b = (R p).lt b a, so hNotP : ¬(R ...).lt a b
-    -- We want (R ...).lt b a, use lt_of_not_lt with swapped arguments
-    have hsoc_swp : socPrefers R (cs i.castSucc) a b :=
-      Preorder'.lt_of_not_lt (R (cs i.castSucc)) b a (Ne.symm hab) hNotP
-    exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hsoc_swp
-  · -- Part 2: socPrefers R (f n_ab.succ) b a
+          apply Preorder'.lt_of_not_lt at hnotPj
+          exact hnotPj
+          exact Ne.symm hab
+    exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hgoal
+  . -- Part 2: socPrefers R (f n_ab.succ) b a
     have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
       intro i
       have h := hSameCol i
