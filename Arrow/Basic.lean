@@ -30,7 +30,6 @@ lemma Preorder'.lt_irrefl {α : Type} (p : Preorder' α) (a : α) :
   intro ⟨h, hn⟩
   exact hn h
 
--- Now prove not_lt: ¬ lt a b ↔ le b a
 lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
     ¬ p.lt a b ↔ p.le b a := by
   unfold Preorder'.lt
@@ -41,19 +40,10 @@ lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
     . exact hba
   . intro hba; push_neg; intro _; exact hba
 
-lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
-    (hab : a ≠ b) (h : ¬ p.lt b a) : p.lt a b := by
-  unfold Preorder'.lt at *
-  push_neg at h
-  rcases p.total a b with hab' | hba'
-  · constructor
-    · exact hab'
-    · intro hba
-      exact hab (p.antisymm a b hab' hba)
-  · constructor
-    · exact h hba'
-    · intro hba
-      exact hab (p.antisymm a b (h hba') hba)
+lemma Preorder'.le_of_lt {α : Type} (p : Preorder' α) (a b : α) :
+    p.lt a b → p.le a b := by
+    intro h
+    exact h.1
 
 lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
@@ -213,7 +203,7 @@ def IsPivotal
   (a b : α)
   (n_ab: Fin N): Prop :=
   (∀ i ≤ n_ab,  socPrefers R (f i.castSucc) a b) ∧
-  socPrefers R (f n_ab.succ) b a
+  socWeakPrefers R (f n_ab.succ) b a
 
 -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
 def canonicalSwap
@@ -234,14 +224,19 @@ noncomputable def pivotalVoter
   (a b : α) (hab : a ≠ b)
   (hu : Unanimity _ _ R) : Fin N :=
   let cs := canonicalSwap a b hab
-  let P := fun k: Fin N => socPrefers R (cs k.succ) b a
+  let P := fun k: Fin N => socWeakPrefers R (cs k.succ) b a
   let hN: ∃ k, P k := by
     use (0:Fin N).rev
     unfold P cs canonicalSwap swapping_k
     have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel this]
-    apply hu
-    simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+    have hstrong: socPrefers R (fun i => orderFromRanking b b a (Ne.symm hab)) b a := by
+      apply hu
+      simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+    unfold socWeakPrefers
+    apply Preorder'.le_of_lt at hstrong
+    exact hstrong
+
   -- Find the minimum k where the flip happens
   Fin.find P hN
 
@@ -317,7 +312,7 @@ lemma pivotalVoter_spec
           simp only [P] at hnotPj
           have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
           rw [heq] at hnotPj
-          apply Preorder'.lt_of_not_lt at hnotPj
+          apply Preorder'.not_lt at hnotPj
           exact hnotPj
           exact Ne.symm hab
       . have hieq: i = n_ab := by omega
