@@ -68,11 +68,14 @@ notation a " ≻[" R p "] " b => Preorder'.lt (R p) b a
 notation a " ≽[" R p "] " b => Preorder'.le (R p) b a
 notation a " ≻[" R p "] " b "≻ " c =>
   Preorder'.lt (R p) b a ∧ Preorder'.lt (R p) b c
+notation a " ≽[" R p "] " b "≻ " c =>
+  Preorder'.le (R p) b a ∧ Preorder'.lt (R p) b c
 
 --- voter strictly prefers a over b
 notation a " ≻[" p  "] " b => Preorder'.lt p b a
 notation a " ≽[" p  "] " b => Preorder'.le p b a
 notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
+notation a " ≽[" p  "] " b "≻ " c => (a ≽[p] b) ∧ b ≻[p] c
 
 -- In society R, voter k dictate just ab
 def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :=
@@ -480,7 +483,7 @@ lemma nab_pivotal_bc
       . intro
         exact hppibc
 
-  have hbac: b ≻[R rr] a ≻ c := by
+  have hbac: b ≽[R rr] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
     . have hSameCol_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
