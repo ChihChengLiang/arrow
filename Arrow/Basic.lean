@@ -166,6 +166,10 @@ lemma orderFromRanking_lt_01 {α : Type} [LinearOrder α]
   simp [Preorder'.lt, orderFromRanking]
   exact ⟨h02, Ne.symm h01⟩
 
+lemma orderFromRanking_le_01 {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (orderFromRanking a₀ a₁ a₂ h02).le a₁ a₀ := by simp [orderFromRanking]
+
 lemma orderFromRanking_lt_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
     (orderFromRanking a₀ a₁ a₂ h02).lt a₂ a₁ := by
@@ -174,11 +178,19 @@ lemma orderFromRanking_lt_12 {α : Type} [LinearOrder α]
   . exact absurd (Eq.symm ha10) h01
   . exact ⟨ h12, Ne.symm h02, h12 ⟩
 
+lemma orderFromRanking_le_12 {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (orderFromRanking a₀ a₁ a₂ h02).le a₂ a₁ := by simp [orderFromRanking]
+
 lemma orderFromRanking_lt_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (orderFromRanking a₀ a₁ a₂ h02).lt a₂ a₀ := by
   simp [Preorder'.lt, orderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
+
+lemma orderFromRanking_le_02 {α : Type} [LinearOrder α]
+    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (orderFromRanking a₀ a₁ a₂ h02).le a₂ a₀ := by simp [orderFromRanking]
 
 def IsSequentialSwap
   {α : Type}
@@ -269,21 +281,28 @@ lemma pivotalVoter_spec
   -- For j < n_ab, ¬P j: society doesn't prefer b > a, hence prefers a > b
   have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
 
-  -- Helper: sameCol for any column k between f and canonical swapping process
+  -- Helper: f and canonical swapping process agrees on orders of a and b
   have hSameColGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
-    intro k i; unfold cs canonicalSwap swapping_k
-    split_ifs with hik
-    . -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
-      rw [← not_iff_not]
-      have hfba := (hf k i).1 hik
-      constructor
-      . intro h; apply Preorder'.lt_asymm; exact orderFromRanking_lt_02 b _ a (Ne.symm hab)
-      . intro h; apply Preorder'.lt_asymm; exact hfba
-    . -- i ≥ k.val: swapping_k uses q, which has a > b
-      simp at hik
-      have hfba := (hf k i).2 hik
-      simp [hfba]
-      exact orderFromRanking_lt_02 a _ b hab
+    intro k;
+    -- unfold cs canonicalSwap swapping_k
+    have hstrong: AgreeStronglyOn (f k) (cs k) a b := by
+      intro i
+      unfold cs canonicalSwap swapping_k
+      split_ifs with hik
+      . have hfba := (hf k i).1 hik
+        constructor
+        . rw [← not_iff_not]; simp; constructor
+          . intro h; exact orderFromRanking_le_02 b _ a (Ne.symm hab)
+          . intro h; exact hfba.1
+        . simp only [orderFromRanking_lt_02 b _ a (Ne.symm hab), hfba]
+      . push_neg at hik
+        have hfba := (hf k i).2 hik
+        constructor
+        . simp only [hfba,  orderFromRanking_lt_02 a _ b hab]
+        . rw [← not_iff_not]; simp; constructor
+          . intro h; exact orderFromRanking_le_02 a _ b hab
+          . intro h; exact hfba.1
+    exact agree_strongly_is_agree (f k) (cs k) a b hstrong
 
   have hSameCol: AgreeOn (f n_ab.succ) (cs n_ab.succ) a b := hSameColGen n_ab.succ
 
