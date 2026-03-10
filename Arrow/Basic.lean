@@ -72,6 +72,7 @@ notation a " ≻[" R p "] " b "≻ " c =>
 
 --- voter strictly prefers a over b
 notation a " ≻[" p  "] " b => Preorder'.lt p b a
+notation a " ≽[" p  "] " b => Preorder'.le p b a
 notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
 
 -- In society R, voter k dictate just ab
@@ -234,10 +235,9 @@ lemma functionCanBeFound
   unfold functionToFind canonicalSwap swapping_k
   have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
-  have hstrong: socPrefers R (fun i => orderFromRanking b b a (Ne.symm hab)) b a := by
+  have hstrong: b ≻[R (fun i => orderFromRanking b b a (Ne.symm hab))] a := by
     apply hu
     simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
-  unfold socWeakPrefers
   apply Preorder'.le_of_lt at hstrong
   exact hstrong
 
