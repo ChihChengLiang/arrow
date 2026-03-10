@@ -82,7 +82,8 @@ def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :
 -- all voters in both profile p and q prefer a over b
 def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
-  ∀ i, (a ≻[p i] b) ↔ a ≻[q i] b -- voter i prefers a over b in p iff in q
+  ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
+
 
 -- if everyone like `a` over `b`, so is society
 def Unanimity (R : SWF α N) : Prop :=
