@@ -65,38 +65,35 @@ def SWF (α : Type) (N : ℕ) :=
 abbrev SwapSequence: Type := Fin (N+1) →  Profile α N
 
 -- society prefers a over b in profile p
-abbrev socPrefers {α : Type} {N : ℕ}
-    (R : SWF α N) (p : Profile α N) (a b : α) : Prop :=
-  (R p).lt b a  -- b is below a, meaning a is preferred
+notation a " ≻[" R p "] " b => Preorder'.lt (R p) b a
+notation a " ≽[" R p "] " b => Preorder'.le (R p) b a
+notation a " ≻[" R p "] " b "≻ " c =>
+  Preorder'.lt (R p) b a ∧ Preorder'.lt (R p) b c
 
-abbrev socWeakPrefers {α : Type} {N : ℕ}
-    (R : SWF α N) (p : Profile α N) (a b : α) : Prop :=
-  (R p).le b a  -- b is below a, meaning a is preferred
-
--- voter prefers a over b
-abbrev voterPrefers {α : Type} (p : Preorder' α) (a b : α) : Prop :=
-  p.lt b a  -- b is below a, meaning a is preferred
+--- voter strictly prefers a over b
+notation a " ≻[" p  "] " b => Preorder'.lt p b a
+notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
 
 -- In society R, voter k dictate just ab
 def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :=
-  ∀ (p: Profile α N ), voterPrefers (p k) a b → socPrefers R p a b
+  ∀ (p: Profile α N ), (a ≻[p k] b) → a ≻[R p] b
 
 -- all voters in both profile p and q prefer a over b
 def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
-  ∀ i, voterPrefers (p i) a b ↔ voterPrefers (q i) a b  -- voter i prefers a over b in p iff in q
+  ∀ i, (a ≻[p i] b) ↔ a ≻[q i] b -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
 def Unanimity (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α),
-    (∀ i: Fin N, voterPrefers (p i) a b) → socPrefers R p a b
+    (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
 -- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
 def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
-    AgreeOn p q a b → (socPrefers R p a b ↔ socPrefers R q a b)
+    AgreeOn p q a b → ((a ≻[R p] b) ↔ a ≻[R q] b)
 
 def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
@@ -193,8 +190,8 @@ def IsSequentialSwap
   (a b : α)
   (f: SwapSequence α N): Prop :=
     ∀ (k: Fin (N+1)) (i: Fin N),
-    (i.val < k.val → voterPrefers (f k i) b a ) ∧
-    (i.val ≥ k.val → voterPrefers (f k i) a b )
+    (i.val < k.val → b ≻[f k i] a ) ∧
+    (i.val ≥ k.val → a ≻[f k i] b )
 
 def IsPivotal
   {α : Type}
@@ -203,8 +200,7 @@ def IsPivotal
   (f: SwapSequence α N)
   (a b : α)
   (n_ab: Fin N): Prop :=
-  (∀ i ≤ n_ab,  socPrefers R (f i.castSucc) a b) ∧
-  socWeakPrefers R (f n_ab.succ) b a
+  (∀ i ≤ n_ab, a ≻[R (f i.castSucc)] b) ∧ b ≽[R (f n_ab.succ)] a
 
 -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
 def canonicalSwap
@@ -224,7 +220,7 @@ def functionToFind
   (R : SWF α N)
   (a b : α) (hab : a ≠ b) :=
   let cs := canonicalSwap a b hab
-  fun k: Fin N => socWeakPrefers R (cs k.succ) b a
+  fun k: Fin N => b ≽[R (cs k.succ)] a
 
 lemma functionCanBeFound
   {α : Type} [LinearOrder α]
@@ -301,11 +297,11 @@ lemma pivotalVoter_spec
     intro i hi
     have hSameCol_i : AgreeOn (f i.castSucc) (cs i.castSucc) a b := hSameColGen i.castSucc
     -- Need to show society prefers a > b at swapping_k p q i.castSucc
-    have hgoal: socPrefers R (cs i.castSucc) a b := by
+    have hgoal: a ≻[R (cs i.castSucc)] b := by
       by_cases hilt : i < n_ab
       . by_cases hizero : i.val = 0
         · -- Column 0: everyone prefers a > b by unanimity on q
-          have hall : ∀ j : Fin N, voterPrefers (cs i.castSucc j) a b := by
+          have hall : ∀ j : Fin N, a ≻[cs i.castSucc j] b := by
             intro j; unfold cs canonicalSwap swapping_k; simp [hizero]
             exact orderFromRanking_lt_02 a _ b hab
           exact hu (cs i.castSucc) a b hall
@@ -326,7 +322,7 @@ lemma pivotalVoter_spec
         subst hieq
         by_cases hnzero : n_ab.val = 0
         . -- Column 0: unanimity
-          have hall : ∀ j : Fin N, voterPrefers (cs n_ab.castSucc j) a b := by
+          have hall : ∀ j : Fin N, a ≻[cs n_ab.castSucc j] b := by
             intro j
             unfold cs canonicalSwap swapping_k
             simp [hnzero]
@@ -388,11 +384,11 @@ lemma nab_pivotal_bc
   let p: Profile α N := fun i => orderFromRanking b c a (Ne.symm hab)
   let q: Profile α N := fun i => orderFromRanking a b c hac
 
-  have hp: ∀ i: Fin N, voterPrefers (p i) b c ∧ voterPrefers (p i) c a := by
+  have hp: ∀ i: Fin N, b ≻[p i] c ≻ a := by
     intro i; constructor
     . exact orderFromRanking_lt_01 b c a hbc (Ne.symm hab)
     . exact orderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
-  have hq: ∀ i: Fin N, voterPrefers (q i) a b ∧ voterPrefers (q i) b c := by
+  have hq: ∀ i: Fin N, a ≻[q i] b ≻ c := by
     intro i; constructor
     . exact orderFromRanking_lt_01 a b c hab hac
     . exact orderFromRanking_lt_12 a b c hab hbc hac
@@ -411,14 +407,12 @@ lemma nab_pivotal_bc
   have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hAIIA hu
 
   -- soc prefer a > b > c
-  have habc:
-    socPrefers R (swapping_k p q n_ab.castSucc) a b ∧
-    socPrefers R (swapping_k p q n_ab.castSucc) b c  := by
+  have habc: a ≻[R (swapping_k p q n_ab.castSucc)] b ≻ c  := by
     constructor
     -- a > b by def of n_ab
     . exact h_nab_pivot_p.1 n_ab (le_refl n_ab)
     -- b > c by unanimity
-    . have h: ∀ i: Fin N, voterPrefers (swapping_k p q n_ab.castSucc i) b c := by
+    . have h: ∀ i: Fin N, b ≻[swapping_k p q n_ab.castSucc i] c := by
         intro i
         unfold swapping_k
         split_ifs
@@ -436,13 +430,13 @@ lemma nab_pivotal_bc
   let rr : Profile α N := fun i: Fin N =>
     if i < n_ab
       then
-        if  voterPrefers (pp i) b c
+        if b ≻[pp i] c
           then orderFromRanking b c a (Ne.symm hab)
           else orderFromRanking c b a (Ne.symm hac)
       else
         if i = n_ab
         then orderFromRanking b a c hbc
-        else if  voterPrefers (pp i) b c
+        else if b ≻[pp i] c
           then orderFromRanking a b c hac
           else orderFromRanking a c b hab
 
@@ -456,7 +450,6 @@ lemma nab_pivotal_bc
     . rw [← not_iff_not]
       constructor
       . intro
-        unfold voterPrefers
         apply  Preorder'.lt_asymm
         simp [orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
       . intro
@@ -468,15 +461,12 @@ lemma nab_pivotal_bc
     . rw [← not_iff_not]
       constructor
       . intro
-        unfold voterPrefers
         apply  Preorder'.lt_asymm
         simp [orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
       . intro
         exact hppibc
 
-  have hbac:
-    socPrefers R rr b a ∧
-    socPrefers R rr a c := by
+  have hbac: b ≻[R rr] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
     . have hSameCol_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
@@ -507,7 +497,7 @@ lemma nab_pivotal_bc
       have hSocPrefer_rr_ba := by apply hAIIA at hSameCol_ba; exact hSameCol_ba;
       exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
     -- By AIIA
-    . have hsoc_swp_ac: socPrefers R (swapping_k p q n_ab.castSucc) a c :=
+    . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
       have hSameCol_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
         unfold AgreeOn rr swapping_k
@@ -557,7 +547,7 @@ lemma nab_le_nbc
   by_contra h
   push_neg at h
   let pp := (canonicalSwap b c hbc) n_bc.succ
-  have h3 :  voterPrefers (pp n_ab) b c:= by
+  have h3: b ≻[pp n_ab] c:= by
     unfold pp canonicalSwap swapping_k
     split_ifs with hh
     . simp at *; omega
@@ -589,10 +579,10 @@ lemma ncb_le_nab
   -- profile at n_cb column
   let pp := (canonicalSwap c b (Ne.symm hbc)) n_cb.castSucc
   -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
-  have h1: socPrefers R pp c b := h_ncb_pivot.1 n_cb (le_refl n_cb)
+  have h1: c ≻[R pp] b := h_ncb_pivot.1 n_cb (le_refl n_cb)
   -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
-  have h2: socPrefers R pp b c := by
-    have h20: voterPrefers (pp n_ab) b c := by
+  have h2: b ≻[R pp] c := by
+    have h20: b ≻[pp n_ab] c := by
       unfold pp canonicalSwap swapping_k
       have: n_ab < n_cb.val := by omega
       simp [this]
