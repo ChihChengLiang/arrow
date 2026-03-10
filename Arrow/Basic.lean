@@ -83,19 +83,17 @@ def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
 
-lemma AgreeOnStrongly {α : Type} {N : ℕ}
+def AgreeStronglyOn {α : Type} {N : ℕ}
+    (p q : Profile α N) (a b : α) : Prop :=
+  ∀ i, ((a ≻[p i] b) ↔ a ≻[q i] b) ∧ ((b ≻[p i] a) ↔ b ≻[q i] a)
+
+lemma agree_strongly_is_agree {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) :
-    (∀ i, (a ≻[p i] b) ↔ (a ≻[q i] b)) → AgreeOn p q a b := by
+    AgreeStronglyOn p q a b → AgreeOn p q a b := by
   intro h i
-  by_cases hab : a = b
-  . subst hab; simp only [(p i).refl, (q i).refl, iff_self, and_self]
-  . -- For a ≠ b: r.lt a b ↔ ¬r.lt b a (by asymm + total + antisymm)
-    have key : ∀ r : Preorder' α, r.lt a b ↔ ¬r.lt b a := fun r =>
-      ⟨r.lt_asymm a b, fun hn => (r.total a b).elim
-        (fun h => ⟨h, fun hba => hab (r.antisymm a b h hba)⟩)
-        (fun h => absurd ⟨h, fun h' => hab (r.antisymm b a h h').symm⟩ hn)⟩
-    simp only [← Preorder'.not_lt, not_iff_not]
-    exact ⟨by rw [key, key, not_iff_not]; exact h i, h i⟩
+  have h2 := h i
+  simp only [← Preorder'.not_lt, not_iff_not]
+  exact ⟨h2.2, h2.1⟩
 
 -- if everyone like `a` over `b`, so is society
 def Unanimity (R : SWF α N) : Prop :=
