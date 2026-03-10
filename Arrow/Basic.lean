@@ -84,6 +84,48 @@ def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
 
+lemma AgreeOnStrongly {α : Type} {N : ℕ}
+    (p q : Profile α N) (a b : α) :
+    (∀ i, (a ≻[p i] b) ↔ (a ≻[q i] b)) → AgreeOn p q a b := by
+  intro h i
+  have h2 := h i
+  constructor
+  · -- a ≽[p i] b ↔ a ≽[q i] b
+    -- Using: a ≽ b ↔ ¬(b ≻ a) (by not_lt)
+    -- Need: (b ≻[p i] a) ↔ (b ≻[q i] a)
+    simp only [← Preorder'.not_lt, not_iff_not]
+    -- Goal: (p i).lt a b ↔ (q i).lt a b
+    constructor
+    · intro hpab
+      by_contra hqab
+      simp only [Preorder'.not_lt] at hqab
+      -- hqab : (q i).le b a, so ¬(a ≻[q i] b) by not_lt rewritten
+      have hpba : ¬(p i).lt b a := (p i).lt_asymm a b hpab
+      simp only [Preorder'.not_lt] at hpba
+      -- hpba : (p i).le a b
+      -- From h2 and hpba: ¬(a ≻[p i] b), so ¬(a ≻[q i] b)
+      have hnpab : ¬(p i).lt b a := fun h => (p i).lt_asymm a b hpab h
+      have hnqab : ¬(q i).lt b a := h2.not.mp hnpab
+      simp only [Preorder'.not_lt] at hnqab
+      -- hnqab : (q i).le a b, with hqab : (q i).le b a
+      have heq := (q i).antisymm a b hnqab hqab
+      subst heq
+      exact (p i).lt_irrefl a hpab
+    · intro hqab
+      by_contra hpab
+      simp only [Preorder'.not_lt] at hpab
+      have hqba : ¬(q i).lt b a := (q i).lt_asymm a b hqab
+      simp only [Preorder'.not_lt] at hqba
+      have hnqab : ¬(q i).lt b a := fun h => (q i).lt_asymm a b hqab h
+      have hnpab : ¬(p i).lt b a := h2.not.mpr hnqab
+      simp only [Preorder'.not_lt] at hnpab
+      have heq := (p i).antisymm a b hnpab hpab
+      subst heq
+      exact (q i).lt_irrefl a hqab
+  · -- b ≽[p i] a ↔ b ≽[q i] a
+    -- Using: b ≽ a ↔ ¬(a ≻ b) (by not_lt)
+    simp only [← Preorder'.not_lt, not_iff_not]
+    exact h2
 
 -- if everyone like `a` over `b`, so is society
 def Unanimity (R : SWF α N) : Prop :=
