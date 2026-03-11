@@ -95,7 +95,7 @@ def Unanimity {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
--- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
+-- then `SWF(p)` and `SWF(q)` rank the two alternatives the same
 def AIIA {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≻[R p] b) ↔ a ≻[R q] b)
@@ -270,9 +270,7 @@ lemma pivotalVoter_pivot_canon
   (a b : α) (hab : a ≠ b)
   (hu: Unanimity R) (hAIIA: (AIIA R))
   : IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter a b hab hu) := by
-  let n_ab := pivotalVoter a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
-
   have hf : IsSequentialSwap a b cs := by
     unfold IsSequentialSwap cs canonicalSwap swapping_k
     intro k i
@@ -326,9 +324,7 @@ lemma nab_pivotal_bc
     . exact h_nab_pivot_p.1 n_ab (le_refl n_ab)
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[swapping_k p q n_ab.castSucc i] c := by
-        intro i
-        unfold swapping_k
-        split_ifs
+        intro i; unfold swapping_k; split_ifs
         . exact (hp i).1
         . exact (hq i).2
       exact hu _ _ _ h
@@ -414,6 +410,7 @@ lemma nab_pivotal_bc
   have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
   exact (hAIIA _ _ _ _ h_agree).mpr hrr_bc
 
+-- n_ab pivot b and c, so n_bc shouldn't flip the b c order earlier than n_ab
 lemma nab_le_nbc
   {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
@@ -432,6 +429,7 @@ lemma nab_le_nbc
   exact absurd (pivotalVoter_pivot_canon R b c hbc hu hAIIA).2
     (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
+-- n_cb should flip c b order before n_ab do so
 lemma ncb_le_nab
   {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
