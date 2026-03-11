@@ -418,13 +418,12 @@ lemma nab_pivotal_bc
     split_ifs with hi hppibc hieqnab hppibc
     . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab)]
       exact hppibc
-    . rw [← not_iff_not]
-      constructor
-      . intro
-        apply  Preorder'.lt_asymm
-        simp [orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
-      . intro
-        exact hppibc
+    . rw [Preorder'.lt_iff]
+      simp [orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
+      apply Preorder'.lt_of_not_lt at hppibc
+      exact hppibc
+      exact hbc
+      exact Ne.symm hbc
     . simp [orderFromRanking_lt_02 b a c hbc]
       rw [hieqnab]
       exact h
