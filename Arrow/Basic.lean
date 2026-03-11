@@ -120,54 +120,18 @@ def orderFromRanking {α : Type} [LinearOrder α]
     else x ≤ y                        -- fallback to LinearOrder
   refl := by intro x; simp
   trans := by
-    intro a b c ha hb
-    split_ifs with haa2 hca0 haa0 hca2
-    . split_ifs at hb with hba2 hba0 hca2
-      . split_ifs at ha with hba0
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . rw[ha] at hba2
-          exact absurd hba2 h02
-      . exact hb
-      . split_ifs at ha
-        rw[ha] at hb
-        exact absurd hb h02
-      . split_ifs at ha
-        exact absurd ha hba0
-    . split_ifs at ha with hba0 hba2
-      . split_ifs at hb with hba2
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . rw[hb] at hca2
-          exact absurd hca2 h02
-      . exact ha
-      . split_ifs at hb
-        . exact absurd hb hba2
-    . split_ifs at ha with hba0 hba2
-      . split_ifs at hb with hba2
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . exact absurd hb hca0
-      . exact absurd ha haa2
-      . split_ifs at hb
-        exact le_trans ha hb
+    intro a b c ha hb; split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
+    by_cases hba0: b = a₀
+    . simp_all
+    . simp_all; exact le_trans ha.2 hb
   total := by intro a b; split_ifs <;> simp_all [le_total a b]
   antisymm := by
     intro a b ha hb
-    split_ifs at ha with haa2 hba0 haa0 hba2
-    . split_ifs at hb with hba2 haa0 hba0
-      . rw [haa2, hba2]
-      . rw[haa0] at haa2; exact absurd haa2 h02
-      . exact absurd hb haa0
-      . rw[hb, haa2]
-    . split_ifs at hb with hba2 haa0
-      . rw[hba0 ] at hba2; exact absurd hba2 h02
-      . rw[hba0, haa0]
-      .  exact absurd hb haa0
-    . rw[ha, haa0]
-    . rw[ha , hba2]
-    . split_ifs at hb
-      exact le_antisymm ha hb
+    split_ifs at ha with haa2 hba0 haa0 hba2 <;> simp_all
+    . by_cases hba2: b = a₂
+      . rw [← hba2]
+      . exact absurd (hb hba2) (Ne.symm h02)
+    . exact le_antisymm ha hb
 
 lemma orderFromRanking_lt_01 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
