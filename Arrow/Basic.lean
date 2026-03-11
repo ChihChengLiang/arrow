@@ -487,26 +487,16 @@ lemma nab_le_nbc
   (hbc : b ≠ c)
   (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  :
-  -- n_ab ≤ n_bc
-  pivotalVoter R a b hab hu ≤ pivotalVoter R b c hbc hu  := by
-  -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
-  -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
-  let n_ab := pivotalVoter R a b hab hu
-  let n_bc := pivotalVoter R b c hbc hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  have h_nbc_pivot := pivotalVoter_pivot_canon R b c hbc hAIIA hu
-  by_contra h
-  push_neg at h
-  let pp := (canonicalSwap b c hbc) n_bc.succ
-  have h3: b ≻[pp n_ab] c:= by
-    unfold pp canonicalSwap swapping_k
+  : pivotalVoter R a b hab hu ≤ pivotalVoter R b c hbc hu := by
+  by_contra h; push_neg at h
+  let pp := (canonicalSwap b c hbc) (pivotalVoter R b c hbc hu).succ
+  have h_pref : b ≻[pp (pivotalVoter R a b hab hu)] c := by
+    simp only [pp, canonicalSwap, swapping_k]
     split_ifs with hh
-    . simp at *; omega
+    . simp at hh; omega
     . exact orderFromRanking_lt_02 b _ c hbc
-  have h4 := h_nab_dictate_bc pp h3
-  have h5 := by apply Preorder'.lt_asymm at h4; exact h4
-  exact absurd  h_nbc_pivot.2 h5
+  exact absurd (pivotalVoter_pivot_canon R b c hbc hAIIA hu).2
+    (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma ncb_le_nab
   {α : Type} [DecidableEq α] [LinearOrder α]
@@ -518,30 +508,17 @@ lemma ncb_le_nab
   (hbc : b ≠ c)
   (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  -- n_cb ≤ n_ab
-  : pivotalVoter R c b (Ne.symm hbc) hu  ≤ pivotalVoter R a b hab hu := by
-  -- the society ranking of c > b should flip no later than n_ab does it.
+  : pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R a b hab hu := by
+  by_contra h; push_neg at h
   let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
-  let n_ab := pivotalVoter R a b hab hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  have h_ncb_pivot := pivotalVoter_pivot_canon R c b (Ne.symm hbc) hAIIA hu
-
-  by_contra h
-  push_neg at h
-  -- profile at n_cb column
   let pp := (canonicalSwap c b (Ne.symm hbc)) n_cb.castSucc
-  -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
-  have h1: c ≻[R pp] b := h_ncb_pivot.1 n_cb (le_refl n_cb)
-  -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
-  have h2: b ≻[R pp] c := by
-    have h20: b ≻[pp n_ab] c := by
-      unfold pp canonicalSwap swapping_k
-      have: n_ab < n_cb.val := by omega
-      simp [this]
-      exact orderFromRanking_lt_02 b _ c hbc
-    exact h_nab_dictate_bc pp h20
-  have h3 := by apply Preorder'.lt_asymm at h2; exact h2
-  exact absurd h1 h3
+  have h_pref : b ≻[pp (pivotalVoter R a b hab hu)] c := by
+    unfold pp canonicalSwap swapping_k
+    have hlt : (pivotalVoter R a b hab hu).val < n_cb.val := by omega
+    simp [hlt]
+    exact orderFromRanking_lt_02 b _ c hbc
+  exact absurd ((pivotalVoter_pivot_canon R c b (Ne.symm hbc) hAIIA hu).1 n_cb (le_refl n_cb))
+    (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma nbc_le_ncb
   {α : Type} [DecidableEq α] [LinearOrder α]
@@ -553,18 +530,8 @@ lemma nbc_le_ncb
   (hbc : b ≠ c)
   (hu: Unanimity _ _ R)
   (hAIIA: (AIIA _ _ R))
-  : -- n_cb ≤ n_bc
-  pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu := by
-  let n_ab := pivotalVoter R a b hab hu
-  let n_bc := pivotalVoter R b c hbc hu
-  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
-  -- n_bc ≥ n_ab
-  have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
-
-  -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hac hbc hu hAIIA
-
-  exact le_trans h_ncb_le_nab h_nab_le_nbc
+  : pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu :=
+  le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
 lemma n_ab_pivotal_bc_cb
   {α : Type} [DecidableEq α] [LinearOrder α]
