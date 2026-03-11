@@ -281,14 +281,11 @@ lemma pivotalVoter_spec
   have hSameColGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
     intro k i; unfold cs canonicalSwap swapping_k
     split_ifs with hik
-    . -- i < k.val: swapping_k uses p, which has b > a, so ¬(a > b)
-      rw [← not_iff_not]
-      have hfba := (hf k i).1 hik
-      constructor
-      . intro h; apply Preorder'.lt_asymm; exact orderFromRanking_lt_02 b _ a (Ne.symm hab)
-      . intro h; apply Preorder'.lt_asymm; exact hfba
-    . -- i ≥ k.val: swapping_k uses q, which has a > b
-      simp at hik
+    . rw [Preorder'.lt_iff]
+      simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+      exact (hf k i).1 hik
+      exact Ne.symm hab
+    . simp at hik
       have hfba := (hf k i).2 hik
       simp [hfba]
       exact orderFromRanking_lt_02 a _ b hab
