@@ -333,13 +333,10 @@ lemma pivotalVoter_pivot_canon
 lemma nab_pivotal_bc
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
-  (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
   {R: SWF α N}
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
+  (a b c: α)
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R))
   : Dictates R (pivotalVoter R a b hab hu) b c := by
   let n_ab := pivotalVoter R a b hab hu
   let p: Profile α N := fun i => orderFromRanking b c a (Ne.symm hab)
@@ -482,11 +479,8 @@ lemma nab_le_nbc
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R))
   : pivotalVoter R a b hab hu ≤ pivotalVoter R b c hbc hu := by
   by_contra h; push_neg at h
   let pp := (canonicalSwap b c hbc) (pivotalVoter R b c hbc hu).succ
@@ -503,12 +497,9 @@ lemma ncb_le_nab
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  : pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R a b hab hu := by
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R)):
+  pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R a b hab hu := by
   by_contra h; push_neg at h
   let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
   let pp := (canonicalSwap c b (Ne.symm hbc)) n_cb.castSucc
@@ -525,11 +516,8 @@ lemma nbc_le_ncb
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R))
   : pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu :=
   le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
@@ -538,12 +526,8 @@ lemma n_ab_pivotal_bc_cb
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  :
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R)):
   -- n_bc = n_cb = n_ab
   (pivotalVoter R b c hbc hu) = (pivotalVoter R c b (Ne.symm hbc) hu) ∧
   (pivotalVoter R c b (Ne.symm hbc) hu) = pivotalVoter R a b hab hu := by
