@@ -7,7 +7,7 @@ import Mathlib.Data.Fintype.EquivFin
 noncomputable section
 open Classical
 
-variable (α: Type) [Fintype α]-- α is the type of alternatives
+variable (α: Type) -- α is the type of alternatives
 variable (N: ℕ ) -- N is the number of voters
 
 structure Preorder' (α : Type) where
@@ -220,7 +220,7 @@ def canonicalSwap
   swapping_k p q
 
 noncomputable def pivotalVoter
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
@@ -239,7 +239,7 @@ noncomputable def pivotalVoter
 
 -- pivotalVoter is independent of profile
 lemma pivotalVoter_spec
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
@@ -308,7 +308,7 @@ lemma pivotalVoter_spec
     exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a hSameCol_ba).mpr hPn
 
 lemma pivotalVoter_pivot_canon
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
@@ -331,7 +331,7 @@ lemma pivotalVoter_pivot_canon
 
 
 lemma nab_pivotal_bc
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
@@ -475,7 +475,7 @@ lemma nab_pivotal_bc
   exact hSocPrefer.mpr hrr_bc
 
 lemma nab_le_nbc
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
@@ -493,7 +493,7 @@ lemma nab_le_nbc
     (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma ncb_le_nab
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
@@ -512,7 +512,7 @@ lemma ncb_le_nab
     (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma nbc_le_ncb
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
@@ -522,7 +522,7 @@ lemma nbc_le_ncb
   le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
 lemma n_ab_pivotal_bc_cb
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
@@ -557,7 +557,7 @@ lemma n_ab_pivotal_bc_cb
 
 -- n_bc = n_cb = n_ab can be extended to any pair x y
 lemma n_ab_dictate_xy
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c x y: α)
@@ -611,7 +611,7 @@ lemma n_ab_dictate_xy
             . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxb) (Ne.symm hyb) hxy hu hAIIA
 
 theorem Impossibility
-    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+    {α : Type} [Fintype α] [LinearOrder α]
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N,
