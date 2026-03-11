@@ -584,47 +584,47 @@ lemma n_ab_dictate_xy
   obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
   obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
   obtain ⟨_, h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
-  rcases eq_or_ne x a with hxa | hxnea
-  . rw [hxa]  -- x = a
-    rcases eq_or_ne y b with hyb | hynb
+  by_cases hxa : x = a
+  . rw [hxa]
+    by_cases hyb : y = b
     . rw [hyb]
       simpa [← h_nba_eq_nca, ← h_nab_eq_nba] using nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-    . rcases eq_or_ne y c with hyc | hync
+    . by_cases hyc : y = c
       . rw [hyc]
         simpa [← h_nab_eq_nba] using nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
       . rw [hxa] at hxy
-        simpa [← h_nab_eq_nba] using nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hynb) hxy hu hAIIA
-  . rcases eq_or_ne x b with hxb | hxneb
-    . rw [hxb]  -- x = b
-      rcases eq_or_ne y a with hya | hyna
+        simpa [← h_nab_eq_nba] using nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyb) hxy hu hAIIA
+  . by_cases hxb : x = b
+    . rw [hxb]
+      by_cases hya : y = a
       . rw [hya]
         simpa [h_ncb_eq_nab] using nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-      . rcases eq_or_ne y c with hyc | hync
+      . by_cases hyc : y = c
         . rw [hyc]; exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
-        . rw [hxb] at hxy; exact nab_pivotal_bc a b y hab (Ne.symm hyna) hxy hu hAIIA
-    . rcases eq_or_ne x c with hxc | hxnec
-      . rw [hxc]  -- x = c
-        rcases eq_or_ne y a with hya | hyna
+        . rw [hxb] at hxy; exact nab_pivotal_bc a b y hab (Ne.symm hya) hxy hu hAIIA
+    . by_cases hxc : x = c
+      . rw [hxc]
+        by_cases hya : y = a
         . rw [hya]
           simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
-        . rcases eq_or_ne y b with hyb | hynb
+        . by_cases hyb : y = b
           . rw [hyb]
             simpa [← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
           . rw [hxc] at hxy
-            simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c y hbc (Ne.symm hynb) hxy hu hAIIA
+            simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c y hbc (Ne.symm hyb) hxy hu hAIIA
       . -- x ∉ {a,b,c}
-        obtain ⟨h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
-        obtain ⟨_, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxnea) hab hxneb hu hAIIA
-        rcases eq_or_ne y a with hya | hyna
+        obtain ⟨h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxa) (Ne.symm hxb) hu hAIIA
+        obtain ⟨_, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxa) hab hxb hu hAIIA
+        by_cases hya : y = a
         . rw [hya]
-          simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x a (Ne.symm hxneb) (Ne.symm hab) hxnea hu hAIIA
-        . rcases eq_or_ne y b with hyb | hynb
+          simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x a (Ne.symm hxb) (Ne.symm hab) hxa hu hAIIA
+        . by_cases hyb : y = b
           . rw [hyb]
-            simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x b (Ne.symm hxnea) hab hxneb hu hAIIA
-          . rcases eq_or_ne y c with hyc | hync
+            simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x b (Ne.symm hxa) hab hxb hu hAIIA
+          . by_cases hyc : y = c
             . rw [hyc]
-              simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxnea) hac hxnec hu hAIIA
-            . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxneb) (Ne.symm hynb) hxy hu hAIIA
+              simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxa) hac hxc hu hAIIA
+            . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxb) (Ne.symm hyb) hxy hu hAIIA
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
