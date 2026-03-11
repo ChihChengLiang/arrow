@@ -266,8 +266,8 @@ lemma pivotalVoter_spec
   -- For j < n_ab, ¬P j: society doesn't prefer b > a, hence prefers a > b
   have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
 
-  -- Helper: sameCol for any column k between f and canonical swapping process
-  have hSameColGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
+  -- Helper: Agree on for any column k between f and canonical swapping process
+  have hAgreeGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
     intro k i; unfold cs canonicalSwap swapping_k
     split_ifs with hik
     . rw [Preorder'.lt_iff]
@@ -281,9 +281,8 @@ lemma pivotalVoter_spec
 
   constructor
   . intro i hi
-    have hSameCol_i : AgreeOn (f i.castSucc) (cs i.castSucc) a b := hSameColGen i.castSucc
-    have h2 := hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i
-    apply h2.mpr
+    have h_soc_ab := hAIIA (f i.castSucc) (cs i.castSucc) a b (hAgreeGen i.castSucc)
+    apply h_soc_ab.mpr
     by_cases hizero : i.val = 0
     . -- i = 0
       apply hu (cs i.castSucc) a b
@@ -301,10 +300,10 @@ lemma pivotalVoter_spec
       apply Preorder'.lt_of_not_lt at hnotPj
       exact hnotPj
       exact Ne.symm hab
-  . have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
-      intro i; have h := hSameColGen n_ab.succ i
+  . have h_agree_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
+      intro i; have h := hAgreeGen n_ab.succ i
       exact Preorder'.lt_iff (f n_ab.succ i) (cs n_ab.succ i) h hab
-    exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a hSameCol_ba).mpr hPn
+    exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a h_agree_ba).mpr hPn
 
 lemma pivotalVoter_pivot_canon
   {α : Type} [LinearOrder α]
@@ -396,7 +395,7 @@ lemma nab_pivotal_bc
           then orderFromRanking a b c hac
           else orderFromRanking a c b hab
 
-  have hSameCol: AgreeOn pp rr b c := by
+  have h_agree: AgreeOn pp rr b c := by
     unfold AgreeOn
     intro i
     unfold rr
@@ -422,7 +421,7 @@ lemma nab_pivotal_bc
   have hbac: b ≻[R rr] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
-    . have hSameCol_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
+    . have h_agree_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
         unfold AgreeOn swapping_k
         intro i
         split_ifs with h
@@ -444,12 +443,12 @@ lemma nab_pivotal_bc
           . simp only [orderFromRanking_lt_01 a b c hab hac]
           . simp only [orderFromRanking_lt_02 a c b hab, orderFromRanking_lt_01 a b c hab hac]
           exact hab
-      have hSocPrefer_rr_ba := by apply hAIIA at hSameCol_ba; exact hSameCol_ba;
+      have hSocPrefer_rr_ba := by apply hAIIA at h_agree_ba; exact h_agree_ba;
       exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
     -- By AIIA
     . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
-      have hSameCol_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
+      have h_agree_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
         unfold AgreeOn rr swapping_k
         intro i
         simp at *
@@ -465,12 +464,10 @@ lemma nab_pivotal_bc
         . simp [orderFromRanking_lt_01 a c b hac hab]
           exact (q i).lt_trans (hq i).2 (hq i).1
 
-      have hSoc_rr_ac := by apply hAIIA at hSameCol_ac; exact hSameCol_ac
-      exact hSoc_rr_ac.mp hsoc_swp_ac
+      exact (hAIIA _ _ _ _ h_agree_ac).mp hsoc_swp_ac
 
   have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
-  have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
-  exact hSocPrefer.mpr hrr_bc
+  exact (hAIIA _ _ _ _ h_agree).mpr hrr_bc
 
 lemma nab_le_nbc
   {α : Type} [LinearOrder α]
@@ -546,9 +543,9 @@ lemma n_ab_pivotal_bc_cb
   have h_nbc_le_ncb: n_bc ≤ n_cb := nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
 
   -- n_bc = n_cb = n_ab
-  have h_nbc_eq_ncb: n_bc = n_cb := by exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
+  have h_nbc_eq_ncb: n_bc = n_cb := le_antisymm h_nbc_le_ncb h_ncb_le_nbc
   have h_ncb_eq_nab: n_cb = n_ab := by
-    have h_nab_le_n_cb: n_ab ≤ n_cb := by exact le_trans h_nab_le_nbc h_nbc_le_ncb
+    have h_nab_le_n_cb: n_ab ≤ n_cb := le_trans h_nab_le_nbc h_nbc_le_ncb
     exact le_antisymm h_ncb_le_nab h_nab_le_n_cb
 
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
