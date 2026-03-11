@@ -52,13 +52,6 @@ lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
     . intro h
       exact h1.2 (p.trans _ _ _ h2.1 h)
 
-lemma Preorder'.lt_iff {α : Type} (p q: Preorder' α) {a b: α}
-  (h_iff: p.lt b a ↔ q.lt b a)(hab: a≠b): p.lt a b ↔ q.lt a b := by
-  rw [← not_iff_not]
-  constructor <;> intro h
-  . exact q.lt_asymm _ _ (h_iff.mp (p.lt_of_not_lt _ _ (Ne.symm hab) h))
-  . exact p.lt_asymm _ _ (h_iff.mpr (q.lt_of_not_lt _ _ (Ne.symm hab) h))
-
 -- A preference profile maps individual i to their preferences
 def Profile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
@@ -218,7 +211,7 @@ lemma functionCanBeFound
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
-  (hu : Unanimity _ _ R):
+  (hu : Unanimity R):
   ∃ k, functionToFind R a b hab k := by
   let cs: SwapSequence α N := canonicalSwap a b hab
   use (0:Fin N).rev
@@ -236,7 +229,7 @@ noncomputable def pivotalVoter
   {N : ℕ} [NeZero N]
   {R : SWF α N}
   (a b : α) (hab : a ≠ b)
-  (hu : Unanimity _ _ R) : Fin N :=
+  (hu : Unanimity R) : Fin N :=
   -- Find the minimum k where the flip happens
   Fin.find (functionToFind R a b hab) (functionCanBeFound R a b hab hu)
 
