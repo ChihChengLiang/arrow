@@ -52,21 +52,11 @@ lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
       exact h1.2 (p.trans _ _ _ h2.1 h)
 
 lemma Preorder'.lt_iff {α : Type} (p q: Preorder' α) {a b: α}
-  (h_iff: p.lt b a ↔ q.lt b a)(hab: a≠b):  p.lt a b ↔ q.lt a b := by
-  rw[← not_iff_not]
-  constructor
-  . intro h2
-    apply Preorder'.lt_asymm
-    apply h_iff.mp
-    apply Preorder'.lt_of_not_lt at h2
-    exact h2
-    exact Ne.symm hab
-  . intro h2
-    apply Preorder'.lt_asymm
-    apply Preorder'.lt_of_not_lt at h2
-    apply h_iff.mpr at h2
-    exact h2
-    exact Ne.symm hab
+  (h_iff: p.lt b a ↔ q.lt b a)(hab: a≠b): p.lt a b ↔ q.lt a b := by
+  rw [← not_iff_not]
+  constructor <;> intro h
+  . exact q.lt_asymm _ _ (h_iff.mp (p.lt_of_not_lt _ _ (Ne.symm hab) h))
+  . exact p.lt_asymm _ _ (h_iff.mpr (q.lt_of_not_lt _ _ (Ne.symm hab) h))
 
 -- A preference profile maps individual i to their preferences
 def Profile (α : Type) (N : ℕ) :=
