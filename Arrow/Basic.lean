@@ -230,7 +230,7 @@ noncomputable def pivotalVoter
   let hN: ∃ k, P k := by
     use (0:Fin N).rev
     unfold P cs canonicalSwap swapping_k
-    have: 0 < N := by exact Nat.pos_of_ne_zero (NeZero.ne N)
+    have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
     simp [Nat.sub_add_cancel this]
     apply hu
     simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
@@ -270,14 +270,10 @@ lemma pivotalVoter_spec
   have hAgreeGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
     intro k i; unfold cs canonicalSwap swapping_k
     split_ifs with hik
-    . rw [Preorder'.lt_iff]
-      simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
-      exact (hf k i).1 hik
-      exact Ne.symm hab
+    . rw [Preorder'.lt_iff _ _ _ (Ne.symm hab)]
+      simp [orderFromRanking_lt_02 b _ a (Ne.symm hab), (hf k i).1 hik]
     . simp at hik
-      have hfba := (hf k i).2 hik
-      simp [hfba]
-      exact orderFromRanking_lt_02 a _ b hab
+      simp [orderFromRanking_lt_02 a _ b hab, (hf k i).2 hik]
 
   constructor
   . intro i hi
@@ -297,9 +293,7 @@ lemma pivotalVoter_spec
       have hnotPj := hPmin j hjlt
       have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
       simp only [P, heq] at hnotPj
-      apply Preorder'.lt_of_not_lt at hnotPj
-      exact hnotPj
-      exact Ne.symm hab
+      exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotPj
   . have h_agree_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
       intro i; have h := hAgreeGen n_ab.succ i
       exact Preorder'.lt_iff (f n_ab.succ i) (cs n_ab.succ i) h hab
@@ -373,8 +367,7 @@ lemma nab_pivotal_bc
         split_ifs
         . exact (hp i).1
         . exact (hq i).2
-      apply hu at h
-      exact h
+      exact hu _ _ _ h
   intro pp h
 
   -- let rr
@@ -396,27 +389,18 @@ lemma nab_pivotal_bc
           else orderFromRanking a c b hab
 
   have h_agree: AgreeOn pp rr b c := by
-    unfold AgreeOn
+    unfold AgreeOn rr
     intro i
-    unfold rr
     split_ifs with hi hppibc hieqnab hppibc
-    . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab)]
-      exact hppibc
-    . rw [Preorder'.lt_iff]
-      simp [orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
-      apply Preorder'.lt_of_not_lt at hppibc
-      exact hppibc
-      exact hbc
-      exact Ne.symm hbc
-    . simp [orderFromRanking_lt_02 b a c hbc]
-      rw [hieqnab]
-      exact h
-    . simp [orderFromRanking_lt_12 a b c hab hbc hac]; exact hppibc
-    . rw [Preorder'.lt_iff]
-      apply Preorder'.lt_of_not_lt at hppibc
-      simp only [orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab, hppibc]
-      exact hbc
-      exact Ne.symm hbc
+    . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab), hppibc]
+    . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
+      simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
+        orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
+    . simp [orderFromRanking_lt_02 b a c hbc, hieqnab]; exact h
+    . simp [orderFromRanking_lt_12 a b c hab hbc hac, hppibc]
+    . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
+      simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
+        orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
 
   have hbac: b ≻[R rr] a ≻ c := by
     constructor
@@ -437,14 +421,12 @@ lemma nab_pivotal_bc
           . omega
         . unfold rr q; simp at h
           have : ¬(i < n_ab) := by omega
-          rw [Preorder'.lt_iff]
+          rw [Preorder'.lt_iff _ _ _ hab]
           split_ifs
           . omega
           . simp only [orderFromRanking_lt_01 a b c hab hac]
           . simp only [orderFromRanking_lt_02 a c b hab, orderFromRanking_lt_01 a b c hab hac]
-          exact hab
-      have hSocPrefer_rr_ba := by apply hAIIA at h_agree_ba; exact h_agree_ba;
-      exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
+      exact (hAIIA _ _ _ _ h_agree_ba).mp h_nab_pivot_p.2
     -- By AIIA
     . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
@@ -454,9 +436,8 @@ lemma nab_pivotal_bc
         simp at *
         split_ifs with hinab hppibc hieqnab hppibc
         . rfl
-        . rw [Preorder'.lt_iff]
+        . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
           simp only [orderFromRanking_lt_02 c b a (Ne.symm hac), (hp i).2]
-          exact Ne.symm hac
         . simp [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
           exact (q i).lt_trans (hq i).2 (hq i).1
         . simp [orderFromRanking_lt_02 a b c hac]
