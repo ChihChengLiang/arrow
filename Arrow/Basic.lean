@@ -7,7 +7,7 @@ import Mathlib.Data.Fintype.EquivFin
 noncomputable section
 open Classical
 
-variable (α: Type) [Fintype α]-- α is the type of alternatives
+variable (α: Type) -- α is the type of alternatives
 variable (N: ℕ ) -- N is the number of voters
 
 structure Preorder' (α : Type) where
@@ -51,6 +51,13 @@ lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
     . exact p.trans _ _ _ h1.1 h2.1
     . intro h
       exact h1.2 (p.trans _ _ _ h2.1 h)
+
+lemma Preorder'.lt_iff {α : Type} (p q: Preorder' α) {a b: α}
+  (h_iff: p.lt b a ↔ q.lt b a)(hab: a≠b): p.lt a b ↔ q.lt a b := by
+  rw [← not_iff_not]
+  constructor <;> intro h
+  . exact q.lt_asymm _ _ (h_iff.mp (p.lt_of_not_lt _ _ (Ne.symm hab) h))
+  . exact p.lt_asymm _ _ (h_iff.mpr (q.lt_of_not_lt _ _ (Ne.symm hab) h))
 
 -- A preference profile maps individual i to their preferences
 def Profile (α : Type) (N : ℕ) :=
@@ -99,18 +106,18 @@ lemma agree_strongly_is_agree {α : Type} {N : ℕ}
   exact ⟨h2.2, h2.1⟩
 
 -- if everyone like `a` over `b`, so is society
-def Unanimity (R : SWF α N) : Prop :=
+def Unanimity {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α),
     (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
--- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
-def AIIA (R : SWF α N) : Prop :=
+-- then `SWF(p)` and `SWF(q)` rank the two alternatives the same
+def AIIA {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≻[R p] b) ↔ a ≻[R q] b)
 
-def NonDictatorship (R : SWF α N): Prop :=
+def NonDictatorship {α : Type} {N : ℕ} (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
 
 def swapping_k
@@ -130,37 +137,10 @@ def orderFromRanking {α : Type} [LinearOrder α]
     else x ≤ y                        -- fallback to LinearOrder
   refl := by intro x; simp
   trans := by
-    intro a b c ha hb
-    split_ifs with haa2 hca0 haa0 hca2
-    . split_ifs at hb with hba2 hba0 hca2
-      . split_ifs at ha with hba0
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . rw[ha] at hba2
-          exact absurd hba2 h02
-      . exact hb
-      . split_ifs at ha
-        rw[ha] at hb
-        exact absurd hb h02
-      . split_ifs at ha
-        exact absurd ha hba0
-    . split_ifs at ha with hba0 hba2
-      . split_ifs at hb with hba2
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . rw[hb] at hca2
-          exact absurd hca2 h02
-      . exact ha
-      . split_ifs at hb
-        . exact absurd hb hba2
-    . split_ifs at ha with hba0 hba2
-      . split_ifs at hb with hba2
-        . rw[hba0] at hba2
-          exact absurd hba2 h02
-        . exact absurd hb hca0
-      . exact absurd ha haa2
-      . split_ifs at hb
-        exact le_trans ha hb
+    intro a b c ha hb; split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
+    by_cases hba0: b = a₀
+    . simp_all
+    . simp_all; exact le_trans ha.2 hb
   total := by intro a b; split_ifs <;> simp_all [le_total a b]
 
 lemma orderFromRanking_lt_01 {α : Type} [LinearOrder α]
@@ -252,9 +232,9 @@ lemma functionCanBeFound
   exact hstrong
 
 noncomputable def pivotalVoter
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
-  (R : SWF α N)
+  {R : SWF α N}
   (a b : α) (hab : a ≠ b)
   (hu : Unanimity _ _ R) : Fin N :=
   -- Find the minimum k where the flip happens
@@ -262,16 +242,15 @@ noncomputable def pivotalVoter
 
 -- pivotalVoter is independent of profile
 lemma pivotalVoter_spec
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (f : Fin (N+1) → Profile α N)
   (hf: IsSequentialSwap a b f)
-  (hAIIA: AIIA _ _ R )
-  (hu : Unanimity _ _ R) :
-  IsPivotal R f a b (pivotalVoter R a b hab hu) := by
-  let n_ab := pivotalVoter R a b hab hu
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : IsPivotal R f a b (pivotalVoter a b hab hu) := by
+  let n_ab := pivotalVoter a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
   let P := functionToFind R a b hab
 
@@ -284,96 +263,47 @@ lemma pivotalVoter_spec
   -- For j < n_ab, ¬P j: society doesn't prefer b > a, hence prefers a > b
   have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
 
-  -- Helper: f and canonical swapping process agrees on orders of a and b
-  have hSameColGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
-    intro k;
-    -- unfold cs canonicalSwap swapping_k
-    have hstrong: AgreeStronglyOn (f k) (cs k) a b := by
-      intro i
-      unfold cs canonicalSwap swapping_k
-      split_ifs with hik
-      . have hfba := (hf k i).1 hik
-        constructor
-        . rw [← not_iff_not]; simp; constructor
-          . intro h; exact orderFromRanking_le_02 b _ a (Ne.symm hab)
-          . intro h; exact hfba.1
-        . simp only [orderFromRanking_lt_02 b _ a (Ne.symm hab), hfba]
-      . push_neg at hik
-        have hfba := (hf k i).2 hik
-        constructor
-        . simp only [hfba,  orderFromRanking_lt_02 a _ b hab]
-        . rw [← not_iff_not]; simp; constructor
-          . intro h; exact orderFromRanking_le_02 a _ b hab
-          . intro h; exact hfba.1
-    exact agree_strongly_is_agree (f k) (cs k) a b hstrong
-
-  have hSameCol: AgreeOn (f n_ab.succ) (cs n_ab.succ) a b := hSameColGen n_ab.succ
+  -- Helper: Agree on for any column k between f and canonical swapping process
+  have hAgreeGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
+    intro k i; unfold cs canonicalSwap swapping_k
+    split_ifs with hik
+    . rw [Preorder'.lt_iff _ _ _ (Ne.symm hab)]
+      simp [orderFromRanking_lt_02 b _ a (Ne.symm hab), (hf k i).1 hik]
+    . simp at hik
+      simp [orderFromRanking_lt_02 a _ b hab, (hf k i).2 hik]
 
   constructor
-  . -- Part 1: ∀ i ≤ n_ab, socPrefers R (f i.castSucc) a b
-    intro i hi
-    have hSameCol_i : AgreeOn (f i.castSucc) (cs i.castSucc) a b := hSameColGen i.castSucc
-    -- Need to show society prefers a > b at swapping_k p q i.castSucc
-    have hgoal: a ≻[R (cs i.castSucc)] b := by
-      by_cases hilt : i < n_ab
-      . by_cases hizero : i.val = 0
-        · -- Column 0: everyone prefers a > b by unanimity on q
-          have hall : ∀ j : Fin N, a ≻[cs i.castSucc j] b := by
-            intro j; unfold cs canonicalSwap swapping_k; simp [hizero]
-            exact orderFromRanking_lt_02 a _ b hab
-          exact hu (cs i.castSucc) a b hall
-        · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
-          have hipos : 0 < i.val := Nat.pos_of_ne_zero hizero
-          let j : Fin N := ⟨i.val - 1, by omega⟩
-          have hjlt : j < n_ab := by
-            simp only [Fin.lt_def, j]
-            have : i.val < n_ab.val := hilt
-            omega
-          have hnotPj := hPmin j hjlt
-          simp only [P, functionToFind] at hnotPj
-          have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
-          rw [heq] at hnotPj
-          simp [← Preorder'.not_lt] at hnotPj
-          exact hnotPj
-      . have hieq: i = n_ab := by omega
-        subst hieq
-        by_cases hnzero : n_ab.val = 0
-        . -- Column 0: unanimity
-          have hall : ∀ j : Fin N, a ≻[cs n_ab.castSucc j] b := by
-            intro j
-            unfold cs canonicalSwap swapping_k
-            simp [hnzero]
-            exact orderFromRanking_lt_02 a _ b hab
-          have hsoc := hu (cs n_ab.castSucc) a b hall
-          exact hsoc
-        . -- Column n_ab.val > 0: use j = n_ab - 1
-          have hnpos : 0 < n_ab.val := Nat.pos_of_ne_zero hnzero
-          let j : Fin N := ⟨n_ab.val - 1, by omega⟩
-          have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
-          have hnotPj := hPmin j hjlt
-          simp only [P, functionToFind] at hnotPj
-          have heq : j.succ = n_ab.castSucc := by apply Fin.ext; simp [j]; omega
-          rw [heq] at hnotPj
-          simp [← Preorder'.not_lt] at hnotPj
-          exact hnotPj
-    exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hgoal
-  . -- Part 2: socWeakPrefers R (f n_ab.succ) b a
-    apply hAIIA at hSameCol
-    rw [← not_iff_not, Preorder'.not_lt, Preorder'.not_lt] at hSameCol
-    apply hSameCol.mpr
-    exact hPn
+  . intro i hi
+    have h_soc_ab := hAIIA (f i.castSucc) (cs i.castSucc) a b (hAgreeGen i.castSucc)
+    apply h_soc_ab.mpr
+    by_cases hizero : i.val = 0
+    . -- i = 0
+      apply hu (cs i.castSucc) a b
+      intro j
+      unfold cs canonicalSwap swapping_k
+      simp [hizero]
+      exact orderFromRanking_lt_02 a _ b hab
+    . -- i ≠ 0
+      let j : Fin N := ⟨i.val - 1, by omega⟩
+      have : 0 < i.val := Nat.pos_of_ne_zero hizero
+      have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
+      have hnotPj := hPmin j hjlt
+      have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
+      simp only [P, heq] at hnotPj
+      exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotPj
+  . have h_agree_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
+      intro i; have h := hAgreeGen n_ab.succ i
+      exact Preorder'.lt_iff (f n_ab.succ i) (cs n_ab.succ i) h hab
+    exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a h_agree_ba).mpr hPn
 
 lemma pivotalVoter_pivot_canon
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
-  (hAIIA: AIIA _ _ R )
-  (hu : Unanimity _ _ R) :
-  IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter R a b hab hu) := by
-  let n_ab := pivotalVoter R a b hab hu
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter a b hab hu) := by
   let cs: SwapSequence α N := canonicalSwap a b hab
-
   have hf : IsSequentialSwap a b cs := by
     unfold IsSequentialSwap cs canonicalSwap swapping_k
     intro k i
@@ -383,21 +313,18 @@ lemma pivotalVoter_pivot_canon
       have :¬ i < k.val := by omega
       simp [this]
       exact orderFromRanking_lt_02 a _ b hab
-  exact pivotalVoter_spec R a b hab cs hf hAIIA hu
+  exact pivotalVoter_spec R a b hab cs hf hu hAIIA
 
 
 lemma nab_pivotal_bc
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
-  (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
   {R: SWF α N}
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  : Dictates R (pivotalVoter R a b hab hu) b c := by
-  let n_ab := pivotalVoter R a b hab hu
+  (a b c: α)
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : Dictates R (pivotalVoter a b hab hu) b c := by
+  let n_ab := pivotalVoter a b hab hu
   let p: Profile α N := fun i => orderFromRanking b c a (Ne.symm hab)
   let q: Profile α N := fun i => orderFromRanking a b c hac
 
@@ -421,7 +348,7 @@ lemma nab_pivotal_bc
     . intro h; split_ifs
       . omega
       . exact (hq i).1
-  have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hAIIA hu
+  have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hu hAIIA
 
   -- soc prefer a > b > c
   have habc: a ≻[R (swapping_k p q n_ab.castSucc)] b ≻ c  := by
@@ -430,13 +357,10 @@ lemma nab_pivotal_bc
     . exact h_nab_pivot_p.1 n_ab (le_refl n_ab)
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[swapping_k p q n_ab.castSucc i] c := by
-        intro i
-        unfold swapping_k
-        split_ifs
+        intro i; unfold swapping_k; split_ifs
         . exact (hp i).1
         . exact (hq i).2
-      apply hu at h
-      exact h
+      exact hu _ _ _ h
   intro pp h
 
   -- let rr
@@ -457,36 +381,24 @@ lemma nab_pivotal_bc
           then orderFromRanking a b c hac
           else orderFromRanking a c b hab
 
-  have hSameCol: AgreeOn pp rr b c := by
-    unfold AgreeOn
+  have h_agree: AgreeOn pp rr b c := by
+    unfold AgreeOn rr
     intro i
-    unfold rr
     split_ifs with hi hppibc hieqnab hppibc
-    . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab)]
-      exact hppibc
-    . rw [← not_iff_not]
-      constructor
-      . intro
-        apply  Preorder'.lt_asymm
-        simp [orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
-      . intro
-        exact hppibc
-    . simp [orderFromRanking_lt_02 b a c hbc]
-      rw [hieqnab]
-      exact h
-    . simp [orderFromRanking_lt_12 a b c hab hbc hac]; exact hppibc
-    . rw [← not_iff_not]
-      constructor
-      . intro
-        apply  Preorder'.lt_asymm
-        simp [orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
-      . intro
-        exact hppibc
+    . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab), hppibc]
+    . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
+      simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
+        orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
+    . simp [orderFromRanking_lt_02 b a c hbc, hieqnab]; exact h
+    . simp [orderFromRanking_lt_12 a b c hab hbc hac, hppibc]
+    . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
+      simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
+        orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
 
   have hbac: b ≽[R rr] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
-    . have hSameCol_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
+    . have h_agree_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
         unfold AgreeOn swapping_k
         intro i
         split_ifs with h
@@ -500,34 +412,25 @@ lemma nab_pivotal_bc
           . exact orderFromRanking_lt_01 b a c (Ne.symm hab) hbc
           . omega
           . omega
-        . rw [← not_iff_not]
-          constructor
-          . intro h; apply Preorder'.lt_asymm
-            unfold rr
-            simp at *
-            have h2: ¬(i < n_ab) := by omega
-            split_ifs
-            . omega
-            . exact orderFromRanking_lt_01 a b c hab hac
-            . exact orderFromRanking_lt_02 a c b hab
-          . intro h; apply Preorder'.lt_asymm; exact (hq i).1
-      have hSocPrefer_rr_ba := by apply hAIIA at hSameCol_ba; exact hSameCol_ba;
-      exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
+        . unfold rr q; simp at h
+          have : ¬(i < n_ab) := by omega
+          rw [Preorder'.lt_iff _ _ _ hab]
+          split_ifs
+          . omega
+          . simp only [orderFromRanking_lt_01 a b c hab hac]
+          . simp only [orderFromRanking_lt_02 a c b hab, orderFromRanking_lt_01 a b c hab hac]
+      exact (hAIIA _ _ _ _ h_agree_ba).mp h_nab_pivot_p.2
     -- By AIIA
     . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
-      have hSameCol_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
+      have h_agree_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
         unfold AgreeOn rr swapping_k
         intro i
         simp at *
         split_ifs with hinab hppibc hieqnab hppibc
-        . rw [← not_iff_not]
-        . rw [← not_iff_not]
-          constructor
-          . intro h; apply Preorder'.lt_asymm
-            exact orderFromRanking_lt_02 c b a (Ne.symm hac)
-          . intro h; apply Preorder'.lt_asymm
-            exact (hp i).2
+        . rfl
+        . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
+          simp only [orderFromRanking_lt_02 c b a (Ne.symm hac), (hp i).2]
         . simp [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
           exact (q i).lt_trans (hq i).2 (hq i).1
         . simp [orderFromRanking_lt_02 a b c hac]
@@ -535,120 +438,74 @@ lemma nab_pivotal_bc
         . simp [orderFromRanking_lt_01 a c b hac hab]
           exact (q i).lt_trans (hq i).2 (hq i).1
 
-      have hSoc_rr_ac := by apply hAIIA at hSameCol_ac; exact hSameCol_ac
-      exact hSoc_rr_ac.mp hsoc_swp_ac
+      exact (hAIIA _ _ _ _ h_agree_ac).mp hsoc_swp_ac
 
   have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
-  have hSocPrefer := by apply hAIIA at hSameCol; exact hSameCol
-  exact hSocPrefer.mpr hrr_bc
+  exact (hAIIA _ _ _ _ h_agree).mpr hrr_bc
 
+-- n_ab pivot b and c, so n_bc shouldn't flip the b c order earlier than n_ab
 lemma nab_le_nbc
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  :
-  -- n_ab ≤ n_bc
-  pivotalVoter R a b hab hu ≤ pivotalVoter R b c hbc hu  := by
-  -- need to use the h_nbc_pivot to show that n_bc must be latter than n_ab.
-  -- if n_bc flipped, but not the dictacterous n_ab, then the result is still b > c.
-  let n_ab := pivotalVoter R a b hab hu
-  let n_bc := pivotalVoter R b c hbc hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  have h_nbc_pivot := pivotalVoter_pivot_canon R b c hbc hAIIA hu
-  by_contra h
-  push_neg at h
-  let pp := (canonicalSwap b c hbc) n_bc.succ
-  have h3: b ≻[pp n_ab] c:= by
-    unfold pp canonicalSwap swapping_k
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : pivotalVoter a b hab hu ≤ pivotalVoter b c hbc hu := by
+  by_contra h; push_neg at h
+  let pp := (canonicalSwap b c hbc) (pivotalVoter b c hbc hu).succ
+  have h_pref : b ≻[pp (pivotalVoter a b hab hu)] c := by
+    simp only [pp, canonicalSwap, swapping_k]
     split_ifs with hh
-    . simp at *; omega
+    . simp at hh; omega
     . exact orderFromRanking_lt_02 b _ c hbc
-  have h4 := h_nab_dictate_bc pp h3
-  have h5 := by apply Preorder'.lt_asymm at h4; exact h4
-  exact absurd  h_nbc_pivot.2 h5
+  exact absurd (pivotalVoter_pivot_canon R b c hbc hu hAIIA).2
+    (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
+-- n_cb should flip c b order before n_ab do so
 lemma ncb_le_nab
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  -- n_cb ≤ n_ab
-  : pivotalVoter R c b (Ne.symm hbc) hu  ≤ pivotalVoter R a b hab hu := by
-  -- the society ranking of c > b should flip no later than n_ab does it.
-  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
-  let n_ab := pivotalVoter R a b hab hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  have h_ncb_pivot := pivotalVoter_pivot_canon R c b (Ne.symm hbc) hAIIA hu
-
-  by_contra h
-  push_neg at h
-  -- profile at n_cb column
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
+  pivotalVoter c b (Ne.symm hbc) hu ≤ pivotalVoter a b hab hu := by
+  by_contra h; push_neg at h
+  let n_cb := pivotalVoter c b (Ne.symm hbc) hu
   let pp := (canonicalSwap c b (Ne.symm hbc)) n_cb.castSucc
-  -- We haven't reached pivotal voter n_cb, society supposed to rank c > b
-  have h1: c ≻[R pp] b := h_ncb_pivot.1 n_cb (le_refl n_cb)
-  -- But n_ab already flipped to b > c, the dictactorial position should flip society ranking already
-  have h2: b ≻[R pp] c := by
-    have h20: b ≻[pp n_ab] c := by
-      unfold pp canonicalSwap swapping_k
-      have: n_ab < n_cb.val := by omega
-      simp [this]
-      exact orderFromRanking_lt_02 b _ c hbc
-    exact h_nab_dictate_bc pp h20
-  have h3 := by apply Preorder'.lt_asymm at h2; exact h2
-  exact absurd h1 h3
+  have h_pref : b ≻[pp (pivotalVoter a b hab hu)] c := by
+    unfold pp canonicalSwap swapping_k
+    have hlt : (pivotalVoter a b hab hu).val < n_cb.val := by omega
+    simp [hlt]
+    exact orderFromRanking_lt_02 b _ c hbc
+  exact absurd ((pivotalVoter_pivot_canon R c b (Ne.symm hbc) hu hAIIA).1 n_cb (le_refl n_cb))
+    (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma nbc_le_ncb
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  : -- n_cb ≤ n_bc
-  pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu := by
-  let n_ab := pivotalVoter R a b hab hu
-  let n_bc := pivotalVoter R b c hbc hu
-  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
-  -- n_bc ≥ n_ab
-  have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
-
-  -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hac hbc hu hAIIA
-
-  exact le_trans h_ncb_le_nab h_nab_le_nbc
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : pivotalVoter c b (Ne.symm hbc) hu ≤ pivotalVoter b c hbc hu :=
+  le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
 lemma n_ab_pivotal_bc_cb
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R))
-  :
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
   -- n_bc = n_cb = n_ab
-  (pivotalVoter R b c hbc hu) = (pivotalVoter R c b (Ne.symm hbc) hu) ∧
-  (pivotalVoter R c b (Ne.symm hbc) hu) = pivotalVoter R a b hab hu := by
+  (pivotalVoter b c hbc hu) = (pivotalVoter c b (Ne.symm hbc) hu) ∧
+  (pivotalVoter c b (Ne.symm hbc) hu) = pivotalVoter a b hab hu := by
 
-  let n_ab := pivotalVoter R a b hab hu
-  let n_bc := pivotalVoter R b c hbc hu
-  let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
+  let n_ab := pivotalVoter a b hab hu
+  let n_bc := pivotalVoter b c hbc hu
+  let n_cb := pivotalVoter c b (Ne.symm hbc) hu
   -- n_bc ≥ n_ab
   have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
 
@@ -662,127 +519,74 @@ lemma n_ab_pivotal_bc_cb
   have h_nbc_le_ncb: n_bc ≤ n_cb := nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
 
   -- n_bc = n_cb = n_ab
-  have h_nbc_eq_ncb: n_bc = n_cb := by exact le_antisymm h_nbc_le_ncb h_ncb_le_nbc
+  have h_nbc_eq_ncb: n_bc = n_cb := le_antisymm h_nbc_le_ncb h_ncb_le_nbc
   have h_ncb_eq_nab: n_cb = n_ab := by
-    have h_nab_le_n_cb: n_ab ≤ n_cb := by exact le_trans h_nab_le_nbc h_nbc_le_ncb
+    have h_nab_le_n_cb: n_ab ≤ n_cb := le_trans h_nab_le_nbc h_nbc_le_ncb
     exact le_antisymm h_ncb_le_nab h_nab_le_n_cb
 
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
--- n_bc = n_cb = n_ab can be extended to n_ts
+-- n_bc = n_cb = n_ab can be extended to any pair x y
 lemma n_ab_dictate_xy
-  {α : Type} [DecidableEq α] [LinearOrder α]
+  {α : Type} [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c x y: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hxy : x ≠ y)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R)):
-  Dictates R (pivotalVoter R a b hab hu) x y := by
-
-  let n_ab := pivotalVoter R a b hab hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
-  have h_nca_dictate_ab := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab  hu hAIIA
-  obtain ⟨ h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-  obtain ⟨ _ , h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
-  rcases eq_or_ne x a with hxa | hxnea
-  . --x=a
-    rw[hxa]
-    rcases eq_or_ne y b with hyb | hyneb
-    . -- y=b
-      rw[hyb]
-      rw [← h_nba_eq_nca,← h_nab_eq_nba ] at h_nca_dictate_ab
-      exact h_nca_dictate_ab
-    . -- y≠b
-      rcases eq_or_ne y c with hyc | hynec
-      . -- y = c
-        rw[hyc]
-        have h_nba_dictate_ac := nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
-        rw[← h_nab_eq_nba] at h_nba_dictate_ac
-        exact h_nba_dictate_ac
-      . -- y ∉ {a,b,c}
-        rw[hxa] at hxy
-        have h_nba_dictate_ay := nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyneb) hxy hu hAIIA
-        rw[← h_nab_eq_nba] at h_nba_dictate_ay
-        exact h_nba_dictate_ay
-  . --x≠a
-    rcases eq_or_ne x b with hxb | hxneb
-    . -- x=b
-      rw[hxb]
-      rcases eq_or_ne y a with hya | hynea
-      . -- y=a
-        rw[hya]
-        have h_ncb_dictate_ba := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-        rw[h_ncb_eq_nab] at h_ncb_dictate_ba
-        exact h_ncb_dictate_ba
-      . -- y≠ a
-        rcases eq_or_ne y c with hyc | hynec
-        . -- y = c
-          rw[hyc]
-          exact h_nab_dictate_bc
-        . -- y ∉ {a,b,c}
-          rw[hxb] at hxy
-          exact nab_pivotal_bc a b y hab (Ne.symm hynea) hxy hu hAIIA
-    . --x≠b
-      rcases eq_or_ne x c with hxc | hxnec
-      . --x=c
-        rw[hxc]
-        rcases eq_or_ne y a with hya | hynea
-        . -- y=a
-          rw[hya]
-          have h_nbc_dictate_ca := nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
-          rw [h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_ca
-          exact h_nbc_dictate_ca
-        . -- y≠a
-          rcases eq_or_ne y b with hyb | hyneb
-          . -- y=b
-            rw[hyb]
-            have h_nac_dictate_cb := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-            rw[← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] at h_nac_dictate_cb
-            exact h_nac_dictate_cb
-          . -- y≠b
-            rw[hxc] at hxy
-            have h_nbc_dictate_cy := nab_pivotal_bc b c y hbc (Ne.symm hyneb) hxy hu hAIIA
-            rw[h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_cy
-            exact h_nbc_dictate_cy
-      . --x  ∉ {a,b,c}
-        obtain ⟨ h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
-        obtain ⟨ _, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxnea) hab hxneb hu hAIIA
-        rcases eq_or_ne y a with hya | hynea
-        . -- y=a
-          rw[hya]
-          have h_nbx_dictate_xa := nab_pivotal_bc b x a (Ne.symm hxneb) (Ne.symm hab) hxnea hu hAIIA
-          rw[h_nbx_eq_nxb, h_nxb_eq_nab] at h_nbx_dictate_xa
-          exact h_nbx_dictate_xa
-        . -- y≠a
-          rcases eq_or_ne y b with hyb | hyneb
-          . -- y=b
-            rw[hyb]
-            have h_nax_dictate_xb := nab_pivotal_bc a x b (Ne.symm hxnea) hab hxneb hu hAIIA
-            rw[← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] at h_nax_dictate_xb
-            exact h_nax_dictate_xb
-          . -- y≠b
-            rcases eq_or_ne y c with hyc | hynec
-            . --y=c
-              rw[hyc]
-              have h_nax_dictate_xc := nab_pivotal_bc a x c (Ne.symm hxnea) hac hxnec hu hAIIA
-              rw[← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] at h_nax_dictate_xc
-              exact h_nax_dictate_xc
-            . -- y ∉ {a,b,c}
-              have h_nbx_dictate_xy := nab_pivotal_bc b x y (Ne.symm hxneb) (Ne.symm hyneb) hxy hu hAIIA
-              rw[h_nbx_eq_nxb, h_nxb_eq_nab] at h_nbx_dictate_xy
-              exact h_nbx_dictate_xy
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
+  (hu: Unanimity R) (hAIIA: AIIA R):
+  Dictates R (pivotalVoter a b hab hu) x y := by
+  -- Collect pivotal voter equalities for {a,b,c}
+  obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
+  obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+  obtain ⟨_, h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
+  by_cases hxa : x = a
+  . rw [hxa]
+    by_cases hyb : y = b
+    . rw [hyb]
+      simpa [← h_nba_eq_nca, ← h_nab_eq_nba] using nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+    . by_cases hyc : y = c
+      . rw [hyc]
+        simpa [← h_nab_eq_nba] using nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
+      . rw [hxa] at hxy
+        simpa [← h_nab_eq_nba] using nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyb) hxy hu hAIIA
+  . by_cases hxb : x = b
+    . rw [hxb]
+      by_cases hya : y = a
+      . rw [hya]
+        simpa [h_ncb_eq_nab] using nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+      . by_cases hyc : y = c
+        . rw [hyc]; exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
+        . rw [hxb] at hxy; exact nab_pivotal_bc a b y hab (Ne.symm hya) hxy hu hAIIA
+    . by_cases hxc : x = c
+      . rw [hxc]
+        by_cases hya : y = a
+        . rw [hya]
+          simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
+        . by_cases hyb : y = b
+          . rw [hyb]
+            simpa [← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
+          . rw [hxc] at hxy
+            simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c y hbc (Ne.symm hyb) hxy hu hAIIA
+      . -- x ∉ {a,b,c}
+        obtain ⟨h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxa) (Ne.symm hxb) hu hAIIA
+        obtain ⟨_, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxa) hab hxb hu hAIIA
+        by_cases hya : y = a
+        . rw [hya]
+          simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x a (Ne.symm hxb) (Ne.symm hab) hxa hu hAIIA
+        . by_cases hyb : y = b
+          . rw [hyb]
+            simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x b (Ne.symm hxa) hab hxb hu hAIIA
+          . by_cases hyc : y = c
+            . rw [hyc]
+              simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxa) hac hxc hu hAIIA
+            . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxb) (Ne.symm hyb) hxy hu hAIIA
 
 theorem Impossibility
-    {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
+    {α : Type} [Fintype α] [LinearOrder α]
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N,
-    (Unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictatorship _ _ R) := by
+    (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
   by_contra h
   obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
@@ -792,7 +596,7 @@ theorem Impossibility
 
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
 
-  let n_ab := pivotalVoter R a b hab hu
+  let n_ab := pivotalVoter a b hab hu
 
   use n_ab
   intro x y hxy
