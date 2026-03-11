@@ -571,113 +571,60 @@ lemma n_ab_pivotal_bc_cb
 
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
--- n_bc = n_cb = n_ab can be extended to n_ts
+-- n_bc = n_cb = n_ab can be extended to any pair x y
 lemma n_ab_dictate_xy
   {α : Type} [DecidableEq α] [LinearOrder α]
   {N:ℕ} [NeZero N]
   {R: SWF α N}
   (a b c x y: α)
-  (hab : a ≠ b)
-  (hac : a ≠ c)
-  (hbc : b ≠ c)
-  (hxy : x ≠ y)
-  (hu: Unanimity _ _ R)
-  (hAIIA: (AIIA _ _ R)):
+  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
+  (hu: Unanimity _ _ R) (hAIIA: AIIA _ _ R):
   Dictates R (pivotalVoter R a b hab hu) x y := by
-
-  let n_ab := pivotalVoter R a b hab hu
-  have h_nab_dictate_bc := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  obtain ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
-  have h_nca_dictate_ab := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab  hu hAIIA
-  obtain ⟨ h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-  obtain ⟨ _ , h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
+  -- Collect pivotal voter equalities for {a,b,c}
+  obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
+  obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+  obtain ⟨_, h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
   rcases eq_or_ne x a with hxa | hxnea
-  . --x=a
-    rw[hxa]
-    rcases eq_or_ne y b with hyb | hyneb
-    . -- y=b
-      rw[hyb]
-      rw [← h_nba_eq_nca,← h_nab_eq_nba ] at h_nca_dictate_ab
-      exact h_nca_dictate_ab
-    . -- y≠b
-      rcases eq_or_ne y c with hyc | hynec
-      . -- y = c
-        rw[hyc]
-        have h_nba_dictate_ac := nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
-        rw[← h_nab_eq_nba] at h_nba_dictate_ac
-        exact h_nba_dictate_ac
-      . -- y ∉ {a,b,c}
-        rw[hxa] at hxy
-        have h_nba_dictate_ay := nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyneb) hxy hu hAIIA
-        rw[← h_nab_eq_nba] at h_nba_dictate_ay
-        exact h_nba_dictate_ay
-  . --x≠a
-    rcases eq_or_ne x b with hxb | hxneb
-    . -- x=b
-      rw[hxb]
-      rcases eq_or_ne y a with hya | hynea
-      . -- y=a
-        rw[hya]
-        have h_ncb_dictate_ba := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-        rw[h_ncb_eq_nab] at h_ncb_dictate_ba
-        exact h_ncb_dictate_ba
-      . -- y≠ a
-        rcases eq_or_ne y c with hyc | hynec
-        . -- y = c
-          rw[hyc]
-          exact h_nab_dictate_bc
-        . -- y ∉ {a,b,c}
-          rw[hxb] at hxy
-          exact nab_pivotal_bc a b y hab (Ne.symm hynea) hxy hu hAIIA
-    . --x≠b
-      rcases eq_or_ne x c with hxc | hxnec
-      . --x=c
-        rw[hxc]
-        rcases eq_or_ne y a with hya | hynea
-        . -- y=a
-          rw[hya]
-          have h_nbc_dictate_ca := nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
-          rw [h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_ca
-          exact h_nbc_dictate_ca
-        . -- y≠a
-          rcases eq_or_ne y b with hyb | hyneb
-          . -- y=b
-            rw[hyb]
-            have h_nac_dictate_cb := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-            rw[← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] at h_nac_dictate_cb
-            exact h_nac_dictate_cb
-          . -- y≠b
-            rw[hxc] at hxy
-            have h_nbc_dictate_cy := nab_pivotal_bc b c y hbc (Ne.symm hyneb) hxy hu hAIIA
-            rw[h_nbc_eq_ncb, h_ncb_eq_nab] at h_nbc_dictate_cy
-            exact h_nbc_dictate_cy
-      . --x  ∉ {a,b,c}
-        obtain ⟨ h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
-        obtain ⟨ _, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxnea) hab hxneb hu hAIIA
-        rcases eq_or_ne y a with hya | hynea
-        . -- y=a
-          rw[hya]
-          have h_nbx_dictate_xa := nab_pivotal_bc b x a (Ne.symm hxneb) (Ne.symm hab) hxnea hu hAIIA
-          rw[h_nbx_eq_nxb, h_nxb_eq_nab] at h_nbx_dictate_xa
-          exact h_nbx_dictate_xa
-        . -- y≠a
-          rcases eq_or_ne y b with hyb | hyneb
-          . -- y=b
-            rw[hyb]
-            have h_nax_dictate_xb := nab_pivotal_bc a x b (Ne.symm hxnea) hab hxneb hu hAIIA
-            rw[← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] at h_nax_dictate_xb
-            exact h_nax_dictate_xb
-          . -- y≠b
-            rcases eq_or_ne y c with hyc | hynec
-            . --y=c
-              rw[hyc]
-              have h_nax_dictate_xc := nab_pivotal_bc a x c (Ne.symm hxnea) hac hxnec hu hAIIA
-              rw[← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] at h_nax_dictate_xc
-              exact h_nax_dictate_xc
-            . -- y ∉ {a,b,c}
-              have h_nbx_dictate_xy := nab_pivotal_bc b x y (Ne.symm hxneb) (Ne.symm hyneb) hxy hu hAIIA
-              rw[h_nbx_eq_nxb, h_nxb_eq_nab] at h_nbx_dictate_xy
-              exact h_nbx_dictate_xy
+  . rw [hxa]  -- x = a
+    rcases eq_or_ne y b with hyb | hynb
+    . rw [hyb]
+      simpa [← h_nba_eq_nca, ← h_nab_eq_nba] using nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+    . rcases eq_or_ne y c with hyc | hync
+      . rw [hyc]
+        simpa [← h_nab_eq_nba] using nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
+      . rw [hxa] at hxy
+        simpa [← h_nab_eq_nba] using nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hynb) hxy hu hAIIA
+  . rcases eq_or_ne x b with hxb | hxneb
+    . rw [hxb]  -- x = b
+      rcases eq_or_ne y a with hya | hyna
+      . rw [hya]
+        simpa [h_ncb_eq_nab] using nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+      . rcases eq_or_ne y c with hyc | hync
+        . rw [hyc]; exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
+        . rw [hxb] at hxy; exact nab_pivotal_bc a b y hab (Ne.symm hyna) hxy hu hAIIA
+    . rcases eq_or_ne x c with hxc | hxnec
+      . rw [hxc]  -- x = c
+        rcases eq_or_ne y a with hya | hyna
+        . rw [hya]
+          simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
+        . rcases eq_or_ne y b with hyb | hynb
+          . rw [hyb]
+            simpa [← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
+          . rw [hxc] at hxy
+            simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c y hbc (Ne.symm hynb) hxy hu hAIIA
+      . -- x ∉ {a,b,c}
+        obtain ⟨h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxnea) (Ne.symm hxneb) hu hAIIA
+        obtain ⟨_, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxnea) hab hxneb hu hAIIA
+        rcases eq_or_ne y a with hya | hyna
+        . rw [hya]
+          simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x a (Ne.symm hxneb) (Ne.symm hab) hxnea hu hAIIA
+        . rcases eq_or_ne y b with hyb | hynb
+          . rw [hyb]
+            simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x b (Ne.symm hxnea) hab hxneb hu hAIIA
+          . rcases eq_or_ne y c with hyc | hync
+            . rw [hyc]
+              simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxnea) hac hxnec hu hAIIA
+            . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxneb) (Ne.symm hynb) hxy hu hAIIA
 
 theorem Impossibility
     {α : Type} [Fintype α] [DecidableEq α] [LinearOrder α]
