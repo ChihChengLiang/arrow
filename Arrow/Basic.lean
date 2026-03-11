@@ -89,18 +89,18 @@ def AgreeOn {α : Type} {N : ℕ}
   ∀ i, (a ≻[p i] b) ↔ a ≻[q i] b -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
-def Unanimity (R : SWF α N) : Prop :=
+def Unanimity {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α),
     (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
 -- then SocialWelfareFunction(p) and SocialWelfareFunction(q) rank the two alternatives the same
-def AIIA (R : SWF α N) : Prop :=
+def AIIA {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≻[R p] b) ↔ a ≻[R q] b)
 
-def NonDictatorship (R : SWF α N): Prop :=
+def NonDictatorship {α : Type} {N : ℕ} (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
 
 def swapping_k
@@ -224,7 +224,7 @@ noncomputable def pivotalVoter
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
-  (hu : Unanimity _ _ R) : Fin N :=
+  (hu : Unanimity R) : Fin N :=
   let cs := canonicalSwap a b hab
   let P := fun k: Fin N => b ≻[R (cs k.succ)] a
   let hN: ∃ k, P k := by
@@ -245,9 +245,8 @@ lemma pivotalVoter_spec
   (a b : α) (hab : a ≠ b)
   (f : Fin (N+1) → Profile α N)
   (hf: IsSequentialSwap a b f)
-  (hAIIA: AIIA _ _ R )
-  (hu : Unanimity _ _ R) :
-  IsPivotal R f a b (pivotalVoter R a b hab hu) := by
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : IsPivotal R f a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
   let P := fun k: Fin N => b ≻[R (cs k.succ)] a
@@ -312,9 +311,8 @@ lemma pivotalVoter_pivot_canon
   {N : ℕ} [NeZero N]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
-  (hAIIA: AIIA _ _ R )
-  (hu : Unanimity _ _ R) :
-  IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter R a b hab hu) := by
+  (hu: Unanimity R) (hAIIA: (AIIA R))
+  : IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter R a b hab hu) := by
   let n_ab := pivotalVoter R a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
 
@@ -327,7 +325,7 @@ lemma pivotalVoter_pivot_canon
       have :¬ i < k.val := by omega
       simp [this]
       exact orderFromRanking_lt_02 a _ b hab
-  exact pivotalVoter_spec R a b hab cs hf hAIIA hu
+  exact pivotalVoter_spec R a b hab cs hf hu hAIIA
 
 
 lemma nab_pivotal_bc
@@ -336,7 +334,7 @@ lemma nab_pivotal_bc
   {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R))
+  (hu: Unanimity R) (hAIIA: (AIIA R))
   : Dictates R (pivotalVoter R a b hab hu) b c := by
   let n_ab := pivotalVoter R a b hab hu
   let p: Profile α N := fun i => orderFromRanking b c a (Ne.symm hab)
@@ -362,7 +360,7 @@ lemma nab_pivotal_bc
     . intro h; split_ifs
       . omega
       . exact (hq i).1
-  have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hAIIA hu
+  have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hu hAIIA
 
   -- soc prefer a > b > c
   have habc: a ≻[R (swapping_k p q n_ab.castSucc)] b ≻ c  := by
@@ -480,7 +478,7 @@ lemma nab_le_nbc
   {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R))
+  (hu: Unanimity R) (hAIIA: (AIIA R))
   : pivotalVoter R a b hab hu ≤ pivotalVoter R b c hbc hu := by
   by_contra h; push_neg at h
   let pp := (canonicalSwap b c hbc) (pivotalVoter R b c hbc hu).succ
@@ -489,7 +487,7 @@ lemma nab_le_nbc
     split_ifs with hh
     . simp at hh; omega
     . exact orderFromRanking_lt_02 b _ c hbc
-  exact absurd (pivotalVoter_pivot_canon R b c hbc hAIIA hu).2
+  exact absurd (pivotalVoter_pivot_canon R b c hbc hu hAIIA).2
     (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma ncb_le_nab
@@ -498,7 +496,7 @@ lemma ncb_le_nab
   {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R)):
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
   pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R a b hab hu := by
   by_contra h; push_neg at h
   let n_cb := pivotalVoter R c b (Ne.symm hbc) hu
@@ -508,7 +506,7 @@ lemma ncb_le_nab
     have hlt : (pivotalVoter R a b hab hu).val < n_cb.val := by omega
     simp [hlt]
     exact orderFromRanking_lt_02 b _ c hbc
-  exact absurd ((pivotalVoter_pivot_canon R c b (Ne.symm hbc) hAIIA hu).1 n_cb (le_refl n_cb))
+  exact absurd ((pivotalVoter_pivot_canon R c b (Ne.symm hbc) hu hAIIA).1 n_cb (le_refl n_cb))
     (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref))
 
 lemma nbc_le_ncb
@@ -517,7 +515,7 @@ lemma nbc_le_ncb
   {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R))
+  (hu: Unanimity R) (hAIIA: (AIIA R))
   : pivotalVoter R c b (Ne.symm hbc) hu ≤ pivotalVoter R b c hbc hu :=
   le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
@@ -527,7 +525,7 @@ lemma n_ab_pivotal_bc_cb
   {R: SWF α N}
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity _ _ R) (hAIIA: (AIIA _ _ R)):
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
   -- n_bc = n_cb = n_ab
   (pivotalVoter R b c hbc hu) = (pivotalVoter R c b (Ne.symm hbc) hu) ∧
   (pivotalVoter R c b (Ne.symm hbc) hu) = pivotalVoter R a b hab hu := by
@@ -562,7 +560,7 @@ lemma n_ab_dictate_xy
   {R: SWF α N}
   (a b c x y: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
-  (hu: Unanimity _ _ R) (hAIIA: AIIA _ _ R):
+  (hu: Unanimity R) (hAIIA: AIIA R):
   Dictates R (pivotalVoter R a b hab hu) x y := by
   -- Collect pivotal voter equalities for {a,b,c}
   obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
@@ -615,7 +613,7 @@ theorem Impossibility
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N,
-    (Unanimity _ _ R) ∧ (AIIA _ _ R) ∧ (NonDictatorship _ _ R) := by
+    (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
   by_contra h
   obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
   apply hNonDictactor
