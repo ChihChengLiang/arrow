@@ -51,6 +51,23 @@ lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
     . intro h
       exact h1.2 (p.trans _ _ _ h2.1 h)
 
+lemma Preorder'.lt_iff {α : Type} (p q: Preorder' α) {a b: α}
+  (h_iff: p.lt b a ↔ q.lt b a)(hab: a≠b):  p.lt a b ↔ q.lt a b := by
+  rw[← not_iff_not]
+  constructor
+  . intro h2
+    apply Preorder'.lt_asymm
+    apply h_iff.mp
+    apply Preorder'.lt_of_not_lt at h2
+    exact h2
+    exact Ne.symm hab
+  . intro h2
+    apply Preorder'.lt_asymm
+    apply Preorder'.lt_of_not_lt at h2
+    apply h_iff.mpr at h2
+    exact h2
+    exact Ne.symm hab
+
 -- A preference profile maps individual i to their preferences
 def Profile (α : Type) (N : ℕ) :=
   Fin N → Preorder' α
@@ -297,7 +314,6 @@ lemma pivotalVoter_spec
           have hsoc := hu (cs i.castSucc) a b hall
           exact Preorder'.lt_asymm _ _ _ hsoc hcontra
         · -- Column i.val > 0: use that j = i-1 satisfies j+1 = i and j < n_ab
-          have hipos : 0 < i.val := Nat.pos_of_ne_zero hizero
           let j : Fin N := ⟨i.val - 1, by omega⟩
           have hjsucc : j.succ.val = i.castSucc.val := by simp [j]; omega
           have hjlt : j < n_ab := by
@@ -348,27 +364,9 @@ lemma pivotalVoter_spec
     have hsoc_swp : a ≻[R (cs i.castSucc)] b :=
       Preorder'.lt_of_not_lt (R (cs i.castSucc)) b a (Ne.symm hab) hNotP
     exact (hAIIA (f i.castSucc) (cs i.castSucc) a b hSameCol_i).mpr hsoc_swp
-  · -- Part 2: socPrefers R (f n_ab.succ) b a
-    -- hPn : socPrefers R (swapping_k p q n_ab.succ) b a
-    -- Need: socPrefers R (f n_ab.succ) b a
-    -- Use AIIA with sameCol for b a (which follows from sameCol for a b)
-    have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
-      intro i
-      -- In a total preorder, a>b ↔ ¬(b>a) for a ≠ b
-      have h := hSameCol i
-      constructor
-      · intro hba
-        by_contra hnotba
-        have haq : a ≻[cs n_ab.succ i] b := by
-          exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
-        have haf : a ≻[f n_ab.succ i] b := h.mpr haq
-        exact Preorder'.lt_asymm _ _ _ hba haf
-      · intro hba
-        by_contra hnotba
-        have haq : a ≻[f n_ab.succ i] b := by
-          exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotba
-        have haf : a ≻[cs n_ab.succ i] b := h.mp haq
-        exact Preorder'.lt_asymm _ _ _ hba haf
+  . have hSameCol_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
+      intro i; have h := hSameCol i
+      exact Preorder'.lt_iff (f n_ab.succ i) (cs n_ab.succ i) h hab
     exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a hSameCol_ba).mpr hPn
 
 lemma pivotalVoter_pivot_canon
