@@ -25,11 +25,6 @@ lemma Preorder'.lt_asymm {α : Type} (p : Preorder' α) (a b : α) :
   intro ⟨hab, hnba⟩ ⟨hba, _⟩
   exact hnba hba
 
-lemma Preorder'.lt_irrefl {α : Type} (p : Preorder' α) (a : α) :
-    ¬ p.lt a a := by
-  intro ⟨h, hn⟩
-  exact hn h
-
 lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
     (hab : a ≠ b) (h : ¬ p.lt b a) : p.lt a b := by
   unfold Preorder'.lt at *
