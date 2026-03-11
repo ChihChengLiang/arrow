@@ -428,13 +428,11 @@ lemma nab_pivotal_bc
       rw [hieqnab]
       exact h
     . simp [orderFromRanking_lt_12 a b c hab hbc hac]; exact hppibc
-    . rw [← not_iff_not]
-      constructor
-      . intro
-        apply  Preorder'.lt_asymm
-        simp [orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
-      . intro
-        exact hppibc
+    . rw [Preorder'.lt_iff]
+      apply Preorder'.lt_of_not_lt at hppibc
+      simp only [orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab, hppibc]
+      exact hbc
+      exact Ne.symm hbc
 
   have hbac: b ≻[R rr] a ≻ c := by
     constructor
@@ -453,17 +451,14 @@ lemma nab_pivotal_bc
           . exact orderFromRanking_lt_01 b a c (Ne.symm hab) hbc
           . omega
           . omega
-        . rw [← not_iff_not]
-          constructor
-          . intro h; apply Preorder'.lt_asymm
-            unfold rr
-            simp at *
-            have h2: ¬(i < n_ab) := by omega
-            split_ifs
-            . omega
-            . exact orderFromRanking_lt_01 a b c hab hac
-            . exact orderFromRanking_lt_02 a c b hab
-          . intro h; apply Preorder'.lt_asymm; exact (hq i).1
+        . unfold rr q; simp at h
+          have : ¬(i < n_ab) := by omega
+          rw [Preorder'.lt_iff]
+          split_ifs
+          . omega
+          . simp only [orderFromRanking_lt_01 a b c hab hac]
+          . simp only [orderFromRanking_lt_02 a c b hab, orderFromRanking_lt_01 a b c hab hac]
+          exact hab
       have hSocPrefer_rr_ba := by apply hAIIA at hSameCol_ba; exact hSameCol_ba;
       exact hSocPrefer_rr_ba.mp h_nab_pivot_p.2
     -- By AIIA
@@ -474,13 +469,10 @@ lemma nab_pivotal_bc
         intro i
         simp at *
         split_ifs with hinab hppibc hieqnab hppibc
-        . rw [← not_iff_not]
-        . rw [← not_iff_not]
-          constructor
-          . intro h; apply Preorder'.lt_asymm
-            exact orderFromRanking_lt_02 c b a (Ne.symm hac)
-          . intro h; apply Preorder'.lt_asymm
-            exact (hp i).2
+        . rfl
+        . rw [Preorder'.lt_iff]
+          simp only [orderFromRanking_lt_02 c b a (Ne.symm hac), (hp i).2]
+          exact Ne.symm hac
         . simp [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
           exact (q i).lt_trans (hq i).2 (hq i).1
         . simp [orderFromRanking_lt_02 a b c hac]
