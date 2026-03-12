@@ -275,10 +275,7 @@ lemma pivotalVoter_pivot_canon
     intro k i
     constructor
     . intro h; simp [h]; exact orderFromRanking_lt_02 b _ a (Ne.symm hab)
-    . intro h;
-      have :¬ i < k.val := by omega
-      simp [this]
-      exact orderFromRanking_lt_02 a _ b hab
+    . intro h; simp [h.not_gt]; exact orderFromRanking_lt_02 a _ b hab
   exact pivotalVoter_spec R a b hab cs hf hu hAIIA
 
 
