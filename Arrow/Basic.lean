@@ -304,7 +304,7 @@ lemma nab_pivotal_bc
       exact hu _ _ _ h
   intro pp h
 
-  -- let rr
+  -- Magic profile to match arbitrary profile `pp` whose n_ab prefer b over c
   -- 0...k-1 prefer b > a ∧ c > a
   -- k prefer b > a > c
   -- k+1 ... N prefer a > b ∧ c < a
