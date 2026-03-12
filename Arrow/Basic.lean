@@ -298,9 +298,7 @@ lemma nab_pivotal_bc
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
   have hf : IsSequentialSwap a b (swapping_k p q) := by
-    unfold IsSequentialSwap swapping_k
-    intro k i
-    constructor
+    unfold IsSequentialSwap swapping_k; intro k i; constructor
     . intro h; simp [h]; exact ((p i).lt_trans (hp i).2 (hp i).1)
     . intro h; simp [h.not_gt]; exact (hq i).1
   have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hu hAIIA
@@ -337,9 +335,7 @@ lemma nab_pivotal_bc
           else orderFromRanking a c b hab
 
   have h_agree: AgreeOn pp rr b c := by
-    unfold AgreeOn rr
-    intro i
-    split_ifs with hi hppibc hieqnab hppibc
+    unfold AgreeOn rr; intro i; split_ifs with _ hppibc hieqnab hppibc
     . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab), hppibc]
     . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
       simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
@@ -354,13 +350,8 @@ lemma nab_pivotal_bc
     constructor
     -- By AIIA on nab pivoting defintion
     . have h_agree_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
-        unfold AgreeOn swapping_k
-        intro i
-        split_ifs with h
-        . simp [(p i).lt_trans (hp i).2 (hp i).1]
-          unfold rr
-          simp at *
-          have h2: ¬(i > n_ab) := by omega
+        unfold AgreeOn swapping_k; intro i; split_ifs with h
+        . simp [(p i).lt_trans (hp i).2 (hp i).1]; unfold rr; simp at h
           split_ifs with hinab hppibc hieqnab hppibc
           . exact orderFromRanking_lt_02 b c a (Ne.symm hab)
           . exact orderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
@@ -379,9 +370,7 @@ lemma nab_pivotal_bc
     . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
       have h_agree_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
-        unfold AgreeOn rr swapping_k
-        intro i
-        simp at *
+        unfold AgreeOn rr swapping_k; intro i; simp
         split_ifs with hinab hppibc hieqnab hppibc
         . rfl
         . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
@@ -392,11 +381,8 @@ lemma nab_pivotal_bc
           exact (q i).lt_trans (hq i).2 (hq i).1
         . simp [orderFromRanking_lt_01 a c b hac hab]
           exact (q i).lt_trans (hq i).2 (hq i).1
-
       exact (hAIIA _ _ _ _ h_agree_ac).mp hsoc_swp_ac
-
-  have hrr_bc := (R rr).lt_trans hbac.2 hbac.1
-  exact (hAIIA _ _ _ _ h_agree).mpr hrr_bc
+  exact (hAIIA _ _ _ _ h_agree).mpr ((R rr).lt_trans hbac.2 hbac.1)
 
 -- n_ab pivot b and c, so n_bc shouldn't flip the b c order earlier than n_ab
 lemma nab_le_nbc
