@@ -178,23 +178,36 @@ def canonicalSwap
   let q : Profile α N := fun _ => orderFromRanking a b b hab           -- a on top
   swapping_k p q
 
+def flipping
+  {α : Type} [LinearOrder α]
+  {N : ℕ}
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b) :=
+  fun k: Fin N => b ≻[R ((canonicalSwap a b hab) k.succ)] a
+
+lemma flipping_exists
+  {α : Type} [LinearOrder α]
+  {N : ℕ} [NeZero N]
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b)
+  (hu : Unanimity R):
+  ∃ k, flipping R a b hab k := by
+  let cs: SwapSequence α N := canonicalSwap a b hab
+  use (0:Fin N).rev
+  unfold flipping canonicalSwap swapping_k
+  have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
+  simp [Nat.sub_add_cancel this]
+  apply hu
+  simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+
+-- Find the minimum k where the flip happens
 noncomputable def pivotalVoter
   {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   {R : SWF α N}
   (a b : α) (hab : a ≠ b)
   (hu : Unanimity R) : Fin N :=
-  let cs := canonicalSwap a b hab
-  let P := fun k: Fin N => b ≻[R (cs k.succ)] a
-  let hN: ∃ k, P k := by
-    use (0:Fin N).rev
-    unfold P cs canonicalSwap swapping_k
-    have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-    simp [Nat.sub_add_cancel this]
-    apply hu
-    simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
-  -- Find the minimum k where the flip happens
-  Fin.find P hN
+  Fin.find (flipping R a b hab) (flipping_exists R a b hab hu)
 
 -- pivotalVoter is independent of profile
 lemma pivotalVoter_spec
@@ -208,22 +221,13 @@ lemma pivotalVoter_spec
   : IsPivotal R f a b (pivotalVoter a b hab hu) := by
   let n_ab := pivotalVoter a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
-  let P := fun k: Fin N => b ≻[R (cs k.succ)] a
-
-  -- Get the existence witness for Fin.find
-  have hN: ∃ k, P k := by
-    use (0:Fin N).rev
-    unfold P cs canonicalSwap swapping_k
-    have hpos: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-    simp [Nat.sub_add_cancel hpos]
-    apply hu
-    simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
 
   -- P n_ab holds: society prefers b > a at column n_ab.succ
-  have hPn : P n_ab := Fin.find_spec hN
+  have hPn : flipping R a b hab n_ab := Fin.find_spec (flipping_exists R a b hab hu)
 
   -- For j < n_ab, ¬P j: society doesn't prefer b > a, hence prefers a > b
-  have hPmin : ∀ j : Fin N, j < n_ab → ¬P j := fun j hj => Fin.find_min hN hj
+  have hPmin : ∀ j : Fin N, j < n_ab → ¬flipping R a b hab j :=
+    fun j hj => Fin.find_min (flipping_exists R a b hab hu) hj
 
   -- Helper: Agree on for any column k between f and canonical swapping process
   have hAgreeGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
@@ -251,7 +255,7 @@ lemma pivotalVoter_spec
       have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
       have hnotPj := hPmin j hjlt
       have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
-      simp only [P, heq] at hnotPj
+      simp only [flipping, heq] at hnotPj
       exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotPj
   . have h_agree_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
       intro i; have h := hAgreeGen n_ab.succ i
