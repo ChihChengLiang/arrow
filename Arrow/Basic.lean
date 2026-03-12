@@ -216,13 +216,6 @@ lemma pivotalVoter_spec
   let n_ab := pivotalVoter a b hab hu
   let cs: SwapSequence α N := canonicalSwap a b hab
 
-  -- P n_ab holds: society prefers b > a at column n_ab.succ
-  have hPn : flipping R a b hab n_ab := Fin.find_spec (flipping_exists R a b hab hu)
-
-  -- For j < n_ab, ¬P j: society doesn't prefer b > a, hence prefers a > b
-  have hPmin : ∀ j : Fin N, j < n_ab → ¬flipping R a b hab j :=
-    fun j hj => Fin.find_min (flipping_exists R a b hab hu) hj
-
   -- Helper: Agree on for any column k between f and canonical swapping process
   have hAgreeGen : ∀ k : Fin (N+1), AgreeOn (f k) (cs k) a b := by
     intro k i; unfold cs canonicalSwap swapping_k
@@ -233,28 +226,25 @@ lemma pivotalVoter_spec
       simp [orderFromRanking_lt_02 a _ b hab, (hf k i).2 hik]
 
   constructor
-  . intro i hi
-    have h_soc_ab := hAIIA (f i.castSucc) (cs i.castSucc) a b (hAgreeGen i.castSucc)
-    apply h_soc_ab.mpr
+  . -- For i ≤ n_ab, society doesn't prefer b > a, hence prefers a > b. Use `Fin.find_min`
+    intro i hi
+    apply (hAIIA (f i.castSucc) (cs i.castSucc) a b (hAgreeGen i.castSucc)).mpr
     by_cases hizero : i.val = 0
-    . -- i = 0
+    . -- i = 0, by unanimity
       apply hu (cs i.castSucc) a b
-      intro j
-      unfold cs canonicalSwap swapping_k
-      simp [hizero]
+      intro j; unfold cs canonicalSwap swapping_k; simp [hizero]
       exact orderFromRanking_lt_02 a _ b hab
-    . -- i ≠ 0
+    . -- i ≠ 0, carefully reason with Fin.find_min
       let j : Fin N := ⟨i.val - 1, by omega⟩
-      have : 0 < i.val := Nat.pos_of_ne_zero hizero
       have hjlt : j < n_ab := by simp only [Fin.lt_def, j]; omega
-      have hnotPj := hPmin j hjlt
+      have hnotPj := Fin.find_min (flipping_exists R a b hab hu) hjlt
       have heq : j.succ = i.castSucc := by apply Fin.ext; simp [j]; omega
       simp only [flipping, heq] at hnotPj
       exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hnotPj
-  . have h_agree_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
-      intro i; have h := hAgreeGen n_ab.succ i
-      exact Preorder'.lt_iff (f n_ab.succ i) (cs n_ab.succ i) h hab
-    exact (hAIIA (f n_ab.succ) (cs n_ab.succ) b a h_agree_ba).mpr hPn
+  . -- society prefers b > a at column n_ab.succ. Use `Fin.find_spec`
+    have h_agree_ba : AgreeOn (f n_ab.succ) (cs n_ab.succ) b a := by
+      intro i; exact Preorder'.lt_iff _ _ (hAgreeGen n_ab.succ i) hab
+    exact (hAIIA _ _ _ _ h_agree_ba).mpr (Fin.find_spec (flipping_exists R a b hab hu))
 
 lemma pivotalVoter_pivot_canon
   {α : Type} [LinearOrder α]
@@ -265,9 +255,7 @@ lemma pivotalVoter_pivot_canon
   : IsPivotal R (canonicalSwap a b hab) a b (pivotalVoter a b hab hu) := by
   let cs: SwapSequence α N := canonicalSwap a b hab
   have hf : IsSequentialSwap a b cs := by
-    unfold IsSequentialSwap cs canonicalSwap swapping_k
-    intro k i
-    constructor
+    unfold IsSequentialSwap cs canonicalSwap swapping_k; intro k i; constructor
     . intro h; simp [h]; exact orderFromRanking_lt_02 b _ a (Ne.symm hab)
     . intro h; simp [h.not_gt]; exact orderFromRanking_lt_02 a _ b hab
   exact pivotalVoter_spec R a b hab cs hf hu hAIIA
