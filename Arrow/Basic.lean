@@ -27,17 +27,14 @@ lemma Preorder'.lt_asymm {α : Type} (p : Preorder' α) (a b : α) :
 
 lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
     (hab : a ≠ b) (h : ¬ p.lt b a) : p.lt a b := by
-  unfold Preorder'.lt at *
-  push_neg at h
+  unfold Preorder'.lt at *; push_neg at h
   rcases p.total a b with hab' | hba'
-  · constructor
-    · exact hab'
-    · intro hba
-      exact hab (p.antisymm a b hab' hba)
-  · constructor
-    · exact h hba'
-    · intro hba
-      exact hab (p.antisymm a b (h hba') hba)
+  . constructor
+    . exact hab'
+    . by_contra hba; exact hab (p.antisymm a b hab' hba)
+  . constructor
+    . exact h hba'
+    . by_contra hba; exact hab (p.antisymm a b (h hba') hba)
 
 lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
@@ -54,15 +51,13 @@ lemma Preorder'.lt_iff {α : Type} (p q: Preorder' α) {a b: α}
   . exact p.lt_asymm _ _ (h_iff.mpr (q.lt_of_not_lt _ _ (Ne.symm hab) h))
 
 -- A preference profile maps individual i to their preferences
-def Profile (α : Type) (N : ℕ) :=
-  Fin N → Preorder' α
+def Profile (α : Type) (N : ℕ) := Fin N → Preorder' α
 
 -- Social Welfare Function
-def SWF (α : Type) (N : ℕ) :=
-  (Fin N → Preorder' α) → Preorder' α
+def SWF (α : Type) (N : ℕ) := (Fin N → Preorder' α) → Preorder' α
 
 -- Useful for building profile with a pivotal voter
-abbrev SwapSequence: Type := Fin (N+1) →  Profile α N
+abbrev SwapSequence: Type := Fin (N+1) → Profile α N
 
 -- society prefers a over b in profile p
 notation a " ≻[" R p "] " b => Preorder'.lt (R p) b a
@@ -79,8 +74,7 @@ def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :
   ∀ (p: Profile α N ), (a ≻[p k] b) → a ≻[R p] b
 
 -- all voters in both profile p and q prefer a over b
-def AgreeOn {α : Type} {N : ℕ}
-    (p q : Profile α N) (a b : α) : Prop :=
+def AgreeOn {α : Type} {N : ℕ} (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, (a ≻[p i] b) ↔ a ≻[q i] b -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
@@ -308,9 +302,7 @@ lemma nab_pivotal_bc
     intro k i
     constructor
     . intro h; simp [h]; exact ((p i).lt_trans (hp i).2 (hp i).1)
-    . intro h; split_ifs
-      . omega
-      . exact (hq i).1
+    . intro h; simp [h.not_gt]; exact (hq i).1
   have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hu hAIIA
 
   -- soc prefer a > b > c
