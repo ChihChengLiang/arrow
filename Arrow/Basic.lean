@@ -203,19 +203,6 @@ noncomputable def pivotalVoter
   (hu : Unanimity R) : Fin N :=
   Fin.find (flipping R a b hab) (flipping_exists R a b hab hu)
 
-lemma zero_lt_pivotalVoter {α : Type} [LinearOrder α]
-  {N : ℕ} [NeZero N]
-  (R : SWF α N)
-  (a b : α) (hab : a ≠ b)
-  (p : Profile α N)
-  (i : Fin N)
-  (hp: AgreeOn p (canonicalSwap a b hab i.succ) a b)
-  (hu: Unanimity R) (hAIIA: (AIIA R)):
-  0 < pivotalVoter a b hab hu := by
-
-
-  sorry
-
 -- before pivot, no flip
 lemma no_flip {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
