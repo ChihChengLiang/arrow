@@ -7,9 +7,6 @@ import Mathlib.Data.Fintype.EquivFin
 noncomputable section
 open Classical
 
-variable (α: Type) -- α is the type of alternatives
-variable (N: ℕ ) -- N is the number of voters
-
 structure Preorder' (α : Type) where
   le : α → α → Prop
   refl : ∀ a, le a a
