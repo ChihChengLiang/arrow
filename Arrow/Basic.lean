@@ -167,6 +167,14 @@ lemma pick_le_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ h02).le a₂ a₀ := by simp [prefer]
 
+/-! ## Pivotal Voter
+
+The key construction: we find the "pivotal voter" who flips society's preference.
+Starting from a profile where everyone prefers `b ≻ a`, we flip voters one by one
+to prefer `a ≻ b`. By unanimity, society eventually flips too. The first voter
+whose flip changes society's preference is the pivotal voter.
+-/
+variable [NeZero N] {R : SWF α N}
 
 /-- A family of profiles indexed by `k ∈ Fin (N+1)`:
     voters `0..k-1` prefer `b ≻ a`, voters `k..N-1` prefer `a ≻ b`. -/
@@ -187,8 +195,9 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   unfold flipping canonicalSwap
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
-  apply hu
-  simp [pick_lt_02 b _ a (Ne.symm hab)]
+  have: b ≻[R (fun i => prefer b b a (Ne.symm hab) )] a := by
+    apply hu; intro i; simp [pick_lt_02 b _ a (Ne.symm hab)]
+  exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
 noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N :=
