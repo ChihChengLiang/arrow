@@ -223,7 +223,7 @@ lemma nab_pivotal_bc
     . by_cases hn : n_ab = 0
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
-          intro i; unfold mg1; simp [hn]
+          intro i; simp [mg1, hn]
           exact orderFromRanking_lt_01 a b c hab hac
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
@@ -330,15 +330,15 @@ lemma nab_le_nbc
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
   (hu: Unanimity R) (hAIIA: (AIIA R))
   : pivotalVoter a b hab hu ≤ pivotalVoter b c hbc hu := by
-  by_contra h; push_neg at h
-  let pp := canonicalSwap b c hbc (pivotalVoter b c hbc hu).succ
-  have h_pref : b ≻[pp (pivotalVoter a b hab hu)] c := by
-    simp only [pp, canonicalSwap]
+  by_contra h; push_neg at h;
+  let cs := canonicalSwap b c hbc (pivotalVoter b c hbc hu).succ
+  have h_pref : b ≻[cs (pivotalVoter a b hab hu)] c := by
+    simp only [cs, canonicalSwap]
     split_ifs with hh
     . simp at hh; omega
     . exact orderFromRanking_lt_02 b _ c hbc
   exact absurd
-    (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref) -- n_ab still dictates b over c
+    (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     (Preorder'.lt_asymm _ _ _ (flipped b c))              -- but n_bc flipped, so society should prefer c over b
 
 -- n_cb should flip c b order before n_ab do so
@@ -353,13 +353,11 @@ lemma ncb_le_nab
   by_contra h; push_neg at h
   let n_ab := pivotalVoter a b hab hu
   let n_cb := pivotalVoter c b (Ne.symm hbc) hu
-  let pp := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have h_pref : b ≻[pp n_ab] c := by
-    unfold pp canonicalSwap; simp
-    exact orderFromRanking_lt_02 b _ c hbc
+  let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
+  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, orderFromRanking_lt_02 b _ c hbc]
   exact absurd
-    (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref) -- n_ab prefer b over c, so is society
-    (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))       -- n_ab before pivoter, so b c shouldn't flip
+    (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
+    (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
 
 lemma nbc_le_ncb
   {α : Type} [LinearOrder α]
