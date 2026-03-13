@@ -337,8 +337,9 @@ lemma nab_le_nbc
     split_ifs with hh
     . simp at hh; omega
     . exact orderFromRanking_lt_02 b _ c hbc
-  exact absurd (flipped b c) -- n_bc flipped, so society should prefer c over b
-    (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref)) -- but n_ab still dictates b over c
+  exact absurd
+    (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref) -- n_ab still dictates b over c
+    (Preorder'.lt_asymm _ _ _ (flipped b c))              -- but n_bc flipped, so society should prefer c over b
 
 -- n_cb should flip c b order before n_ab do so
 lemma ncb_le_nab
