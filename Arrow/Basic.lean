@@ -89,7 +89,8 @@ def AIIA {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
 def NonDictatorship {α : Type} {N : ℕ} (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
 
-def orderFromRanking {α : Type} [LinearOrder α]
+/-- Build a concrete ranking of preference-/
+def prefer {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) : Preorder' α where
   le x y :=
     -- first handle the 6 ordered pairs among a₀, a₁, a₂
@@ -114,24 +115,25 @@ def orderFromRanking {α : Type} [LinearOrder α]
       . exact absurd (hb hba2) (Ne.symm h02)
     . exact le_antisymm ha hb
 
-lemma orderFromRanking_lt_01 {α : Type} [LinearOrder α]
+/--Pick from the ranking to compare-/
+lemma pick_lt_01 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
-    (orderFromRanking a₀ a₁ a₂ h02).lt a₁ a₀ := by
-  simp [Preorder'.lt, orderFromRanking]
+    (prefer a₀ a₁ a₂ h02).lt a₁ a₀ := by
+  simp [Preorder'.lt, prefer]
   exact ⟨h02, Ne.symm h01⟩
 
-lemma orderFromRanking_lt_12 {α : Type} [LinearOrder α]
+lemma pick_lt_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (orderFromRanking a₀ a₁ a₂ h02).lt a₂ a₁ := by
-  simp [Preorder'.lt, orderFromRanking]
+    (prefer a₀ a₁ a₂ h02).lt a₂ a₁ := by
+  simp [Preorder'.lt, prefer]
   split_ifs with ha10
   . exact absurd (Eq.symm ha10) h01
   . exact ⟨ h12, Ne.symm h02, h12 ⟩
 
-lemma orderFromRanking_lt_02 {α : Type} [LinearOrder α]
+lemma pick_lt_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
-    (orderFromRanking a₀ a₁ a₂ h02).lt a₂ a₀ := by
-  simp [Preorder'.lt, orderFromRanking]
+    (prefer a₀ a₁ a₂ h02).lt a₂ a₀ := by
+  simp [Preorder'.lt, prefer]
   exact ⟨h02, Ne.symm h02⟩
 
 -- Canonical profiles: before, everyone ranks b ≻ a; after, everyone ranks a ≻ b
@@ -144,8 +146,8 @@ def canonicalSwap
   fun k: Fin (N+1) =>
     fun i: Fin N => if i < k.val
       -- put extra b or a just to reuse a 3 items ranking
-      then orderFromRanking b b a (Ne.symm hab) -- b on top
-      else orderFromRanking a b b hab           -- a on top
+      then prefer b b a (Ne.symm hab) -- b on top
+      else prefer a b b hab           -- a on top
 
 def flipping
   {α : Type} [LinearOrder α]
@@ -166,7 +168,7 @@ lemma flip_exists
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
   apply hu
-  simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
+  simp [pick_lt_02 b _ a (Ne.symm hab)]
 
 /-- Pivotal Voter: `Fin.find` finds the minimum k where the flip happens -/
 noncomputable def pivoter
@@ -214,8 +216,8 @@ lemma nab_pivotal_bc
   -- result: socPrefer a > b > c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
-      then orderFromRanking b c a (Ne.symm hab)
-      else orderFromRanking a b c hac
+      then prefer b c a (Ne.symm hab)
+      else prefer a b c hac
   -- soc prefer a > b > c
   have habc: a ≻[R mg1] b ≻ c  := by
     constructor
@@ -224,7 +226,7 @@ lemma nab_pivotal_bc
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
           intro i; simp [mg1, hn]
-          exact orderFromRanking_lt_01 a b c hab hac
+          exact pick_lt_01 a b c hab hac
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
         let k := n_ab - 1
@@ -242,17 +244,17 @@ lemma nab_pivotal_bc
           · -- Case i < n_ab: both orderings have b ≻ a, so a ≻ b is false
             simp only [hi, hk_eq.mpr hi, ↓reduceIte]
             rw[Preorder'.lt_iff _ _ _ (Ne.symm hab)]
-            simp only [orderFromRanking_lt_02 b c a (Ne.symm hab), orderFromRanking_lt_02 b b a (Ne.symm hab)]
+            simp only [pick_lt_02 b c a (Ne.symm hab), pick_lt_02 b b a (Ne.symm hab)]
           · -- Case i ≥ n_ab: both orderings have a ≻ b
             have hi' : ¬(i.val < k.succ.val) := hk_eq.not.mpr hi
-            simp only [hi, hi', ↓reduceIte, orderFromRanking_lt_01 a b b hab hab, orderFromRanking_lt_01 a b c hab hac]
+            simp only [hi, hi', ↓reduceIte, pick_lt_01 a b b hab hab, pick_lt_01 a b c hab hac]
         apply (hAIIA _ _ _ _ hp).mpr
         exact no_flip a b k hk
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
-        . exact orderFromRanking_lt_01 b c a hbc (Ne.symm hab)
-        . exact orderFromRanking_lt_12 a b c hab hbc hac
+        . exact pick_lt_01 b c a hbc (Ne.symm hab)
+        . exact pick_lt_12 a b c hab hbc hac
       exact hu _ _ _ h
   intro pp h
 
@@ -265,47 +267,47 @@ lemma nab_pivotal_bc
     if i < n_ab
       then
         if b ≻[pp i] c
-          then orderFromRanking b c a (Ne.symm hab)
-          else orderFromRanking c b a (Ne.symm hac)
+          then prefer b c a (Ne.symm hab)
+          else prefer c b a (Ne.symm hac)
       else
         if i = n_ab
-        then orderFromRanking b a c hbc
+        then prefer b a c hbc
         else if b ≻[pp i] c
-          then orderFromRanking a b c hac
-          else orderFromRanking a c b hab
+          then prefer a b c hac
+          else prefer a c b hab
 
   have h_agree: AgreeOn pp mg2 b c := by
     unfold AgreeOn mg2; intro i; split_ifs with _ hppibc hieqnab hppibc
-    . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab), hppibc]
+    . simp [pick_lt_01 b c a hbc (Ne.symm hab), hppibc]
     . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
       simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
-        orderFromRanking_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
-    . simp [orderFromRanking_lt_02 b a c hbc, hieqnab]; exact h
-    . simp [orderFromRanking_lt_12 a b c hab hbc hac, hppibc]
+        pick_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)]
+    . simp [pick_lt_02 b a c hbc, hieqnab]; exact h
+    . simp [pick_lt_12 a b c hab hbc hac, hppibc]
     . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
       simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
-        orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
+        pick_lt_12 a c b hac (Ne.symm hbc) hab]
 
   have hbac: b ≻[R mg2] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
     . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
         unfold AgreeOn canonicalSwap; intro i; split_ifs with h
-        . simp only [orderFromRanking_lt_02 b b a (Ne.symm hab)]; unfold mg2; simp at h
+        . simp only [pick_lt_02 b b a (Ne.symm hab)]; unfold mg2; simp at h
           split_ifs with hinab hppibc hieqnab hppibc
-          . simp only [orderFromRanking_lt_02 b c a (Ne.symm hab)]
-          . simp only [orderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
-          . simp only [orderFromRanking_lt_01 b a c (Ne.symm hab) hbc]
+          . simp only [pick_lt_02 b c a (Ne.symm hab)]
+          . simp only [pick_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
+          . simp only [pick_lt_01 b a c (Ne.symm hab) hbc]
           . omega
           . omega
         . unfold mg2; simp at h
           have : ¬(i < n_ab) := by omega
           rw [Preorder'.lt_iff _ _ _ hab]
-          simp only [orderFromRanking_lt_02 a b b hab]
+          simp only [pick_lt_02 a b b hab]
           split_ifs
           . omega
-          . simp only [orderFromRanking_lt_01 a b c hab hac]
-          . simp only [orderFromRanking_lt_02 a c b hab]
+          . simp only [pick_lt_01 a b c hab hac]
+          . simp only [pick_lt_02 a c b hab]
       apply (hAIIA _ _ _ _ h_agree_ba).mpr
       exact flipped a b
     -- By AIIA
@@ -314,10 +316,10 @@ lemma nab_pivotal_bc
         split_ifs with hinab hppibc hieqnab hppibc
         . rfl
         . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
-          simp only [orderFromRanking_lt_02 c b a (Ne.symm hac), orderFromRanking_lt_12 b c a hbc (Ne.symm hac)]
-        . simp only [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc, orderFromRanking_lt_02 a b c hac]
-        . simp only [orderFromRanking_lt_02 a b c hac]
-        . simp [orderFromRanking_lt_01 a c b hac hab, orderFromRanking_lt_02 a b c hac]
+          simp only [pick_lt_02 c b a (Ne.symm hac), pick_lt_12 b c a hbc (Ne.symm hac)]
+        . simp only [pick_lt_12 b a c (Ne.symm hab) hac hbc, pick_lt_02 a b c hac]
+        . simp only [pick_lt_02 a b c hac]
+        . simp [pick_lt_01 a c b hac hab, pick_lt_02 a b c hac]
       exact (hAIIA _ _ _ _ h_agree_ac).mp ((R mg1).lt_trans habc.2 habc.1)
   exact (hAIIA _ _ _ _ h_agree).mpr ((R mg2).lt_trans hbac.2 hbac.1)
 
@@ -336,7 +338,7 @@ lemma nab_le_nbc
     simp only [cs, canonicalSwap]
     split_ifs with hh
     . simp at hh; omega
-    . exact orderFromRanking_lt_02 b _ c hbc
+    . exact pick_lt_02 b _ c hbc
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     (Preorder'.lt_asymm _ _ _ (flipped b c))              -- but n_bc flipped, so society should prefer c over b
@@ -354,7 +356,7 @@ lemma ncb_le_nab
   let n_ab := pivoter a b hab hu
   let n_cb := pivoter c b (Ne.symm hbc) hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, orderFromRanking_lt_02 b _ c hbc]
+  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, pick_lt_02 b _ c hbc]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
