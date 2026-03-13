@@ -142,24 +142,6 @@ lemma orderFromRanking_lt_02 {α : Type} [LinearOrder α]
   simp [Preorder'.lt, orderFromRanking]
   exact ⟨h02, Ne.symm h02⟩
 
-def IsSequentialSwap
-  {α : Type}
-  {N : ℕ}
-  (a b : α)
-  (f: SwapSequence α N): Prop :=
-    ∀ (k: Fin (N+1)) (i: Fin N),
-    (i.val < k.val → b ≻[f k i] a ) ∧
-    (i.val ≥ k.val → a ≻[f k i] b )
-
-def IsPivotal
-  {α : Type}
-  {N : ℕ}
-  (R : SWF α N)
-  (f: SwapSequence α N)
-  (a b : α)
-  (n_ab: Fin N): Prop :=
-  (∀ i ≤ n_ab, a ≻[R (f i.castSucc)] b) ∧ b ≻[R (f n_ab.succ)] a
-
 -- Canonical profiles: p = everyone ranks b > a, q = everyone ranks a > b
 def canonicalSwap
   {α : Type} [LinearOrder α]
