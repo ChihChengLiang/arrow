@@ -168,8 +168,8 @@ lemma flip_exists
   apply hu
   simp [orderFromRanking_lt_02 b _ a (Ne.symm hab)]
 
--- Find the minimum k where the flip happens
-noncomputable def pivotalVoter
+/-- Pivotal Voter: `Fin.find` finds the minimum k where the flip happens -/
+noncomputable def pivoter
   {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   {R : SWF α N}
@@ -184,7 +184,7 @@ lemma no_flip {α : Type} [LinearOrder α]
   (a b : α) {hab : a ≠ b}
   (i : Fin N)
   {hu: Unanimity R}:
-  i < pivotalVoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
+  i < pivoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
   intro hilt
   exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab)
     (Fin.find_min (flip_exists R a b hab hu) hilt)
@@ -195,7 +195,7 @@ lemma flipped {α : Type} [LinearOrder α]
   {R : SWF α N}
   (a b : α) {hab : a ≠ b}
   {hu: Unanimity R}:
-  b ≻[R (canonicalSwap a b hab (pivotalVoter a b hab hu).succ)] a := by
+  b ≻[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
   exact Fin.find_spec (flip_exists R a b hab hu)
 
 lemma nab_pivotal_bc
@@ -205,8 +205,8 @@ lemma nab_pivotal_bc
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
   (hu: Unanimity R) (hAIIA: (AIIA R))
-  : Dictates R (pivotalVoter a b hab hu) b c := by
-  let n_ab := pivotalVoter a b hab hu
+  : Dictates R (pivoter a b hab hu) b c := by
+  let n_ab := pivoter a b hab hu
 
   -- Magic profile 1
   -- 0...k-1 prefer b > c > a
@@ -329,10 +329,10 @@ lemma nab_le_nbc
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
   (hu: Unanimity R) (hAIIA: (AIIA R))
-  : pivotalVoter a b hab hu ≤ pivotalVoter b c hbc hu := by
+  : pivoter a b hab hu ≤ pivoter b c hbc hu := by
   by_contra h; push_neg at h;
-  let cs := canonicalSwap b c hbc (pivotalVoter b c hbc hu).succ
-  have h_pref : b ≻[cs (pivotalVoter a b hab hu)] c := by
+  let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
+  have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp only [cs, canonicalSwap]
     split_ifs with hh
     . simp at hh; omega
@@ -349,10 +349,10 @@ lemma ncb_le_nab
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
   (hu: Unanimity R) (hAIIA: (AIIA R)):
-  pivotalVoter c b (Ne.symm hbc) hu ≤ pivotalVoter a b hab hu := by
+  pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
   by_contra h; push_neg at h
-  let n_ab := pivotalVoter a b hab hu
-  let n_cb := pivotalVoter c b (Ne.symm hbc) hu
+  let n_ab := pivoter a b hab hu
+  let n_cb := pivoter c b (Ne.symm hbc) hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
   have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, orderFromRanking_lt_02 b _ c hbc]
   exact absurd
@@ -366,7 +366,7 @@ lemma nbc_le_ncb
   (a b c: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
   (hu: Unanimity R) (hAIIA: (AIIA R))
-  : pivotalVoter c b (Ne.symm hbc) hu ≤ pivotalVoter b c hbc hu :=
+  : pivoter c b (Ne.symm hbc) hu ≤ pivoter b c hbc hu :=
   le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
 lemma n_ab_pivotal_bc_cb
@@ -377,12 +377,12 @@ lemma n_ab_pivotal_bc_cb
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
   (hu: Unanimity R) (hAIIA: (AIIA R)):
   -- n_bc = n_cb = n_ab
-  (pivotalVoter b c hbc hu) = (pivotalVoter c b (Ne.symm hbc) hu) ∧
-  (pivotalVoter c b (Ne.symm hbc) hu) = pivotalVoter a b hab hu := by
+  (pivoter b c hbc hu) = (pivoter c b (Ne.symm hbc) hu) ∧
+  (pivoter c b (Ne.symm hbc) hu) = pivoter a b hab hu := by
 
-  let n_ab := pivotalVoter a b hab hu
-  let n_bc := pivotalVoter b c hbc hu
-  let n_cb := pivotalVoter c b (Ne.symm hbc) hu
+  let n_ab := pivoter a b hab hu
+  let n_bc := pivoter b c hbc hu
+  let n_cb := pivoter c b (Ne.symm hbc) hu
   -- n_bc ≥ n_ab
   have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
 
@@ -411,7 +411,7 @@ lemma n_ab_dictate_xy
   (a b c x y: α)
   (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
   (hu: Unanimity R) (hAIIA: AIIA R):
-  Dictates R (pivotalVoter a b hab hu) x y := by
+  Dictates R (pivoter a b hab hu) x y := by
   -- Collect pivotal voter equalities for {a,b,c}
   obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
   obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
@@ -453,6 +453,6 @@ theorem Impossibility
   by_contra ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩
   apply hNonDictactor
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
-  use pivotalVoter a b hab hu
+  use pivoter a b hab hu
   intro x y hxy
   exact n_ab_dictate_xy a b c x y hab hac hbc hxy hu hAIIA
