@@ -482,19 +482,10 @@ theorem Impossibility
     {α : Type} [Fintype α] [LinearOrder α]
     {N:ℕ } [NeZero N]
     (ha : Fintype.card α ≥ 3):
-    ¬ ∃ R : SWF α N,
-    (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
-  by_contra h
-  obtain ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩ := h
+    ¬ ∃ R : SWF α N, (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
+  by_contra ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩
   apply hNonDictactor
-
-  -- i j k | in the paper are translated into
-  -- a b c
-
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
-
-  let n_ab := pivotalVoter a b hab hu
-
-  use n_ab
+  use pivotalVoter a b hab hu
   intro x y hxy
   exact n_ab_dictate_xy a b c x y hab hac hbc hxy hu hAIIA
