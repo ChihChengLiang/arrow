@@ -186,7 +186,7 @@ def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
 
 /-- `flipping R a b hab k` holds iff society prefers `b ≻ a` when voters `0..k` prefer `b ≻ a`. -/
 def flipping (R : SWF α N) (a b : α) (hab : a ≠ b) :=
-  fun k: Fin N => b ≽[R ((canonicalSwap a b hab) k.succ)] a
+  fun k: Fin N => ¬ a ≻[R ((canonicalSwap a b hab) k.succ)] b
 
 /-- By unanimity, a flip must occur: when all voters prefer `b ≻ a`, so does society. -/
 lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
@@ -207,13 +207,13 @@ noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N 
 lemma no_flip (a b : α) {hab : a ≠ b} (i : Fin N) {hu: Unanimity R}:
     i < pivoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
   intro hilt
-  exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab)
-    (Fin.find_min (flip_exists R a b hab hu) hilt)
+  have h := Fin.find_min (flip_exists R a b hab hu) hilt
+  unfold flipping at h; push_neg at h; exact h
 
 /-- At the pivotal voter, society flips to `b ≻ a`. -/
 lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
-    b ≻[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
-  exact Fin.find_spec (flip_exists R a b hab hu)
+    b ≽[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
+  exact (Preorder'.not_lt _ _ _).mp (Fin.find_spec (flip_exists R a b hab hu))
 
 /-- The pivotal voter for `(a, b)` dictates the pair `(b, c)`. -/
 lemma nab_pivotal_bc (a b c: α)
