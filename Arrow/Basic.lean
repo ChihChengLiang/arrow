@@ -7,6 +7,9 @@ import Mathlib.Data.Fintype.EquivFin
 noncomputable section
 open Classical
 
+/-! ## Preorder' -/
+variable {α : Type}
+
 structure Preorder' (α : Type) where
   le : α → α → Prop
   refl : ∀ a, le a a
@@ -14,15 +17,15 @@ structure Preorder' (α : Type) where
   total : ∀ a b, le a b ∨ le b a
   antisymm : ∀ a b, le a b → le b a → a = b
 
-def Preorder'.lt {α : Type} (p : Preorder' α) (a b : α) : Prop :=
+def Preorder'.lt (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
 
-lemma Preorder'.lt_asymm {α : Type} (p : Preorder' α) (a b : α) :
+lemma Preorder'.lt_asymm (p : Preorder' α) (a b : α) :
     p.lt a b → ¬ p.lt b a := by
   intro ⟨hab, hnba⟩ ⟨hba, _⟩
   exact hnba hba
 
-lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
+lemma Preorder'.lt_of_not_lt (p : Preorder' α) (a b : α)
     (hab : a ≠ b) (h : ¬ p.lt b a) : p.lt a b := by
   unfold Preorder'.lt at *; push_neg at h
   rcases p.total a b with hab' | hba'
@@ -33,19 +36,22 @@ lemma Preorder'.lt_of_not_lt {α : Type} (p : Preorder' α) (a b : α)
     . exact h hba'
     . by_contra hba; exact hab (p.antisymm a b (h hba') hba)
 
-lemma Preorder'.lt_trans  {α : Type} (p : Preorder' α) {a b c : α}
+lemma Preorder'.lt_trans (p : Preorder' α) {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
     constructor
     . exact p.trans _ _ _ h1.1 h2.1
     . intro h
       exact h1.2 (p.trans _ _ _ h2.1 h)
 
-lemma Preorder'.lt_iff {α : Type} (p q: Preorder' α) {a b: α}
+lemma Preorder'.lt_iff (p q: Preorder' α) {a b: α}
   (h_iff: p.lt b a ↔ q.lt b a)(hab: a≠b): p.lt a b ↔ q.lt a b := by
   rw [← not_iff_not]
   constructor <;> intro h
   . exact q.lt_asymm _ _ (h_iff.mp (p.lt_of_not_lt _ _ (Ne.symm hab) h))
   . exact p.lt_asymm _ _ (h_iff.mpr (q.lt_of_not_lt _ _ (Ne.symm hab) h))
+
+/-! ## Social Welfare Function -/
+variable {N : ℕ}
 
 -- A preference profile maps individual i to their preferences
 def Profile (α : Type) (N : ℕ) := Fin N → Preorder' α
@@ -64,31 +70,33 @@ notation a " ≻[" p  "] " b => Preorder'.lt p b a
 notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
 
 -- In society R, voter k dictate just ab
-def Dictates {α : Type} {N : ℕ} (R : SWF α N) (k : Fin N) (a b : α): Prop :=
+def Dictates (R : SWF α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: Profile α N ), (a ≻[p k] b) → a ≻[R p] b
 
 -- all voters in both profile p and q prefer a over b
-def AgreeOn {α : Type} {N : ℕ} (p q : Profile α N) (a b : α) : Prop :=
+def AgreeOn (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, (a ≻[p i] b) ↔ a ≻[q i] b -- voter i prefers a over b in p iff in q
 
 -- if everyone like `a` over `b`, so is society
-def Unanimity {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
+def Unanimity (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α),
     (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
 
 -- (AIIA: Arrow's Independence of Irrelevant Alternatives)
 -- If each individual's preferences over `a` and `b` are the same in profile `p` and profile `q`,
 -- then `SWF(p)` and `SWF(q)` rank the two alternatives the same
-def AIIA {α : Type} {N : ℕ} (R : SWF α N) : Prop :=
+def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≻[R p] b) ↔ a ≻[R q] b)
 
-def NonDictatorship {α : Type} {N : ℕ} (R : SWF α N): Prop :=
+def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
 
+/-! ## Preference Construction -/
+variable [LinearOrder α]
+
 /-- Build a concrete ranking of preference-/
-def prefer {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) : Preorder' α where
+def prefer (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) : Preorder' α where
   le x y :=
     -- first handle the 6 ordered pairs among a₀, a₁, a₂
     if x = a₂ then True              -- a₂ is bottom, below everything
@@ -113,53 +121,39 @@ def prefer {α : Type} [LinearOrder α]
     . exact le_antisymm ha hb
 
 /--Pick from the ranking to compare-/
-lemma pick_lt_01 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
+lemma pick_lt_01 (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ h02).lt a₁ a₀ := by
   simp [Preorder'.lt, prefer]
   exact ⟨h02, Ne.symm h01⟩
 
-lemma pick_lt_12 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
+lemma pick_lt_12 (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ h02).lt a₂ a₁ := by
   simp [Preorder'.lt, prefer]
   split_ifs with ha10
   . exact absurd (Eq.symm ha10) h01
   . exact ⟨ h12, Ne.symm h02, h12 ⟩
 
-lemma pick_lt_02 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+lemma pick_lt_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ h02).lt a₂ a₀ := by
   simp [Preorder'.lt, prefer]
   exact ⟨h02, Ne.symm h02⟩
 
+/-! ## Pivotal Voter -/
+variable [NeZero N] {R : SWF α N}
+
 -- Canonical profiles: before, everyone ranks b ≻ a; after, everyone ranks a ≻ b
-def canonicalSwap
-  {α : Type} [LinearOrder α]
-  {N : ℕ}
-  (a b : α)
-  (hab : a ≠ b)
-  : Fin (N+1) → Profile α N :=
+def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
   fun k: Fin (N+1) =>
     fun i: Fin N => if i < k.val
       -- put extra b or a just to reuse a 3 items ranking
       then prefer b b a (Ne.symm hab) -- b on top
       else prefer a b b hab           -- a on top
 
-def flipping
-  {α : Type} [LinearOrder α]
-  {N : ℕ}
-  (R : SWF α N)
-  (a b : α) (hab : a ≠ b) :=
+def flipping (R : SWF α N) (a b : α) (hab : a ≠ b) :=
   fun k: Fin N => b ≻[R ((canonicalSwap a b hab) k.succ)] a
 
-lemma flip_exists
-  {α : Type} [LinearOrder α]
-  {N : ℕ} [NeZero N]
-  (R : SWF α N)
-  (a b : α) (hab : a ≠ b)
-  (hu : Unanimity R):
-  ∃ k, flipping R a b hab k := by
+lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
+    ∃ k, flipping R a b hab k := by
   use (0:Fin N).rev
   unfold flipping canonicalSwap
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
@@ -168,43 +162,25 @@ lemma flip_exists
   simp [pick_lt_02 b _ a (Ne.symm hab)]
 
 /-- Pivotal Voter: `Fin.find` finds the minimum k where the flip happens -/
-noncomputable def pivoter
-  {α : Type} [LinearOrder α]
-  {N : ℕ} [NeZero N]
-  {R : SWF α N}
-  (a b : α) (hab : a ≠ b)
-  (hu : Unanimity R) : Fin N :=
+noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N :=
   Fin.find (flipping R a b hab) (flip_exists R a b hab hu)
 
 -- before pivot, no flip
-lemma no_flip {α : Type} [LinearOrder α]
-  {N : ℕ} [NeZero N]
-  {R : SWF α N}
-  (a b : α) {hab : a ≠ b}
-  (i : Fin N)
-  {hu: Unanimity R}:
-  i < pivoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
+lemma no_flip (a b : α) {hab : a ≠ b} (i : Fin N) {hu: Unanimity R}:
+    i < pivoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
   intro hilt
   exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab)
     (Fin.find_min (flip_exists R a b hab hu) hilt)
 
 -- at pivot, it flips
-lemma flipped {α : Type} [LinearOrder α]
-  {N : ℕ} [NeZero N]
-  {R : SWF α N}
-  (a b : α) {hab : a ≠ b}
-  {hu: Unanimity R}:
-  b ≻[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
+lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
+    b ≻[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
   exact Fin.find_spec (flip_exists R a b hab hu)
 
-lemma nab_pivotal_bc
-  {α : Type} [LinearOrder α]
-  {N:ℕ} [NeZero N]
-  {R: SWF α N}
-  (a b c: α)
-  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity R) (hAIIA: (AIIA R))
-  : Dictates R (pivoter a b hab hu) b c := by
+lemma nab_pivotal_bc (a b c: α)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (hu: Unanimity R) (hAIIA: AIIA R)
+    : Dictates R (pivoter a b hab hu) b c := by
   let n_ab := pivoter a b hab hu
 
   -- Magic profile 1
@@ -321,14 +297,10 @@ lemma nab_pivotal_bc
   exact (hAIIA _ _ _ _ h_agree).mpr ((R mg2).lt_trans hbac.2 hbac.1)
 
 -- n_ab pivot b and c, so n_bc shouldn't flip the b c order earlier than n_ab
-lemma nab_le_nbc
-  {α : Type} [LinearOrder α]
-  {N:ℕ} [NeZero N]
-  {R: SWF α N}
-  (a b c: α)
-  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity R) (hAIIA: (AIIA R))
-  : pivoter a b hab hu ≤ pivoter b c hbc hu := by
+lemma nab_le_nbc (a b c: α)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (hu: Unanimity R) (hAIIA: AIIA R)
+    : pivoter a b hab hu ≤ pivoter b c hbc hu := by
   by_contra h; push_neg at h;
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
@@ -341,14 +313,10 @@ lemma nab_le_nbc
     (Preorder'.lt_asymm _ _ _ (flipped b c))              -- but n_bc flipped, so society should prefer c over b
 
 -- n_cb should flip c b order before n_ab do so
-lemma ncb_le_nab
-  {α : Type} [LinearOrder α]
-  {N:ℕ} [NeZero N]
-  {R: SWF α N}
-  (a b c: α)
-  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity R) (hAIIA: (AIIA R)):
-  pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
+lemma ncb_le_nab (a b c: α)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (hu: Unanimity R) (hAIIA: AIIA R):
+    pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let n_cb := pivoter c b (Ne.symm hbc) hu
@@ -358,26 +326,18 @@ lemma ncb_le_nab
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
 
-lemma nbc_le_ncb
-  {α : Type} [LinearOrder α]
-  {N:ℕ} [NeZero N]
-  {R: SWF α N}
-  (a b c: α)
-  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity R) (hAIIA: (AIIA R))
-  : pivoter c b (Ne.symm hbc) hu ≤ pivoter b c hbc hu :=
+lemma nbc_le_ncb (a b c: α)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (hu: Unanimity R) (hAIIA: AIIA R)
+    : pivoter c b (Ne.symm hbc) hu ≤ pivoter b c hbc hu :=
   le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
 
-lemma n_ab_pivotal_bc_cb
-  {α : Type} [LinearOrder α]
-  {N:ℕ} [NeZero N]
-  {R: SWF α N}
-  (a b c: α)
-  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-  (hu: Unanimity R) (hAIIA: (AIIA R)):
-  -- n_bc = n_cb = n_ab
-  (pivoter b c hbc hu) = (pivoter c b (Ne.symm hbc) hu) ∧
-  (pivoter c b (Ne.symm hbc) hu) = pivoter a b hab hu := by
+lemma n_ab_pivotal_bc_cb (a b c: α)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (hu: Unanimity R) (hAIIA: AIIA R):
+    -- n_bc = n_cb = n_ab
+    (pivoter b c hbc hu) = (pivoter c b (Ne.symm hbc) hu) ∧
+    (pivoter c b (Ne.symm hbc) hu) = pivoter a b hab hu := by
 
   let n_ab := pivoter a b hab hu
   let n_bc := pivoter b c hbc hu
@@ -403,14 +363,10 @@ lemma n_ab_pivotal_bc_cb
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
 -- n_bc = n_cb = n_ab can be extended to any pair x y
-lemma n_ab_dictate_xy
-  {α : Type} [LinearOrder α]
-  {N:ℕ} [NeZero N]
-  {R: SWF α N}
-  (a b c x y: α)
-  (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
-  (hu: Unanimity R) (hAIIA: AIIA R):
-  Dictates R (pivoter a b hab hu) x y := by
+lemma n_ab_dictate_xy (a b c x y: α)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
+    (hu: Unanimity R) (hAIIA: AIIA R):
+    Dictates R (pivoter a b hab hu) x y := by
   -- Collect pivotal voter equalities for {a,b,c}
   obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
   obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
@@ -444,10 +400,7 @@ lemma n_ab_dictate_xy
             . simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxa) hac hxc hu hAIIA
             . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxb) (Ne.symm hyb) hxy hu hAIIA
 
-theorem Impossibility
-    {α : Type} [Fintype α] [LinearOrder α]
-    {N:ℕ } [NeZero N]
-    (ha : Fintype.card α ≥ 3):
+theorem Impossibility [Fintype α] (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N, (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
   by_contra ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩
   apply hNonDictactor
