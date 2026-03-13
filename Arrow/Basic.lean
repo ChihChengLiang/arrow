@@ -338,16 +338,19 @@ lemma nab_pivotal_bc
           rw [Fin.val_sub_one_of_ne_zero hn]
           exact Nat.sub_one_lt (Fin.val_ne_of_ne hn)
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
-          unfold mg1 canonicalSwap swapping_k
-          subst k
           intro i
-          simp
-          by_cases hi: i < n_ab
-          . simp
-
-          split_ifs
-
-          sorry
+          simp only [mg1, canonicalSwap, swapping_k]
+          have hk_eq : (i.val < k.succ.val) ↔ (i.val < n_ab.val) := by
+            simp only [k, Fin.val_succ, Fin.val_sub_one_of_ne_zero hn]
+            omega
+          by_cases hi : i.val < n_ab.val
+          · -- Case i < n_ab: both orderings have b ≻ a, so a ≻ b is false
+            simp only [hi, hk_eq.mpr hi, ↓reduceIte]
+            rw[Preorder'.lt_iff _ _ _ (Ne.symm hab)]
+            simp only [orderFromRanking_lt_02 b c a (Ne.symm hab), orderFromRanking_lt_02 b b a (Ne.symm hab)]
+          · -- Case i ≥ n_ab: both orderings have a ≻ b
+            have hi' : ¬(i.val < k.succ.val) := hk_eq.not.mpr hi
+            simp only [hi, hi', ↓reduceIte, orderFromRanking_lt_01 a b b hab hab, orderFromRanking_lt_01 a b c hab hac]
         exact no_flip R a b hab mg1 k hp hu hAIIA hk
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
