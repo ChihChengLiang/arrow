@@ -249,9 +249,14 @@ lemma nab_pivotal_bc (a b c: α)
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
           intro i; simp only [mg1, canonicalSwap]
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
-          . rw [Preorder'.lt_iff _ _ _ (Ne.symm hab)]
-            simp only [pick_lt_02 b c a (Ne.symm hab), pick_lt_02 b b a (Ne.symm hab)]
-          . simp only [pick_lt_01 a b c hab hac, pick_lt_01 a b b hab hab]
+          . constructor
+            . rw[← not_iff_not]
+              simp only [(pick_lt_02 b c a (Ne.symm hab)).2, (pick_lt_02 b b a (Ne.symm hab)).2]
+            . simp only [pick_le_02 b c a (Ne.symm hab), pick_le_02 b b a (Ne.symm hab)]
+          . constructor
+            . simp only [pick_le_01 a b c hac, pick_le_01 a b b hab]
+            . rw[← not_iff_not]
+              simp only [(pick_lt_01 a b c hab hac).2, (pick_lt_01 a b b hab hab).2]
         apply (hAIIA _ _ _ _ hp).mpr
         exact no_flip a b k hk
     -- b > c by unanimity
