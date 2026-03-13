@@ -203,6 +203,48 @@ noncomputable def pivotalVoter
   (hu : Unanimity R) : Fin N :=
   Fin.find (flipping R a b hab) (flipping_exists R a b hab hu)
 
+lemma zero_lt_pivotalVoter {α : Type} [LinearOrder α]
+  {N : ℕ} [NeZero N]
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b)
+  (p : Profile α N)
+  (i : Fin N)
+  (hp: AgreeOn p (canonicalSwap a b hab i.succ) a b)
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
+  0 < pivotalVoter a b hab hu := by
+
+
+  sorry
+
+-- before pivot, no flip
+lemma no_flip {α : Type} [LinearOrder α]
+  {N : ℕ} [NeZero N]
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b)
+  (p : Profile α N)
+  (i : Fin N)
+  (hp: AgreeOn p (canonicalSwap a b hab i.succ) a b)
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
+  i < pivotalVoter a b hab hu → a ≻[R p] b := by
+  intro hilt
+  have hNoFlip := Fin.find_min (flipping_exists R a b hab hu) hilt
+  exact (hAIIA _ _ _ _ hp).mpr (Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab) hNoFlip)
+
+-- at pivot, it flips
+lemma flipped {α : Type} [LinearOrder α]
+  {N : ℕ} [NeZero N]
+  (R : SWF α N)
+  (a b : α) (hab : a ≠ b)
+  (p : Profile α N)
+  (i : Fin N)
+  (hp: AgreeOn p (canonicalSwap a b hab i.succ) b a)
+  (hu: Unanimity R) (hAIIA: (AIIA R)):
+  i = pivotalVoter a b hab hu → b ≻[R p] a := by
+  intro heq
+  apply (hAIIA _ _ _ _ hp).mpr
+  subst i
+  exact Fin.find_spec (flipping_exists R a b hab hu)
+
 -- pivotalVoter is independent of profile
 lemma pivotalVoter_spec
   {α : Type} [LinearOrder α]
@@ -270,37 +312,48 @@ lemma nab_pivotal_bc
   (hu: Unanimity R) (hAIIA: (AIIA R))
   : Dictates R (pivotalVoter a b hab hu) b c := by
   let n_ab := pivotalVoter a b hab hu
-  let p: Profile α N := fun i => orderFromRanking b c a (Ne.symm hab)
-  let q: Profile α N := fun i => orderFromRanking a b c hac
 
-  have hp: ∀ i: Fin N, b ≻[p i] c ≻ a := by
-    intro i; constructor
-    . exact orderFromRanking_lt_01 b c a hbc (Ne.symm hab)
-    . exact orderFromRanking_lt_12 b c a hbc (Ne.symm hac) (Ne.symm hab)
-  have hq: ∀ i: Fin N, a ≻[q i] b ≻ c := by
-    intro i; constructor
-    . exact orderFromRanking_lt_01 a b c hab hac
-    . exact orderFromRanking_lt_12 a b c hab hbc hac
-
+  -- Magic profile 1
   -- 0...k-1 prefer b > c > a
   -- k ... N prefer a > b > c
   -- result: socPrefer a > b > c
-  have hf : IsSequentialSwap a b (swapping_k p q) := by
-    unfold IsSequentialSwap swapping_k; intro k i; constructor
-    . intro h; simp [h]; exact ((p i).lt_trans (hp i).2 (hp i).1)
-    . intro h; simp [h.not_gt]; exact (hq i).1
-  have h_nab_pivot_p := pivotalVoter_spec R a b hab (swapping_k p q) hf hu hAIIA
-
+  let mg1: Profile α N := fun i: Fin N =>
+    if i < n_ab.val
+      then orderFromRanking b c a (Ne.symm hab)
+      else orderFromRanking a b c hac
   -- soc prefer a > b > c
-  have habc: a ≻[R (swapping_k p q n_ab.castSucc)] b ≻ c  := by
+  have habc: a ≻[R mg1] b ≻ c  := by
     constructor
     -- a > b by def of n_ab
-    . exact h_nab_pivot_p.1 n_ab (le_refl n_ab)
+    . by_cases hn : n_ab = 0
+      . -- Case n_ab = 0: All voters prefer a > b, use unanimity
+        have h : ∀ i : Fin N, a ≻[mg1 i] b := by
+          intro i; unfold mg1; simp [hn]
+          exact orderFromRanking_lt_01 a b c hab hac
+        exact hu _ _ _ h
+      . -- Case n_ab ≠ 0: Use no_flip
+        let k := n_ab - 1
+        have hk : k.val < n_ab := by
+          simp only [k]
+          rw [Fin.val_sub_one_of_ne_zero hn]
+          exact Nat.sub_one_lt (Fin.val_ne_of_ne hn)
+        have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
+          unfold mg1 canonicalSwap swapping_k
+          subst k
+          intro i
+          simp
+          by_cases hi: i < n_ab
+          . simp
+
+          split_ifs
+
+          sorry
+        exact no_flip R a b hab mg1 k hp hu hAIIA hk
     -- b > c by unanimity
-    . have h: ∀ i: Fin N, b ≻[swapping_k p q n_ab.castSucc i] c := by
-        intro i; unfold swapping_k; split_ifs
-        . exact (hp i).1
-        . exact (hq i).2
+    . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
+        intro i; unfold mg1; split_ifs
+        . exact orderFromRanking_lt_01 b c a hbc (Ne.symm hab)
+        . exact orderFromRanking_lt_12 a b c hab hbc hac
       exact hu _ _ _ h
   intro pp h
 
