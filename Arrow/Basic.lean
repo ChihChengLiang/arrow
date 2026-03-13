@@ -222,24 +222,16 @@ lemma nab_pivotal_bc (a b c: α)
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
         let k := n_ab - 1
-        have hk : k.val < n_ab := by
-          simp only [k]
-          rw [Fin.val_sub_one_of_ne_zero hn]
-          exact Nat.sub_one_lt (Fin.val_ne_of_ne hn)
+        have hk_succ : k.val + 1 = n_ab.val := by
+          simp only [k, Fin.val_sub_one_of_ne_zero hn]
+          exact Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (Fin.val_ne_of_ne hn))
+        have hk : k.val < n_ab := by omega
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
-          intro i
-          simp only [mg1, canonicalSwap]
-          have hk_eq : (i.val < k.succ.val) ↔ (i.val < n_ab.val) := by
-            simp only [k, Fin.val_succ, Fin.val_sub_one_of_ne_zero hn]
-            omega
-          by_cases hi : i.val < n_ab.val
-          · -- Case i < n_ab: both orderings have b ≻ a, so a ≻ b is false
-            simp only [hi, hk_eq.mpr hi, ↓reduceIte]
-            rw[Preorder'.lt_iff _ _ _ (Ne.symm hab)]
+          intro i; simp only [mg1, canonicalSwap]
+          by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
+          . rw [Preorder'.lt_iff _ _ _ (Ne.symm hab)]
             simp only [pick_lt_02 b c a (Ne.symm hab), pick_lt_02 b b a (Ne.symm hab)]
-          · -- Case i ≥ n_ab: both orderings have a ≻ b
-            have hi' : ¬(i.val < k.succ.val) := hk_eq.not.mpr hi
-            simp only [hi, hi', ↓reduceIte, pick_lt_01 a b b hab hab, pick_lt_01 a b c hab hac]
+          . simp only [pick_lt_01 a b c hab hac, pick_lt_01 a b b hab hab]
         apply (hAIIA _ _ _ _ hp).mpr
         exact no_flip a b k hk
     -- b > c by unanimity

@@ -23,15 +23,13 @@ jobs:
       - name: Install Lean
         uses: leanprover/lean-action@v1
         with:
-          build-args: ""
           test: false
           lint: false
+          use-github-cache: true
 
       - name: Build docs
         working-directory: docbuild
-        run: |
-          lake update Arrow
-          lake build Arrow:docs
+        run: lake build Arrow:docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
