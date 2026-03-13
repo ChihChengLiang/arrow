@@ -397,20 +397,16 @@ lemma nab_pivotal_bc
           . simp only [orderFromRanking_lt_02 a c b hab]
       exact flipped R a b hab rr hu hAIIA h_agree_ba
     -- By AIIA
-    . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
-        (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
-      have h_agree_ac: AgreeOn (swapping_k p q n_ab.castSucc) rr a c := by
-        unfold AgreeOn rr swapping_k; intro i; simp
+    . have hsoc_swp_ac: a ≻[R mg1] c := (R mg1).lt_trans habc.2 habc.1
+      have h_agree_ac: AgreeOn mg1 rr a c := by
+        unfold AgreeOn rr mg1; intro i; simp
         split_ifs with hinab hppibc hieqnab hppibc
         . rfl
         . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
-          simp only [orderFromRanking_lt_02 c b a (Ne.symm hac), (hp i).2]
-        . simp [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc]
-          exact (q i).lt_trans (hq i).2 (hq i).1
-        . simp [orderFromRanking_lt_02 a b c hac]
-          exact (q i).lt_trans (hq i).2 (hq i).1
-        . simp [orderFromRanking_lt_01 a c b hac hab]
-          exact (q i).lt_trans (hq i).2 (hq i).1
+          simp only [orderFromRanking_lt_02 c b a (Ne.symm hac), orderFromRanking_lt_12 b c a hbc (Ne.symm hac)]
+        . simp only [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc, orderFromRanking_lt_02 a b c hac]
+        . simp only [orderFromRanking_lt_02 a b c hac]
+        . simp [orderFromRanking_lt_01 a c b hac hab, orderFromRanking_lt_02 a b c hac]
       exact (hAIIA _ _ _ _ h_agree_ac).mp hsoc_swp_ac
   exact (hAIIA _ _ _ _ h_agree).mpr ((R rr).lt_trans hbac.2 hbac.1)
 
