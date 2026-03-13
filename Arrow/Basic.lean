@@ -181,7 +181,7 @@ noncomputable def pivotalVoter
 lemma no_flip {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   {R : SWF α N}
-  (a b : α) (hab : a ≠ b)
+  (a b : α) {hab : a ≠ b}
   (i : Fin N)
   {hu: Unanimity R}:
   i < pivotalVoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
@@ -193,7 +193,7 @@ lemma no_flip {α : Type} [LinearOrder α]
 lemma flipped {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   {R : SWF α N}
-  (a b : α) (hab : a ≠ b)
+  (a b : α) {hab : a ≠ b}
   {hu: Unanimity R}:
   b ≻[R (canonicalSwap a b hab (pivotalVoter a b hab hu).succ)] a := by
   exact Fin.find_spec (flip_exists R a b hab hu)
@@ -247,7 +247,7 @@ lemma nab_pivotal_bc
             have hi' : ¬(i.val < k.succ.val) := hk_eq.not.mpr hi
             simp only [hi, hi', ↓reduceIte, orderFromRanking_lt_01 a b b hab hab, orderFromRanking_lt_01 a b c hab hac]
         apply (hAIIA _ _ _ _ hp).mpr
-        exact no_flip a b hab k hk
+        exact no_flip a b k hk
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
@@ -256,12 +256,12 @@ lemma nab_pivotal_bc
       exact hu _ _ _ h
   intro pp h
 
-  -- Magic profile to match arbitrary profile `pp` whose n_ab prefer b over c
+  -- Magic profile 2: match arbitrary profile `pp` whose n_ab prefer b over c
   -- 0...k-1 prefer b > a ∧ c > a
   -- k prefer b > a > c
   -- k+1 ... N prefer a > b ∧ c < a
   -- result: socPrefer b ≥ a > c
-  let rr : Profile α N := fun i: Fin N =>
+  let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
       then
         if b ≻[pp i] c
@@ -274,8 +274,8 @@ lemma nab_pivotal_bc
           then orderFromRanking a b c hac
           else orderFromRanking a c b hab
 
-  have h_agree: AgreeOn pp rr b c := by
-    unfold AgreeOn rr; intro i; split_ifs with _ hppibc hieqnab hppibc
+  have h_agree: AgreeOn pp mg2 b c := by
+    unfold AgreeOn mg2; intro i; split_ifs with _ hppibc hieqnab hppibc
     . simp [orderFromRanking_lt_01 b c a hbc (Ne.symm hab), hppibc]
     . rw [Preorder'.lt_iff _ _ _ (Ne.symm hbc)]
       simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
@@ -286,19 +286,19 @@ lemma nab_pivotal_bc
       simp only [Preorder'.lt_of_not_lt _ _ _ hbc hppibc,
         orderFromRanking_lt_12 a c b hac (Ne.symm hbc) hab]
 
-  have hbac: b ≻[R rr] a ≻ c := by
+  have hbac: b ≻[R mg2] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
-    . have h_agree_ba: AgreeOn rr (canonicalSwap a b hab n_ab.succ) b a := by
+    . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
         unfold AgreeOn canonicalSwap; intro i; split_ifs with h
-        . simp only [orderFromRanking_lt_02 b b a (Ne.symm hab)]; unfold rr; simp at h
+        . simp only [orderFromRanking_lt_02 b b a (Ne.symm hab)]; unfold mg2; simp at h
           split_ifs with hinab hppibc hieqnab hppibc
           . simp only [orderFromRanking_lt_02 b c a (Ne.symm hab)]
           . simp only [orderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
           . simp only [orderFromRanking_lt_01 b a c (Ne.symm hab) hbc]
           . omega
           . omega
-        . unfold rr; simp at h
+        . unfold mg2; simp at h
           have : ¬(i < n_ab) := by omega
           rw [Preorder'.lt_iff _ _ _ hab]
           simp only [orderFromRanking_lt_02 a b b hab]
@@ -307,11 +307,10 @@ lemma nab_pivotal_bc
           . simp only [orderFromRanking_lt_01 a b c hab hac]
           . simp only [orderFromRanking_lt_02 a c b hab]
       apply (hAIIA _ _ _ _ h_agree_ba).mpr
-      exact flipped a b hab
+      exact flipped a b
     -- By AIIA
-    . have hsoc_swp_ac: a ≻[R mg1] c := (R mg1).lt_trans habc.2 habc.1
-      have h_agree_ac: AgreeOn mg1 rr a c := by
-        unfold AgreeOn rr mg1; intro i; simp
+    . have h_agree_ac: AgreeOn mg1 mg2 a c := by
+        unfold AgreeOn mg2 mg1; intro i; simp
         split_ifs with hinab hppibc hieqnab hppibc
         . rfl
         . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
@@ -319,8 +318,8 @@ lemma nab_pivotal_bc
         . simp only [orderFromRanking_lt_12 b a c (Ne.symm hab) hac hbc, orderFromRanking_lt_02 a b c hac]
         . simp only [orderFromRanking_lt_02 a b c hac]
         . simp [orderFromRanking_lt_01 a c b hac hab, orderFromRanking_lt_02 a b c hac]
-      exact (hAIIA _ _ _ _ h_agree_ac).mp hsoc_swp_ac
-  exact (hAIIA _ _ _ _ h_agree).mpr ((R rr).lt_trans hbac.2 hbac.1)
+      exact (hAIIA _ _ _ _ h_agree_ac).mp ((R mg1).lt_trans habc.2 habc.1)
+  exact (hAIIA _ _ _ _ h_agree).mpr ((R mg2).lt_trans hbac.2 hbac.1)
 
 -- n_ab pivot b and c, so n_bc shouldn't flip the b c order earlier than n_ab
 lemma nab_le_nbc
@@ -338,7 +337,7 @@ lemma nab_le_nbc
     split_ifs with hh
     . simp at hh; omega
     . exact orderFromRanking_lt_02 b _ c hbc
-  exact absurd (flipped b c hbc) -- n_bc flipped, so society should prefer c over b
+  exact absurd (flipped b c) -- n_bc flipped, so society should prefer c over b
     (Preorder'.lt_asymm _ _ _ (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref)) -- but n_ab still dictates b over c
 
 -- n_cb should flip c b order before n_ab do so
@@ -358,8 +357,8 @@ lemma ncb_le_nab
     unfold pp canonicalSwap; simp
     exact orderFromRanking_lt_02 b _ c hbc
   exact absurd
-    (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref)         -- n_ab prefer b over c, so is society
-    (Preorder'.lt_asymm _ _ _ (no_flip c b (Ne.symm hbc) n_ab h)) -- n_ab before pivoter, so b c shouldn't flip
+    (nab_pivotal_bc a b c hab hac hbc hu hAIIA pp h_pref) -- n_ab prefer b over c, so is society
+    (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))       -- n_ab before pivoter, so b c shouldn't flip
 
 lemma nbc_le_ncb
   {α : Type} [LinearOrder α]
