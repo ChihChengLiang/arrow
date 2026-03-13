@@ -1,7 +1,3 @@
-import Mathlib.Order.Defs.PartialOrder
-import Mathlib.Data.Finset.Defs
-import Mathlib.Data.Fintype.Basic
-import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fintype.EquivFin
 
 noncomputable section
