@@ -236,13 +236,11 @@ lemma flipped {α : Type} [LinearOrder α]
   (R : SWF α N)
   (a b : α) (hab : a ≠ b)
   (p : Profile α N)
-  (i : Fin N)
-  (hp: AgreeOn p (canonicalSwap a b hab i.succ) b a)
-  (hu: Unanimity R) (hAIIA: (AIIA R)):
-  i = pivotalVoter a b hab hu → b ≻[R p] a := by
-  intro heq
+  (hu: Unanimity R)
+  (hAIIA: AIIA R)
+  (hp: AgreeOn p (canonicalSwap a b hab (pivotalVoter a b hab hu).succ) b a):
+  b ≻[R p] a := by
   apply (hAIIA _ _ _ _ hp).mpr
-  subst i
   exact Fin.find_spec (flipping_exists R a b hab hu)
 
 -- pivotalVoter is independent of profile
@@ -393,23 +391,24 @@ lemma nab_pivotal_bc
   have hbac: b ≻[R rr] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
-    . have h_agree_ba: AgreeOn (swapping_k p q n_ab.succ) rr b a := by
-        unfold AgreeOn swapping_k; intro i; split_ifs with h
-        . simp [(p i).lt_trans (hp i).2 (hp i).1]; unfold rr; simp at h
+    . have h_agree_ba: AgreeOn rr (canonicalSwap a b hab n_ab.succ) b a := by
+        unfold AgreeOn canonicalSwap swapping_k; intro i; split_ifs with h
+        . simp only [orderFromRanking_lt_02 b b a (Ne.symm hab)]; unfold rr; simp at h
           split_ifs with hinab hppibc hieqnab hppibc
-          . exact orderFromRanking_lt_02 b c a (Ne.symm hab)
-          . exact orderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)
-          . exact orderFromRanking_lt_01 b a c (Ne.symm hab) hbc
+          . simp only [orderFromRanking_lt_02 b c a (Ne.symm hab)]
+          . simp only [orderFromRanking_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
+          . simp only [orderFromRanking_lt_01 b a c (Ne.symm hab) hbc]
           . omega
           . omega
-        . unfold rr q; simp at h
+        . unfold rr; simp at h
           have : ¬(i < n_ab) := by omega
           rw [Preorder'.lt_iff _ _ _ hab]
+          simp only [orderFromRanking_lt_02 a b b hab]
           split_ifs
           . omega
           . simp only [orderFromRanking_lt_01 a b c hab hac]
-          . simp only [orderFromRanking_lt_02 a c b hab, orderFromRanking_lt_01 a b c hab hac]
-      exact (hAIIA _ _ _ _ h_agree_ba).mp h_nab_pivot_p.2
+          . simp only [orderFromRanking_lt_02 a c b hab]
+      exact flipped R a b hab rr hu hAIIA h_agree_ba
     -- By AIIA
     . have hsoc_swp_ac: a ≻[R (swapping_k p q n_ab.castSucc)] c :=
         (R (swapping_k p q n_ab.castSucc)).lt_trans habc.2 habc.1
