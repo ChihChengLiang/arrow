@@ -56,9 +56,6 @@ def Profile (α : Type) (N : ℕ) := Fin N → Preorder' α
 -- Social Welfare Function
 def SWF (α : Type) (N : ℕ) := (Fin N → Preorder' α) → Preorder' α
 
--- Useful for building profile with a pivotal voter
-abbrev SwapSequence: Type := Fin (N+1) → Profile α N
-
 -- society prefers a over b in profile p
 notation a " ≻[" R p "] " b => Preorder'.lt (R p) b a
 notation a " ≽[" R p "] " b => Preorder'.le (R p) b a
@@ -148,7 +145,7 @@ def canonicalSwap
   {N : ℕ}
   (a b : α)
   (hab : a ≠ b)
-  : SwapSequence α N :=
+  : Fin (N+1) → Profile α N :=
   -- put extra b or a just to reuse a 3 items ranking
   let p : Profile α N := fun _ => orderFromRanking b b a (Ne.symm hab) -- b on top
   let q : Profile α N := fun _ => orderFromRanking a b b hab           -- a on top
@@ -168,7 +165,6 @@ lemma flipping_exists
   (a b : α) (hab : a ≠ b)
   (hu : Unanimity R):
   ∃ k, flipping R a b hab k := by
-  let cs: SwapSequence α N := canonicalSwap a b hab
   use (0:Fin N).rev
   unfold flipping canonicalSwap swapping_k
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
