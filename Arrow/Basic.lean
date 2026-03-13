@@ -158,7 +158,7 @@ def flipping
   (a b : α) (hab : a ≠ b) :=
   fun k: Fin N => b ≻[R ((canonicalSwap a b hab) k.succ)] a
 
-lemma flipping_exists
+lemma flip_exists
   {α : Type} [LinearOrder α]
   {N : ℕ} [NeZero N]
   (R : SWF α N)
@@ -179,7 +179,7 @@ noncomputable def pivotalVoter
   {R : SWF α N}
   (a b : α) (hab : a ≠ b)
   (hu : Unanimity R) : Fin N :=
-  Fin.find (flipping R a b hab) (flipping_exists R a b hab hu)
+  Fin.find (flipping R a b hab) (flip_exists R a b hab hu)
 
 -- before pivot, no flip
 lemma no_flip {α : Type} [LinearOrder α]
@@ -191,7 +191,7 @@ lemma no_flip {α : Type} [LinearOrder α]
   i < pivotalVoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
   intro hilt
   exact Preorder'.lt_of_not_lt _ _ _ (Ne.symm hab)
-    (Fin.find_min (flipping_exists R a b hab hu) hilt)
+    (Fin.find_min (flip_exists R a b hab hu) hilt)
 
 -- at pivot, it flips
 lemma flipped {α : Type} [LinearOrder α]
@@ -200,7 +200,7 @@ lemma flipped {α : Type} [LinearOrder α]
   (a b : α) (hab : a ≠ b)
   {hu: Unanimity R}:
   b ≻[R (canonicalSwap a b hab (pivotalVoter a b hab hu).succ)] a := by
-  exact Fin.find_spec (flipping_exists R a b hab hu)
+  exact Fin.find_spec (flip_exists R a b hab hu)
 
 lemma nab_pivotal_bc
   {α : Type} [LinearOrder α]
