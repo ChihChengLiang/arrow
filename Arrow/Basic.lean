@@ -180,7 +180,7 @@ inductive Tie
     - `Tie.Top`: a₀ ~ a₁ > a₂ (top two tied)
     - `Tie.Bot`: a₀ > a₁ ~ a₂ (bottom two tied)
     Uses the ambient `LinearOrder` as a tiebreaker for elements outside `{a₀, a₁, a₂}`. -/
-def prefer (a₀ a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' α where
+def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' α where
   le x y := match tie with
     | .Not =>
       if x = a₂ then True              -- a₂ is bottom
