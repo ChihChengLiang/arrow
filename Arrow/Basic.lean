@@ -425,14 +425,35 @@ lemma nab_pivotal_bc (a b c: α)
       else
         if i = n_ab then prefer b a c .Not hbc
         else match (pp i).cmp b c with
-        | Cmp.LT _ _ => prefer a b c .Not hac
-        | Cmp.GT _ _ => prefer a c b .Not hab
+        | Cmp.LT _ _ => prefer a c b .Not hab
+        | Cmp.GT _ _ => prefer a b c .Not hac
         | Cmp.Indiff _ _ => prefer a b c .Bot hac  -- a > b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
-    -- AgreeOn means: for all i, (b ≽[pp i] c ↔ b ≽[mg2 i] c) ∧ (c ≽[pp i] b ↔ c ≽[mg2 i] b)
-    -- mg2 matches pp on (b,c) by construction
-    sorry
+    unfold AgreeOn mg2; intro i
+    split_ifs with hiltnab hieqnab
+    . constructor -- i < n_ab
+      . cases (pp i).cmp b c with
+        | LT _ hn=> rw[← not_iff_not]; simp [hn, (prefer_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)).2]
+        | GT _ h => simp only [h, prefer_le_01 b c a (Ne.symm hab)]
+        | Indiff _ h2 => simp only [h2, prefer_top_le_10 b c a (Ne.symm hab)]
+      . cases (pp i).cmp b c with
+        | LT h _=> simp [h, (prefer_lt_01 c b a (Ne.symm hbc) (Ne.symm hac)).1]
+        | GT hn _ => rw[← not_iff_not]; simp [hn, (prefer_lt_01 b c a hbc (Ne.symm hab)).2]
+        | Indiff h1 _ => simp only [h1, prefer_top_le_01 b c a (Ne.symm hab) (Ne.symm hac)]
+    . -- i = n_ab
+      subst i n_ab; constructor
+      . simp only [h.1, prefer_le_02 b a c hbc]
+      . rw[← not_iff_not]; simp [h.2, (prefer_lt_02 b a c hbc).2]
+    . constructor -- i > n_ab
+      . cases (pp i).cmp b c with
+        | LT _ hn => rw[← not_iff_not]; simp [hn, (prefer_lt_12 a c b (Ne.symm hbc) hab).2]
+        | GT _ h => simp only [h, prefer_le_12 a b c hac]
+        | Indiff _ h2 => simp only [h2, prefer_bot_le_21 a b c hac hab]
+      . cases (pp i).cmp b c with
+        | LT h _=> simp [h, prefer_le_12 a c b hab]
+        | GT hn _ => rw[← not_iff_not]; simp [hn, (prefer_lt_12 a b c hbc hac).2]
+        | Indiff h1 _ => simp only [h1, prefer_bot_le_12 a b c hac hab]
 
   have hbac: b ≻[R mg2] c := by
     sorry
