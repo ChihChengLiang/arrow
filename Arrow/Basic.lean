@@ -36,23 +36,12 @@ lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
     . exact hba
   . intro hba; push_neg; intro _; exact hba
 
-lemma Preorder'.le_of_lt {α : Type} (p : Preorder' α) (a b : α) :
-    p.lt a b → p.le a b := by
-    intro h
-    exact h.1
-
 lemma Preorder'.lt_trans (p : Preorder' α) {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
     constructor
     . exact p.trans _ _ _ h1.1 h2.1
     . intro h
       exact h1.2 (p.trans _ _ _ h2.1 h)
-
-/-- For a total preorder with distinct elements: ¬(a > b) implies b ≥ a -/
-lemma Preorder'.le_of_not_lt (p : Preorder' α) (a b : α) :
-    ¬ p.lt a b → p.le b a := by
-  rw [Preorder'.not_lt]
-  exact id
 
 /-- The three possible outcomes when comparing two elements under a total preorder. -/
 inductive Cmp (p : Preorder' α) (a b : α) : Type
@@ -66,28 +55,6 @@ noncomputable def Preorder'.cmp (p : Preorder' α) (a b : α) : Cmp p a b :=
     else Cmp.LT hab hba
   else Cmp.GT hab (p.total a b |>.resolve_left hab)
 
-/-- Two elements are indifferent if both a ≤ b and b ≤ a -/
-def Preorder'.indiff (p : Preorder' α) (a b : α) : Prop :=
-  p.le a b ∧ p.le b a
-
-/-- Indifference means neither is strictly preferred -/
-lemma Preorder'.indiff_iff_not_lt (p : Preorder' α) (a b : α) :
-    p.indiff a b ↔ (¬ p.lt a b ∧ ¬ p.lt b a) := by
-  unfold Preorder'.indiff Preorder'.lt
-  constructor
-  · intro ⟨hab, hba⟩
-    exact ⟨fun ⟨_, h⟩ => h hba, fun ⟨_, h⟩ => h hab⟩
-  · intro ⟨hnab, hnba⟩
-    push_neg at hnab hnba
-    -- hnab : p.le a b → p.le b a
-    -- hnba : p.le b a → p.le a b
-    constructor
-    · rcases p.total a b with h | h
-      · exact h
-      · exact hnba h
-    · rcases p.total b a with h | h
-      · exact h
-      · exact hnab h
 
 /-! ## Social Welfare Function
 
@@ -124,18 +91,6 @@ def Dictates (R : SWF α N) (k : Fin N) (a b : α): Prop :=
 def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
-
-def AgreeStronglyOn {α : Type} {N : ℕ}
-    (p q : Profile α N) (a b : α) : Prop :=
-  ∀ i, ((a ≻[p i] b) ↔ a ≻[q i] b) ∧ ((b ≻[p i] a) ↔ b ≻[q i] a)
-
-lemma agree_strongly_is_agree {α : Type} {N : ℕ}
-    (p q : Profile α N) (a b : α) :
-    AgreeStronglyOn p q a b → AgreeOn p q a b := by
-  intro h i
-  have h2 := h i
-  simp only [← Preorder'.not_lt, not_iff_not]
-  exact ⟨h2.2, h2.1⟩
 
 /-- **Unanimity** (Pareto): If all voters prefer `a` over `b`, so does society. -/
 def Unanimity (R : SWF α N) : Prop :=
@@ -264,16 +219,6 @@ lemma prefer_top_le_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂):
     (prefer a₀ a₁ a₂ .Top h02).le a₁ a₀ := by
   simp [prefer, h02]
 
-/-- In `prefer a₀ a₁ a₂ .Top`, a₀ ~ a₁ (not a₀ > a₁) -/
-lemma prefer_top_not_lt_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
-    ¬(prefer a₀ a₁ a₂ .Top h02).lt a₁ a₀ := by
-  simp [Preorder'.lt, prefer, h02, h12]
-
-/-- In `prefer a₀ a₁ a₂ .Top`, a₀ ~ a₁ (not a₁ > a₀) -/
-lemma prefer_top_not_lt_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
-    ¬(prefer a₀ a₁ a₂ .Top h02).lt a₀ a₁ := by
-  simp [Preorder'.lt, prefer, h12, h02]
-
 lemma prefer_top_le_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).le a₂ a₀ := by simp [prefer]
 
@@ -300,16 +245,6 @@ lemma prefer_bot_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ �
 /-- In `prefer a₀ a₁ a₂ .Bot`, a₁ and a₂ are indifferent: a₂ ≤ a₁ -/
 lemma prefer_bot_le_21 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     (prefer a₀ a₁ a₂ .Bot h02).le a₂ a₁ := by
-  simp [prefer, Ne.symm h01, Ne.symm h02]
-
-/-- In `prefer a₀ a₁ a₂ .Bot`, a₁ ~ a₂ (not a₁ > a₂) -/
-lemma prefer_bot_not_lt_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
-    ¬(prefer a₀ a₁ a₂ .Bot h02).lt a₂ a₁ := by
-  simp [prefer, Ne.symm h02, Ne.symm h01]
-
-/-- In `prefer a₀ a₁ a₂ .Bot`, a₁ ~ a₂ (not a₂ > a₁) -/
-lemma prefer_bot_not_lt_21 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
-    ¬(prefer a₀ a₁ a₂ .Bot h02).lt a₁ a₂ := by
   simp [prefer, Ne.symm h01, Ne.symm h02]
 
 lemma prefer_bot_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
