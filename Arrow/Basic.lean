@@ -197,8 +197,8 @@ def prefer (a₀ a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' �
       by_cases hba0: b = a₀
       · simp_all
       · simp_all; exact le_trans ha.2 hb
-    · split_ifs at ha hb ⊢ <;> simp_all
-    · split_ifs at ha hb ⊢ <;> simp_all
+    · split_ifs at ha hb ⊢; exact ha
+    · split_ifs at ha hb ⊢; exact hb
   total := by
     intro a b
     cases tie
@@ -211,8 +211,7 @@ def prefer (a₀ a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' �
 /-- In `prefer a₀ a₁ a₂ .Not`, we have `a₀ > a₁`. -/
 lemma prefer_lt_01 (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).lt a₁ a₀ := by
-  simp [Preorder'.lt, prefer]
-  exact ⟨h02, Ne.symm h01⟩
+  simp [Preorder'.lt, prefer, h02, Ne.symm h01]
 
 lemma prefer_le_01 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
@@ -221,10 +220,7 @@ lemma prefer_le_01 {α : Type} [LinearOrder α]
 lemma prefer_lt_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₁ := by
-  simp [Preorder'.lt, prefer]
-  split_ifs with ha10
-  · exact absurd (Eq.symm ha10) h01
-  · exact ⟨ h12, Ne.symm h02, h12 ⟩
+  simp [Preorder'.lt, prefer, h12, Ne.symm h02]
 
 lemma prefer_le_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
@@ -233,8 +229,7 @@ lemma prefer_le_12 {α : Type} [LinearOrder α]
 lemma prefer_lt_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₀ := by
-  simp [Preorder'.lt, prefer]
-  exact ⟨h02, Ne.symm h02⟩
+  simp [Preorder'.lt, prefer, h02, Ne.symm h02]
 
 lemma prefer_le_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
@@ -245,92 +240,70 @@ lemma prefer_le_02 {α : Type} [LinearOrder α]
 /-- In `prefer a₀ a₁ a₂ .Top`, we have a₀ > a₂ -/
 lemma prefer_top_lt_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).lt a₂ a₀ := by
-  simp only [Preorder'.lt, prefer]
-  constructor
-  · split_ifs <;> simp_all
-  · exact h02
+  simp [Preorder'.lt, prefer, h02]
 
 /-- In `prefer a₀ a₁ a₂ .Top`, we have a₁ > a₂ -/
 lemma prefer_top_lt_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).lt a₂ a₁ := by
-  simp only [Preorder'.lt, prefer]
-  constructor
-  · split_ifs <;> simp_all
-  · exact h12
+  simp [Preorder'.lt, prefer, h12]
 
 /-- In `prefer a₀ a₁ a₂ .Top`, a₀ and a₁ are indifferent: a₀ ≤ a₁ -/
 lemma prefer_top_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).le a₀ a₁ := by
-  simp only [prefer]
-  split_ifs with h1 h2 <;> simp_all
+  simp [prefer, h02, h12]
 
 /-- In `prefer a₀ a₁ a₂ .Top`, a₀ and a₁ are indifferent: a₁ ≤ a₀ -/
 lemma prefer_top_le_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).le a₁ a₀ := by
-  simp only [prefer]
-  split_ifs with h1 h2 <;> simp_all
+  simp [prefer, h02]
 
 /-- In `prefer a₀ a₁ a₂ .Top`, a₀ ~ a₁ (not a₀ > a₁) -/
 lemma prefer_top_not_lt_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
     ¬(prefer a₀ a₁ a₂ .Top h02).lt a₁ a₀ := by
-  simp only [Preorder'.lt, prefer, not_and, not_not]
-  intro _; split_ifs with h1 h2 <;> simp_all
+  simp [Preorder'.lt, prefer, h02, h12]
 
 /-- In `prefer a₀ a₁ a₂ .Top`, a₀ ~ a₁ (not a₁ > a₀) -/
 lemma prefer_top_not_lt_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
     ¬(prefer a₀ a₁ a₂ .Top h02).lt a₀ a₁ := by
-  simp only [Preorder'.lt, prefer, not_and, not_not]
-  intro _; split_ifs with h1 h2 <;> simp_all
+  simp [Preorder'.lt, prefer, h12, h02]
 
 lemma prefer_top_le_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ .Top h02).le a₂ a₀ := by
-  simp only [prefer]; split_ifs <;> rfl
+    (prefer a₀ a₁ a₂ .Top h02).le a₂ a₀ := by simp [prefer]
 
 lemma prefer_top_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
-    (prefer a₀ a₁ a₂ .Top h02).le a₂ a₁ := by
-  simp only [prefer]; split_ifs <;> rfl
+    (prefer a₀ a₁ a₂ .Top h02).le a₂ a₁ := by simp [prefer]
 
 /-! ### Lemmas for Tie.Bot (a₀ > a₁ ~ a₂) -/
 
 /-- In `prefer a₀ a₁ a₂ .Bot`, we have a₀ > a₁ -/
 lemma prefer_bot_lt_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     (prefer a₀ a₁ a₂ .Bot h02).lt a₁ a₀ := by
-  simp only [Preorder'.lt, prefer]
-  constructor
-  · simp [Ne.symm h01]
-  · exact Ne.symm h01
+  simp [Preorder'.lt, prefer, Ne.symm h01]
 
 /-- In `prefer a₀ a₁ a₂ .Bot`, we have a₀ > a₂ -/
 lemma prefer_bot_lt_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Bot h02).lt a₂ a₀ := by
-  simp only [Preorder'.lt, prefer]
-  constructor
-  · simp [Ne.symm h02]
-  · exact Ne.symm h02
+  simp [Preorder'.lt, prefer, Ne.symm h02]
 
 /-- In `prefer a₀ a₁ a₂ .Bot`, a₁ and a₂ are indifferent: a₁ ≤ a₂ -/
 lemma prefer_bot_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     (prefer a₀ a₁ a₂ .Bot h02).le a₁ a₂ := by
-  simp only [prefer]
-  split_ifs with h1 h2 <;> simp_all
+  simp [prefer, Ne.symm h02, Ne.symm h01]
 
 /-- In `prefer a₀ a₁ a₂ .Bot`, a₁ and a₂ are indifferent: a₂ ≤ a₁ -/
 lemma prefer_bot_le_21 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     (prefer a₀ a₁ a₂ .Bot h02).le a₂ a₁ := by
-  simp only [prefer]
-  split_ifs with h1 h2 <;> simp_all
+  simp [prefer, Ne.symm h01, Ne.symm h02]
 
 /-- In `prefer a₀ a₁ a₂ .Bot`, a₁ ~ a₂ (not a₁ > a₂) -/
 lemma prefer_bot_not_lt_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     ¬(prefer a₀ a₁ a₂ .Bot h02).lt a₂ a₁ := by
-  simp only [Preorder'.lt, prefer, not_and, not_not]
-  intro _; simp [Ne.symm h01, Ne.symm h02]
+  simp [prefer, Ne.symm h02, Ne.symm h01]
 
 /-- In `prefer a₀ a₁ a₂ .Bot`, a₁ ~ a₂ (not a₂ > a₁) -/
 lemma prefer_bot_not_lt_21 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     ¬(prefer a₀ a₁ a₂ .Bot h02).lt a₁ a₂ := by
-  simp only [Preorder'.lt, prefer, not_and, not_not]
-  intro _; simp [Ne.symm h01, Ne.symm h02]
+  simp [prefer, Ne.symm h01, Ne.symm h02]
 
 lemma prefer_bot_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
     (prefer a₀ a₁ a₂ .Bot h02).le a₁ a₀ := by simp [prefer, Ne.symm h01]
