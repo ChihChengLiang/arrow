@@ -175,26 +175,21 @@ lemma prefer_lt_01 (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a
     (prefer a₀ a₁ a₂ .Not h02).lt a₁ a₀ := by
   simp [Preorder'.lt, prefer, h02, Ne.symm h01]
 
-lemma prefer_le_01 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+lemma prefer_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).le a₁ a₀ := by simp [prefer]
 
-lemma prefer_lt_12 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
+lemma prefer_lt_12 (a₀ a₁ a₂ : α) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₁ := by
   simp [Preorder'.lt, prefer, h12, Ne.symm h02]
 
-lemma prefer_le_12 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+lemma prefer_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).le a₂ a₁ := by simp [prefer]
 
-lemma prefer_lt_02 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+lemma prefer_lt_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₀ := by
   simp [Preorder'.lt, prefer, h02, Ne.symm h02]
 
-lemma prefer_le_02 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+lemma prefer_le_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).le a₂ a₀ := by simp [prefer]
 
 /-! ### Lemmas for Tie.Top (a₀ ~ a₁ > a₂) -/
