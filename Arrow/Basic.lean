@@ -146,7 +146,14 @@ def Unanimity (R : SWF α N) : Prop :=
     depends only on individual rankings of `a` vs `b`. -/
 def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
-    AgreeOn p q a b → ((a ≻[R p] b) ↔ a ≻[R q] b)
+    AgreeOn p q a b → ((a ≽[R p] b) ↔ a ≽[R q] b) ∧ ((b ≽[R p] a) ↔ b ≽[R q] a)
+
+lemma strict_aiia {R: SWF α N}
+  {p q: Profile α N} {a b: α}
+  (hagree: AgreeOn p q a b)(hAIIA: AIIA R):
+  (a ≻[R p] b) ↔ a ≻[R q] b := by
+  have := hAIIA _ _ _ _ hagree
+  simp [Preorder'.lt, this.1, this.2]
 
 /-- **Non-Dictatorship**: No single voter dictates the outcome for all pairs. -/
 def NonDictatorship (R : SWF α N): Prop :=
@@ -401,7 +408,8 @@ lemma nab_pivotal_bc (a b c: α)
             . simp only [prefer_le_01 a b c hac, prefer_le_01 a b b hab]
             . rw[← not_iff_not]
               simp only [(prefer_lt_01 a b c hab hac).2, (prefer_lt_01 a b b hab hab).2]
-        apply (hAIIA _ _ _ _ hp).mpr
+
+        apply (strict_aiia hp hAIIA).mpr
         exact no_flip a b k hk
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
@@ -456,7 +464,10 @@ lemma nab_pivotal_bc (a b c: α)
         | Indiff h1 _ => simp only [h1, prefer_bot_le_12 a b c hac hab]
 
   have hbac: b ≽[R mg2] a ≻ c := by
-    sorry
+    constructor
+    -- By AIIA on nab pivoting defintion
+    . sorry
+    . sorry
 
   -- transitivity from b ≽ a ≻ c
   have hRmg2bc : b ≻[R mg2] c := by
@@ -466,8 +477,7 @@ lemma nab_pivotal_bc (a b c: α)
     . intro h
       have := (R mg2).trans a b c hbac.1 h
       exact absurd this hbac.2.2
-
-  exact (hAIIA _ _ _ _ h_agree).mpr hRmg2bc
+  exact (strict_aiia h_agree hAIIA).mpr hRmg2bc
 
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
