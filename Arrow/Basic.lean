@@ -455,10 +455,19 @@ lemma nab_pivotal_bc (a b c: α)
         | GT hn _ => rw[← not_iff_not]; simp [hn, (prefer_lt_12 a b c hbc hac).2]
         | Indiff h1 _ => simp only [h1, prefer_bot_le_12 a b c hac hab]
 
-  have hbac: b ≻[R mg2] c := by
+  have hbac: b ≽[R mg2] a ≻ c := by
     sorry
 
-  exact (hAIIA _ _ _ _ h_agree).mpr hbac
+  -- transitivity from b ≽ a ≻ c
+  have hRmg2bc : b ≻[R mg2] c := by
+    simp [Preorder'.lt]
+    constructor
+    . exact (R mg2).trans c a b hbac.2.1 hbac.1
+    . intro h
+      have := (R mg2).trans a b c hbac.1 h
+      exact absurd this hbac.2.2
+
+  exact (hAIIA _ _ _ _ h_agree).mpr hRmg2bc
 
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
