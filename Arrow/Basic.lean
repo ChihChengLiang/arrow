@@ -315,6 +315,8 @@ lemma nab_pivotal_bc (a b c: α)
   have habc: a ≻[R mg1] b ≻ c  := by
     constructor
     -- a > b by def of n_ab
+    -- note that voter is `Fin N` but the family of profiles is `Fin N+1`.
+    -- The profile zero is not handled in `flipping` related functions.
     . by_cases hn : n_ab = 0
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
@@ -499,7 +501,6 @@ lemma ncb_le_nab (a b c: α)
     pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
-  let n_cb := pivoter c b (Ne.symm hbc) hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
   have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, prefer_lt_02 b _ c hbc]
   exact absurd
@@ -521,26 +522,17 @@ lemma n_ab_pivotal_bc_cb (a b c: α)
     (pivoter b c hbc hu) = (pivoter c b (Ne.symm hbc) hu) ∧
     (pivoter c b (Ne.symm hbc) hu) = pivoter a b hab hu := by
 
-  let n_ab := pivoter a b hab hu
-  let n_bc := pivoter b c hbc hu
-  let n_cb := pivoter c b (Ne.symm hbc) hu
-  -- n_bc ≥ n_ab
-  have h_nab_le_nbc: n_ab ≤ n_bc := nab_le_nbc a b c hab hac hbc hu hAIIA
+  have h_nab_le_nbc := nab_le_nbc a b c hab hac hbc hu hAIIA
+  have h_ncb_le_nab := ncb_le_nab a b c hab hac hbc hu hAIIA
+  have h_ncb_le_nbc := nbc_le_ncb a b c hab hac hbc hu hAIIA
 
-  -- n_cb ≤ n_ab
-  have h_ncb_le_nab: n_cb ≤ n_ab := ncb_le_nab a b c hab hac hbc hu hAIIA
-
-  have h_ncb_le_nbc: n_cb ≤ n_bc := nbc_le_ncb a b c hab hac hbc hu hAIIA
-  -- n_bc ≥ n_ab ≥ n_cb
-  -- n_cb ≥ n_bc
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
-  have h_nbc_le_ncb: n_bc ≤ n_cb := nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
+  have h_nbc_le_ncb := nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
 
   -- n_bc = n_cb = n_ab
-  have h_nbc_eq_ncb: n_bc = n_cb := le_antisymm h_nbc_le_ncb h_ncb_le_nbc
-  have h_ncb_eq_nab: n_cb = n_ab := by
-    have h_nab_le_n_cb: n_ab ≤ n_cb := le_trans h_nab_le_nbc h_nbc_le_ncb
-    exact le_antisymm h_ncb_le_nab h_nab_le_n_cb
+  have h_nbc_eq_ncb := le_antisymm h_nbc_le_ncb h_ncb_le_nbc
+  have h_nab_le_ncb := le_trans h_nab_le_nbc h_nbc_le_ncb
+  have h_ncb_eq_nab := le_antisymm h_ncb_le_nab h_nab_le_ncb
 
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
