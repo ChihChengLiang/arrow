@@ -218,7 +218,7 @@ lemma prefer_le_01 {α : Type} [LinearOrder α]
     (prefer a₀ a₁ a₂ .Not h02).le a₁ a₀ := by simp [prefer]
 
 lemma prefer_lt_12 {α : Type} [LinearOrder α]
-    (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
+    (a₀ a₁ a₂ : α) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₁ := by
   simp [Preorder'.lt, prefer, h12, Ne.symm h02]
 
@@ -253,7 +253,7 @@ lemma prefer_top_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ �
   simp [prefer, h02, h12]
 
 /-- In `prefer a₀ a₁ a₂ .Top`, a₀ and a₁ are indifferent: a₁ ≤ a₀ -/
-lemma prefer_top_le_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+lemma prefer_top_le_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂):
     (prefer a₀ a₁ a₂ .Top h02).le a₁ a₀ := by
   simp [prefer, h02]
 
@@ -270,7 +270,7 @@ lemma prefer_top_not_lt_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a�
 lemma prefer_top_le_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).le a₂ a₀ := by simp [prefer]
 
-lemma prefer_top_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+lemma prefer_top_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
     (prefer a₀ a₁ a₂ .Top h02).le a₂ a₁ := by simp [prefer]
 
 /-! ### Lemmas for Tie.Bot (a₀ > a₁ ~ a₂) -/
@@ -407,7 +407,7 @@ lemma nab_pivotal_bc (a b c: α)
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
         . exact prefer_lt_01 b c a hbc (Ne.symm hab)
-        . exact prefer_lt_12 a b c hab hbc hac
+        . exact prefer_lt_12 a b c hbc hac
       exact hu _ _ _ h
   intro pp h
 
