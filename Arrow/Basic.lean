@@ -466,8 +466,75 @@ lemma nab_pivotal_bc (a b c: α)
   have hbac: b ≽[R mg2] a ≻ c := by
     constructor
     -- By AIIA on nab pivoting defintion
-    . sorry
-    . sorry
+    . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
+        unfold AgreeOn canonicalSwap mg2; intro i;
+        by_cases hi: i < n_ab
+        . have :i.val < n_ab +1 := by omega
+          simp [hi, this]
+          constructor
+          . simp only [prefer_le_02 b b a (Ne.symm hab)]
+            cases (pp i).cmp b c with
+            | LT _ _ => simp only [prefer_le_12 c b a (Ne.symm hac)]
+            | GT _ _ => simp only [prefer_le_02 b c a (Ne.symm hab)]
+            | Indiff _ _ => simp only [prefer_top_le_02 b c a (Ne.symm hab)]
+          . rw[← not_iff_not]
+            simp [(prefer_lt_02 b b a (Ne.symm hab)).2]
+            cases (pp i).cmp b c with
+            | LT _ _ => simp [(prefer_lt_12 c b a (Ne.symm hab) (Ne.symm hac)).2]
+            | GT _ _ => simp [(prefer_lt_02 b c a (Ne.symm hab)).2]
+            | Indiff _ _ => simp [(prefer_top_lt_02 b c a (Ne.symm hab)).2]
+        . by_cases hi2: i = n_ab
+          . simp [hi2, prefer_le_01 b a c hbc, prefer_le_02 b b a (Ne.symm hab)]
+            rw[← not_iff_not]
+            simp [(prefer_lt_01 b a c (Ne.symm hab) hbc).2, (prefer_lt_02 b b a (Ne.symm hab)).2]
+          . have :¬ (i.val < n_ab +1 ):= by omega
+            simp [hi, hi2, this]
+            constructor
+            . rw[← not_iff_not]
+              simp [(prefer_lt_02 a b b hab).2]
+              cases (pp i).cmp b c with
+              | LT _ _ => simp [(prefer_lt_02 a c b hab).2]
+              | GT _ _ => simp [(prefer_lt_01 a b c hab hac).2]
+              | Indiff _ _ => simp [(prefer_bot_lt_01 a b c hac hab).2]
+            . simp only [(prefer_lt_02 a b b hab).1]
+              cases (pp i).cmp b c with
+              | LT _ _ => simp [(prefer_lt_02 a c b hab).1]
+              | GT _ _ => simp [(prefer_lt_01 a b c hab hac).1]
+              | Indiff _ _ => simp [(prefer_bot_lt_01 a b c hac hab).1]
+      apply (hAIIA _ _ _ _ h_agree_ba).1.mpr
+      exact flipped a b
+    -- By AIIA
+    . have h_agree_ac: AgreeOn mg2 mg1 a c := by
+        unfold AgreeOn mg2 mg1; intro i; simp; split_ifs
+        . constructor
+          . rw[← not_iff_not]
+            simp [(prefer_lt_12 b c a (Ne.symm hac) (Ne.symm hab)).2]
+            cases (pp i).cmp b c with
+            | LT _ _ => simp [(prefer_lt_02 c b a (Ne.symm hac)).2]
+            | GT _ _ => simp [(prefer_lt_12 b c a (Ne.symm hac) (Ne.symm hab)).2]
+            | Indiff _ _ => simp [(prefer_top_lt_12 b c a (Ne.symm hab) (Ne.symm hac)).2]
+          . simp [prefer_le_12 b c a (Ne.symm hab)]
+            cases (pp i).cmp b c with
+            | LT _ _ => simp [prefer_le_02 c b a (Ne.symm hac)]
+            | GT _ _ => simp [prefer_le_12 b c a (Ne.symm hab)]
+            | Indiff _ _ => simp [prefer_top_le_12 b c a (Ne.symm hab)]
+        . constructor
+          . simp only [prefer_le_12 b a c hbc, prefer_le_02 a b c hac]
+          . rw[← not_iff_not]
+            simp [(prefer_lt_12 b a c hac hbc).2, (prefer_lt_02 a b c hac).2]
+        . constructor
+          . simp only [prefer_le_02 a b c hac]
+            cases (pp i).cmp b c with
+            | LT _ _ => simp [prefer_le_01 a c b hab]
+            | GT _ _ => simp [prefer_le_02 a b c hac]
+            | Indiff _ _ => simp [prefer_bot_le_02 a b c hac]
+          . rw[← not_iff_not]
+            simp [(prefer_lt_02 a b c hac).2]
+            cases (pp i).cmp b c with
+            | LT _ _ => simp [(prefer_lt_01 a c b hac hab).2]
+            | GT _ _ => simp [(prefer_lt_02 a b c hac).2]
+            | Indiff _ _ => simp [(prefer_bot_lt_02 a b c hac).2]
+      exact (strict_aiia h_agree_ac hAIIA).mpr ((R mg1).lt_trans habc.2 habc.1)
 
   -- transitivity from b ≽ a ≻ c
   have hRmg2bc : b ≻[R mg2] c := by
