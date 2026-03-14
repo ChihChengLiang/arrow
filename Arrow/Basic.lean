@@ -54,6 +54,18 @@ lemma Preorder'.le_of_not_lt (p : Preorder' α) (a b : α) :
   rw [Preorder'.not_lt]
   exact id
 
+/-- The three possible outcomes when comparing two elements under a total preorder. -/
+inductive Cmp (p : Preorder' α) (a b : α) : Type
+  | Indiff (h₁ : p.le a b) (h₂ : p.le b a) : Cmp p a b
+  | LT     (h  : p.le a b) (hn : ¬p.le b a) : Cmp p a b
+  | GT     (hn : ¬p.le a b) (h  : p.le b a)  : Cmp p a b
+
+noncomputable def Preorder'.cmp (p : Preorder' α) (a b : α) : Cmp p a b :=
+  if hab : p.le a b then
+    if hba : p.le b a then Cmp.Indiff hab hba
+    else Cmp.LT hab hba
+  else Cmp.GT hab (p.total a b |>.resolve_left hab)
+
 /-- Two elements are indifferent if both a ≤ b and b ≤ a -/
 def Preorder'.indiff (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ p.le b a
@@ -416,16 +428,16 @@ lemma nab_pivotal_bc (a b c: α)
   -- result: socPrefer b ≥ a > c
   let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
-      then
-        if b ≻[pp i] c then prefer b c a (Ne.symm hab)
-        else if c ≻[pp i] b then prefer c b a (Ne.symm hac)
-        else prefer_with_tie a b c .Bottom hab  -- b ~ c, a at bottom
+      then match (pp i).cmp b c with
+        | Cmp.LT _ _ => prefer c b a (Ne.symm hac)
+        | Cmp.GT _ _ => prefer b c a (Ne.symm hab)
+        | Cmp.Indiff _ _ => prefer_with_tie b c a .Top hbc  -- b ~ c, a at bottom
       else
-        if i = n_ab
-        then prefer b a c hbc
-        else if b ≻[pp i] c then prefer a b c hac
-        else if c ≻[pp i] b then prefer a c b hab
-        else prefer_with_tie a b c .Top hab  -- b ~ c, a at top
+        if i = n_ab then prefer b a c hbc
+        else match (pp i).cmp b c with
+        | Cmp.LT _ _ => prefer a b c hac
+        | Cmp.GT _ _ => prefer a c b hab
+        | Cmp.Indiff _ _ => prefer_with_tie a b c .Top hab
 
   have h_agree: AgreeOn pp mg2 b c := by
     -- AgreeOn means: for all i, (b ≽[pp i] c ↔ b ≽[mg2 i] c) ∧ (c ≽[pp i] b ↔ c ≽[mg2 i] b)
@@ -437,7 +449,16 @@ lemma nab_pivotal_bc (a b c: α)
     by_cases hinab : i < n_ab
     · simp only [hinab, ↓reduceIte]
       by_cases hppibc : b ≻[pp i] c
-      · simp only [hppibc, ↓reduceIte]
+      . constructor
+        . simp only [
+          hppibc.1,
+          pick_le_01 c b a (Ne.symm hac),
+          pick_le_12 b c a (Ne.symm hab),
+          prefer_with_tie_bottom_le_bc a b c hab hac SingletonPosition.Top ]
+
+          sorry
+        .
+
         -- mg2 i = prefer b c a, so b > c in mg2
         -- pp has b > c, so b ≽ c and ¬(c ≽ b) match
         constructor <;> simp only [pick_le_01, pick_le_12, prefer] <;> sorry
