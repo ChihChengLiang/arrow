@@ -155,171 +155,188 @@ def NonDictatorship (R : SWF α N): Prop :=
 /-! ## Preference Construction
 
 We construct concrete preference orderings to build test profiles for the proof.
-Given three alternatives, `prefer a₀ a₁ a₂` ranks them as `a₀ ≻ a₁ ≻ a₂`.
+Given three alternatives, `prefer a₀ a₁ a₂ tie` ranks them with optional ties:
+- `Tie.Not`: a₀ > a₁ > a₂
+- `Tie.Top`: a₀ ~ a₁ > a₂
+- `Tie.Bot`: a₀ > a₁ ~ a₂
 -/
 variable [LinearOrder α]
 
-/-- Construct a preference ordering `a₀ ≻ a₁ ≻ a₂`, using the ambient `LinearOrder`
-    as a tiebreaker for elements outside `{a₀, a₁, a₂}`. -/
-def prefer (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) : Preorder' α where
-  le x y :=
-    if x = a₂ then True              -- a₂ is bottom
-    else if y = a₀ then True         -- a₀ is top
-    else if x = a₀ then y = a₀       -- only a₀ ≤ a₀
-    else if y = a₂ then x = a₂       -- only a₂ ≥ a₂
-    else x ≤ y                        -- fallback to LinearOrder
-  refl := by intro x; simp
-  trans := by
-    intro a b c ha hb; split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
-    by_cases hba0: b = a₀
-    . simp_all
-    . simp_all; exact le_trans ha.2 hb
-  total := by intro a b; split_ifs <;> simp_all [le_total a b]
+/-- Where ties occur in a 3-element preference ranking -/
+inductive Tie
+  | Not  -- No ties: a₀ > a₁ > a₂
+  | Top  -- Top two tied: a₀ ~ a₁ > a₂
+  | Bot  -- Bottom two tied: a₀ > a₁ ~ a₂
 
-/-- In `prefer a₀ a₁ a₂`, we have `a₀ ≻ a₁`. -/
-lemma pick_lt_01 (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ h02).lt a₁ a₀ := by
+/-- Construct a preference ordering with optional ties:
+    - `Tie.Not`: a₀ > a₁ > a₂ (strict ranking)
+    - `Tie.Top`: a₀ ~ a₁ > a₂ (top two tied)
+    - `Tie.Bot`: a₀ > a₁ ~ a₂ (bottom two tied)
+    Uses the ambient `LinearOrder` as a tiebreaker for elements outside `{a₀, a₁, a₂}`. -/
+def prefer (a₀ a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' α where
+  le x y := match tie with
+    | .Not =>
+      if x = a₂ then True              -- a₂ is bottom
+      else if y = a₀ then True         -- a₀ is top
+      else if x = a₀ then y = a₀       -- only a₀ ≤ a₀
+      else if y = a₂ then x = a₂       -- only a₂ ≥ a₂
+      else x ≤ y                        -- fallback to LinearOrder
+    | .Top =>
+      if y = a₂ then x = a₂           -- only a₂ ≥ a₂ (a₂ is bottom)
+      else if x = a₂ then True        -- a₂ ≤ everything else
+      else True                        -- a₀ ~ a₁: both directions
+    | .Bot =>
+      if x = a₀ then y = a₀           -- only a₀ ≤ a₀ (a₀ is top)
+      else if y = a₀ then True        -- everything else ≤ a₀
+      else True                        -- a₁ ~ a₂: both directions
+  refl := by intro x; cases tie <;> simp
+  trans := by
+    intro a b c ha hb
+    cases tie <;> simp only at ha hb ⊢
+    · split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
+      by_cases hba0: b = a₀
+      · simp_all
+      · simp_all; exact le_trans ha.2 hb
+    · split_ifs at ha hb ⊢ <;> simp_all
+    · split_ifs at ha hb ⊢ <;> simp_all
+  total := by
+    intro a b
+    cases tie
+    · split_ifs <;> simp_all [le_total a b]
+    · simp only; by_cases hxa : a = a₂ <;> by_cases hya : b = a₂ <;> simp_all
+    · simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
+
+/-! ### Lemmas for Tie.Not (strict ranking a₀ > a₁ > a₂) -/
+
+/-- In `prefer a₀ a₁ a₂ .Not`, we have `a₀ > a₁`. -/
+lemma prefer_lt_01 (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h02 : a₀ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Not h02).lt a₁ a₀ := by
   simp [Preorder'.lt, prefer]
   exact ⟨h02, Ne.symm h01⟩
 
-lemma pick_le_01 {α : Type} [LinearOrder α]
+lemma prefer_le_01 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ h02).le a₁ a₀ := by simp [prefer]
+    (prefer a₀ a₁ a₂ .Not h02).le a₁ a₀ := by simp [prefer]
 
-lemma pick_lt_12 {α : Type} [LinearOrder α]
+lemma prefer_lt_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h01 : a₀ ≠ a₁) (h12 : a₁ ≠ a₂) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ h02).lt a₂ a₁ := by
+    (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₁ := by
   simp [Preorder'.lt, prefer]
   split_ifs with ha10
-  . exact absurd (Eq.symm ha10) h01
-  . exact ⟨ h12, Ne.symm h02, h12 ⟩
+  · exact absurd (Eq.symm ha10) h01
+  · exact ⟨ h12, Ne.symm h02, h12 ⟩
 
-lemma pick_le_12 {α : Type} [LinearOrder α]
+lemma prefer_le_12 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ h02).le a₂ a₁ := by simp [prefer]
+    (prefer a₀ a₁ a₂ .Not h02).le a₂ a₁ := by simp [prefer]
 
-lemma pick_lt_02 {α : Type} [LinearOrder α]
+lemma prefer_lt_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ h02).lt a₂ a₀ := by
+    (prefer a₀ a₁ a₂ .Not h02).lt a₂ a₀ := by
   simp [Preorder'.lt, prefer]
   exact ⟨h02, Ne.symm h02⟩
 
-lemma pick_le_02 {α : Type} [LinearOrder α]
+lemma prefer_le_02 {α : Type} [LinearOrder α]
     (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
-    (prefer a₀ a₁ a₂ h02).le a₂ a₀ := by simp [prefer]
+    (prefer a₀ a₁ a₂ .Not h02).le a₂ a₀ := by simp [prefer]
 
-/-! ## Preference with Ties
+/-! ### Lemmas for Tie.Top (a₀ ~ a₁ > a₂) -/
 
-A preference ordering where two alternatives are tied (indifferent).
--/
-
-/-- Position of the singleton (non-tied) element -/
-inductive SingletonPosition | Top | Bottom
-
-/-- `prefer_with_tie a b c pos` creates a preference where b and c are tied:
-    - If pos = Top: a > (b ~ c)
-    - If pos = Bottom: (b ~ c) > a -/
-def prefer_with_tie (a b c : α) (pos : SingletonPosition) (hab : a ≠ b) : Preorder' α where
-  le x y := match pos with
-    | .Top =>
-      if x = a then y = a           -- only a ≤ a (a is top)
-      else if y = a then True       -- everything else ≤ a
-      else True                     -- b ~ c: both b ≤ c and c ≤ b
-    | .Bottom =>
-      if y = a then x = a           -- only a ≥ a (a is bottom)
-      else if x = a then True       -- a ≤ everything else
-      else True                     -- b ~ c: both directions
-  refl := by intro x; cases pos <;> simp
-  trans := by
-    intro x y z hxy hyz
-    cases pos <;> simp only at hxy hyz ⊢
-    · split_ifs at hxy hyz ⊢ <;> simp_all
-    · split_ifs at hxy hyz ⊢ <;> simp_all
-  total := by
-    intro x y; cases pos
-    · simp only; by_cases hxa : x = a <;> by_cases hya : y = a <;> simp_all
-    · simp only; by_cases hxa : x = a <;> by_cases hya : y = a <;> simp_all
-
-/-- In `prefer_with_tie a b c .Top`, we have a > b -/
-lemma prefer_with_tie_top_lt_ab (a b c : α) (hab : a ≠ b) :
-    (prefer_with_tie a b c .Top hab).lt b a := by
-  simp only [Preorder'.lt, prefer_with_tie]
+/-- In `prefer a₀ a₁ a₂ .Top`, we have a₀ > a₂ -/
+lemma prefer_top_lt_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Top h02).lt a₂ a₀ := by
+  simp only [Preorder'.lt, prefer]
   constructor
-  · simp [Ne.symm hab]
-  · simp [Ne.symm hab]
+  · split_ifs <;> simp_all
+  · exact h02
 
-/-- In `prefer_with_tie a b c .Top`, we have a > c -/
-lemma prefer_with_tie_top_lt_ac (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    (prefer_with_tie a b c .Top hab).lt c a := by
-  simp only [Preorder'.lt, prefer_with_tie]
+/-- In `prefer a₀ a₁ a₂ .Top`, we have a₁ > a₂ -/
+lemma prefer_top_lt_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Top h02).lt a₂ a₁ := by
+  simp only [Preorder'.lt, prefer]
   constructor
-  · simp [Ne.symm hac]
-  · simp [Ne.symm hac]
+  · split_ifs <;> simp_all
+  · exact h12
 
-/-- In `prefer_with_tie a b c .Top`, b and c are indifferent: b ≤ c -/
-lemma prefer_with_tie_top_le_bc (a b c : α) (hab : a ≠ b) :
-    (prefer_with_tie a b c .Top hab).le b c := by
-  simp only [prefer_with_tie]
-  simp [Ne.symm hab]
+/-- In `prefer a₀ a₁ a₂ .Top`, a₀ and a₁ are indifferent: a₀ ≤ a₁ -/
+lemma prefer_top_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Top h02).le a₀ a₁ := by
+  simp only [prefer]
+  split_ifs with h1 h2 <;> simp_all
 
-/-- In `prefer_with_tie a b c .Top`, b and c are indifferent: c ≤ b -/
-lemma prefer_with_tie_top_le_cb (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    (prefer_with_tie a b c .Top hab).le c b := by
-  simp only [prefer_with_tie]
-  simp [Ne.symm hac]
+/-- In `prefer a₀ a₁ a₂ .Top`, a₀ and a₁ are indifferent: a₁ ≤ a₀ -/
+lemma prefer_top_le_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Top h02).le a₁ a₀ := by
+  simp only [prefer]
+  split_ifs with h1 h2 <;> simp_all
 
-/-- In `prefer_with_tie a b c .Top`, b and c are indifferent (not b > c) -/
-lemma prefer_with_tie_top_not_lt_bc (a b c : α) (hab : a ≠ b) :
-    ¬(prefer_with_tie a b c .Top hab).lt c b := by
-  simp only [Preorder'.lt, prefer_with_tie, not_and, not_not]
-  intro _; simp [Ne.symm hab]
+/-- In `prefer a₀ a₁ a₂ .Top`, a₀ ~ a₁ (not a₀ > a₁) -/
+lemma prefer_top_not_lt_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+    ¬(prefer a₀ a₁ a₂ .Top h02).lt a₁ a₀ := by
+  simp only [Preorder'.lt, prefer, not_and, not_not]
+  intro _; split_ifs with h1 h2 <;> simp_all
 
-/-- In `prefer_with_tie a b c .Top`, b and c are indifferent (not c > b) -/
-lemma prefer_with_tie_top_not_lt_cb (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    ¬(prefer_with_tie a b c .Top hab).lt b c := by
-  simp only [Preorder'.lt, prefer_with_tie, not_and, not_not]
-  intro _; simp [Ne.symm hac]
+/-- In `prefer a₀ a₁ a₂ .Top`, a₀ ~ a₁ (not a₁ > a₀) -/
+lemma prefer_top_not_lt_10 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+    ¬(prefer a₀ a₁ a₂ .Top h02).lt a₀ a₁ := by
+  simp only [Preorder'.lt, prefer, not_and, not_not]
+  intro _; split_ifs with h1 h2 <;> simp_all
 
-/-- In `prefer_with_tie a b c .Bottom`, b > a -/
-lemma prefer_with_tie_bottom_lt_ba (a b c : α) (hab : a ≠ b) :
-    (prefer_with_tie a b c .Bottom hab).lt a b := by
-  simp only [Preorder'.lt, prefer_with_tie]
+lemma prefer_top_le_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Top h02).le a₂ a₀ := by
+  simp only [prefer]; split_ifs <;> rfl
+
+lemma prefer_top_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h12 : a₁ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Top h02).le a₂ a₁ := by
+  simp only [prefer]; split_ifs <;> rfl
+
+/-! ### Lemmas for Tie.Bot (a₀ > a₁ ~ a₂) -/
+
+/-- In `prefer a₀ a₁ a₂ .Bot`, we have a₀ > a₁ -/
+lemma prefer_bot_lt_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
+    (prefer a₀ a₁ a₂ .Bot h02).lt a₁ a₀ := by
+  simp only [Preorder'.lt, prefer]
   constructor
-  · simp [Ne.symm hab]
-  · exact Ne.symm hab
+  · simp [Ne.symm h01]
+  · exact Ne.symm h01
 
-/-- In `prefer_with_tie a b c .Bottom`, c > a -/
-lemma prefer_with_tie_bottom_lt_ca (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    (prefer_with_tie a b c .Bottom hab).lt a c := by
-  simp only [Preorder'.lt, prefer_with_tie]
+/-- In `prefer a₀ a₁ a₂ .Bot`, we have a₀ > a₂ -/
+lemma prefer_bot_lt_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Bot h02).lt a₂ a₀ := by
+  simp only [Preorder'.lt, prefer]
   constructor
-  · simp [Ne.symm hac]
-  · exact Ne.symm hac
+  · simp [Ne.symm h02]
+  · exact Ne.symm h02
 
-/-- In `prefer_with_tie a b c .Bottom`, b and c are indifferent: b ≤ c -/
-lemma prefer_with_tie_bottom_le_bc (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    (prefer_with_tie a b c .Bottom hab).le b c := by
-  simp only [prefer_with_tie]
-  simp [Ne.symm hac]
+/-- In `prefer a₀ a₁ a₂ .Bot`, a₁ and a₂ are indifferent: a₁ ≤ a₂ -/
+lemma prefer_bot_le_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
+    (prefer a₀ a₁ a₂ .Bot h02).le a₁ a₂ := by
+  simp only [prefer]
+  split_ifs with h1 h2 <;> simp_all
 
-/-- In `prefer_with_tie a b c .Bottom`, b and c are indifferent: c ≤ b -/
-lemma prefer_with_tie_bottom_le_cb (a b c : α) (hab : a ≠ b) :
-    (prefer_with_tie a b c .Bottom hab).le c b := by
-  simp only [prefer_with_tie]
-  simp [Ne.symm hab]
+/-- In `prefer a₀ a₁ a₂ .Bot`, a₁ and a₂ are indifferent: a₂ ≤ a₁ -/
+lemma prefer_bot_le_21 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
+    (prefer a₀ a₁ a₂ .Bot h02).le a₂ a₁ := by
+  simp only [prefer]
+  split_ifs with h1 h2 <;> simp_all
 
-/-- In `prefer_with_tie a b c .Bottom`, b and c are indifferent (not b > c) -/
-lemma prefer_with_tie_bottom_not_lt_bc (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    ¬(prefer_with_tie a b c .Bottom hab).lt c b := by
-  simp only [Preorder'.lt, prefer_with_tie, not_and, not_not]
-  intro _; simp [Ne.symm hab, Ne.symm hac]
+/-- In `prefer a₀ a₁ a₂ .Bot`, a₁ ~ a₂ (not a₁ > a₂) -/
+lemma prefer_bot_not_lt_12 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
+    ¬(prefer a₀ a₁ a₂ .Bot h02).lt a₂ a₁ := by
+  simp only [Preorder'.lt, prefer, not_and, not_not]
+  intro _; simp [Ne.symm h01, Ne.symm h02]
 
-/-- In `prefer_with_tie a b c .Bottom`, b and c are indifferent (not c > b) -/
-lemma prefer_with_tie_bottom_not_lt_cb (a b c : α) (hab : a ≠ b) (hac : a ≠ c) :
-    ¬(prefer_with_tie a b c .Bottom hab).lt b c := by
-  simp only [Preorder'.lt, prefer_with_tie, not_and, not_not]
-  intro _
-  simp [Ne.symm hab, Ne.symm hac]
+/-- In `prefer a₀ a₁ a₂ .Bot`, a₁ ~ a₂ (not a₂ > a₁) -/
+lemma prefer_bot_not_lt_21 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
+    ¬(prefer a₀ a₁ a₂ .Bot h02).lt a₁ a₂ := by
+  simp only [Preorder'.lt, prefer, not_and, not_not]
+  intro _; simp [Ne.symm h01, Ne.symm h02]
+
+lemma prefer_bot_le_01 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) (h01 : a₀ ≠ a₁) :
+    (prefer a₀ a₁ a₂ .Bot h02).le a₁ a₀ := by simp [prefer, Ne.symm h01]
+
+lemma prefer_bot_le_02 (a₀ a₁ a₂ : α) (h02 : a₀ ≠ a₂) :
+    (prefer a₀ a₁ a₂ .Bot h02).le a₂ a₀ := by simp [prefer, Ne.symm h02]
 
 /-! ## Pivotal Voter
 
@@ -335,8 +352,8 @@ variable [NeZero N] {R : SWF α N}
 def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
   fun k: Fin (N+1) =>
     fun i: Fin N => if i < k.val
-      then prefer b b a (Ne.symm hab)  -- b on top
-      else prefer a b b hab            -- a on top
+      then prefer b b a .Not (Ne.symm hab)  -- b on top
+      else prefer a b b .Not hab            -- a on top
 
 /-- `flipping R a b hab k` holds iff society prefers `b ≻ a` when voters `0..k` prefer `b ≻ a`. -/
 def flipping (R : SWF α N) (a b : α) (hab : a ≠ b) :=
@@ -349,8 +366,8 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   unfold flipping canonicalSwap
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
-  have: b ≻[R (fun i => prefer b b a (Ne.symm hab) )] a := by
-    apply hu; intro i; simp [pick_lt_02 b _ a (Ne.symm hab)]
+  have: b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
+    apply hu; intro i; simp [prefer_lt_02 b _ a (Ne.symm hab)]
   exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
@@ -382,8 +399,8 @@ lemma nab_pivotal_bc (a b c: α)
   -- result: socPrefer a > b > c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
-      then prefer b c a (Ne.symm hab)
-      else prefer a b c hac
+      then prefer b c a .Not (Ne.symm hab)
+      else prefer a b c .Not hac
   -- soc prefer a > b > c
   have habc: a ≻[R mg1] b ≻ c  := by
     constructor
@@ -392,7 +409,7 @@ lemma nab_pivotal_bc (a b c: α)
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
           intro i; simp [mg1, hn]
-          exact pick_lt_01 a b c hab hac
+          exact prefer_lt_01 a b c hab hac
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
         let k := n_ab - 1
@@ -405,19 +422,19 @@ lemma nab_pivotal_bc (a b c: α)
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
           . constructor
             . rw[← not_iff_not]
-              simp only [(pick_lt_02 b c a (Ne.symm hab)).2, (pick_lt_02 b b a (Ne.symm hab)).2]
-            . simp only [pick_le_02 b c a (Ne.symm hab), pick_le_02 b b a (Ne.symm hab)]
+              simp only [(prefer_lt_02 b c a (Ne.symm hab)).2, (prefer_lt_02 b b a (Ne.symm hab)).2]
+            . simp only [prefer_le_02 b c a (Ne.symm hab), prefer_le_02 b b a (Ne.symm hab)]
           . constructor
-            . simp only [pick_le_01 a b c hac, pick_le_01 a b b hab]
+            . simp only [prefer_le_01 a b c hac, prefer_le_01 a b b hab]
             . rw[← not_iff_not]
-              simp only [(pick_lt_01 a b c hab hac).2, (pick_lt_01 a b b hab hab).2]
+              simp only [(prefer_lt_01 a b c hab hac).2, (prefer_lt_01 a b b hab hab).2]
         apply (hAIIA _ _ _ _ hp).mpr
         exact no_flip a b k hk
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
-        . exact pick_lt_01 b c a hbc (Ne.symm hab)
-        . exact pick_lt_12 a b c hab hbc hac
+        . exact prefer_lt_01 b c a hbc (Ne.symm hab)
+        . exact prefer_lt_12 a b c hab hbc hac
       exact hu _ _ _ h
   intro pp h
 
@@ -429,98 +446,25 @@ lemma nab_pivotal_bc (a b c: α)
   let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
       then match (pp i).cmp b c with
-        | Cmp.LT _ _ => prefer c b a (Ne.symm hac)
-        | Cmp.GT _ _ => prefer b c a (Ne.symm hab)
-        | Cmp.Indiff _ _ => prefer_with_tie b c a .Top hbc  -- b ~ c, a at bottom
+        | Cmp.LT _ _ => prefer c b a .Not (Ne.symm hac)
+        | Cmp.GT _ _ => prefer b c a .Not (Ne.symm hab)
+        | Cmp.Indiff _ _ => prefer b c a .Top (Ne.symm hab)  -- b ~ c > a
       else
-        if i = n_ab then prefer b a c hbc
+        if i = n_ab then prefer b a c .Not hbc
         else match (pp i).cmp b c with
-        | Cmp.LT _ _ => prefer a b c hac
-        | Cmp.GT _ _ => prefer a c b hab
-        | Cmp.Indiff _ _ => prefer_with_tie a b c .Top hab
+        | Cmp.LT _ _ => prefer a b c .Not hac
+        | Cmp.GT _ _ => prefer a c b .Not hab
+        | Cmp.Indiff _ _ => prefer a b c .Bot hac  -- a > b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
     -- AgreeOn means: for all i, (b ≽[pp i] c ↔ b ≽[mg2 i] c) ∧ (c ≽[pp i] b ↔ c ≽[mg2 i] b)
-    -- mg2 matches pp on (b,c) by construction:
-    -- - when b ≻[pp] c: mg2 uses prefer with b > c
-    -- - when c ≻[pp] b: mg2 uses prefer with c > b
-    -- - when indifferent: mg2 uses prefer_with_tie with b ~ c
-    unfold AgreeOn mg2; intro i
-    by_cases hinab : i < n_ab
-    · simp only [hinab, ↓reduceIte]
-      by_cases hppibc : b ≻[pp i] c
-      . constructor
-        . simp only [
-          hppibc.1,
-          pick_le_01 c b a (Ne.symm hac),
-          pick_le_12 b c a (Ne.symm hab),
-          prefer_with_tie_bottom_le_bc a b c hab hac SingletonPosition.Top ]
+    -- mg2 matches pp on (b,c) by construction
+    sorry
 
-          sorry
-        .
+  have hbac: b ≻[R mg2] c := by
+    sorry
 
-        -- mg2 i = prefer b c a, so b > c in mg2
-        -- pp has b > c, so b ≽ c and ¬(c ≽ b) match
-        constructor <;> simp only [pick_le_01, pick_le_12, prefer] <;> sorry
-      · by_cases hppicb : c ≻[pp i] b
-        · simp only [hppibc, hppicb, ↓reduceIte]
-          -- mg2 i = prefer c b a, so c > b in mg2
-          constructor <;> simp only [pick_le_01, pick_le_12, prefer] <;> sorry
-        · simp only [hppibc, hppicb, ↓reduceIte]
-          -- mg2 i = prefer_with_tie a b c .Bottom, so b ~ c in mg2
-          constructor <;> simp only [prefer_with_tie] <;> sorry
-    · simp only [hinab, ↓reduceIte]
-      by_cases hieqnab : i = n_ab
-      · simp only [hieqnab, ↓reduceIte]
-        -- mg2 n_ab = prefer b a c, and we know b ≻[pp n_ab] c from h
-        constructor <;> simp only [pick_le_01, pick_le_12, prefer] <;> sorry
-      · simp only [hieqnab, ↓reduceIte]
-        by_cases hppibc : b ≻[pp i] c
-        · simp only [hppibc, ↓reduceIte]
-          -- mg2 i = prefer a b c, so b > c in mg2
-          constructor <;> simp only [pick_le_12, pick_le_02, prefer] <;> sorry
-        · by_cases hppicb : c ≻[pp i] b
-          · simp only [hppibc, hppicb, ↓reduceIte]
-            -- mg2 i = prefer a c b, so c > b in mg2
-            constructor <;> simp only [pick_le_12, pick_le_02, prefer] <;> sorry
-          · simp only [hppibc, hppicb, ↓reduceIte]
-            -- mg2 i = prefer_with_tie a b c .Top, so b ~ c in mg2
-            constructor <;> simp only [prefer_with_tie] <;> sorry
-
-  have hbac: b ≽[R mg2] a ≻ c := by
-    constructor
-    -- By AIIA on nab pivoting defintion
-    . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
-        unfold AgreeOn canonicalSwap; intro i; split_ifs with h
-        . simp only [pick_lt_02 b b a (Ne.symm hab)]; unfold mg2; simp at h
-          split_ifs with hinab hppibc hieqnab hppibc
-          . simp only [pick_lt_02 b c a (Ne.symm hab)]
-          . simp only [pick_lt_12 c b a (Ne.symm hbc) (Ne.symm hab) (Ne.symm hac)]
-          . simp only [pick_lt_01 b a c (Ne.symm hab) hbc]
-          . omega
-          . omega
-        . unfold mg2; simp at h
-          have : ¬(i < n_ab) := by omega
-          rw [Preorder'.lt_iff _ _ _ hab]
-          simp only [pick_lt_02 a b b hab]
-          split_ifs
-          . omega
-          . simp only [pick_lt_01 a b c hab hac]
-          . simp only [pick_lt_02 a c b hab]
-      apply (hAIIA _ _ _ _ h_agree_ba).mpr
-      exact flipped a b
-    -- By AIIA
-    . have h_agree_ac: AgreeOn mg1 mg2 a c := by
-        unfold AgreeOn mg2 mg1; intro i; simp
-        split_ifs with hinab hppibc hieqnab hppibc
-        . rfl
-        . rw [Preorder'.lt_iff _ _ _ (Ne.symm hac)]
-          simp only [pick_lt_02 c b a (Ne.symm hac), pick_lt_12 b c a hbc (Ne.symm hac)]
-        . simp only [pick_lt_12 b a c (Ne.symm hab) hac hbc, pick_lt_02 a b c hac]
-        . simp only [pick_lt_02 a b c hac]
-        . simp [pick_lt_01 a c b hac hab, pick_lt_02 a b c hac]
-      exact (hAIIA _ _ _ _ h_agree_ac).mp ((R mg1).lt_trans habc.2 habc.1)
-  exact (hAIIA _ _ _ _ h_agree).mpr ((R mg2).lt_trans hbac.2 hbac.1)
+  exact (hAIIA _ _ _ _ h_agree).mpr hbac
 
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
@@ -533,10 +477,12 @@ lemma nab_le_nbc (a b c: α)
     simp only [cs, canonicalSwap]
     split_ifs with hh
     . simp at hh; omega
-    . exact pick_lt_02 b _ c hbc
+    . exact prefer_lt_02 b _ c hbc
+  have hflip := flipped b c (hab := hbc) (hu := hu) (R := R)
+  have hnotlt : ¬(b ≻[R cs] c) := (Preorder'.not_lt (R cs) c b).mpr hflip
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
-    (Preorder'.lt_asymm _ _ _ (flipped b c))              -- but n_bc flipped, so society should prefer c over b
+    hnotlt                                                -- but n_bc flipped, so society should prefer c over b
 
 /-- The pivotal voter for `(c, b)` comes no later than the one for `(a, b)`. -/
 lemma ncb_le_nab (a b c: α)
@@ -547,7 +493,7 @@ lemma ncb_le_nab (a b c: α)
   let n_ab := pivoter a b hab hu
   let n_cb := pivoter c b (Ne.symm hbc) hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, pick_lt_02 b _ c hbc]
+  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, prefer_lt_02 b _ c hbc]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
