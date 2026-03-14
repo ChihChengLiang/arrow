@@ -9,7 +9,7 @@ A total preorder over candidates `α`, representing an individual's preference r
 -/
 variable {α : Type}
 
-/-- A total preorder: reflexive, transitive, total, and antisymmetric. -/
+/-- A total preorder: reflexive, transitive, and total. -/
 structure Preorder' (α : Type) where
   le : α → α → Prop
   refl : ∀ a, le a a
