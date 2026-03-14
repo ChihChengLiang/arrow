@@ -493,11 +493,9 @@ lemma nab_le_nbc (a b c: α)
     split_ifs with hh
     . simp at hh; omega
     . exact prefer_lt_02 b _ c hbc
-  have hflip := flipped b c (hab := hbc) (hu := hu) (R := R)
-  have hnotlt : ¬(b ≻[R cs] c) := (Preorder'.not_lt (R cs) c b).mpr hflip
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
-    hnotlt                                                -- but n_bc flipped, so society should prefer c over b
+    ((Preorder'.not_lt _ _ _).mpr (flipped b c))          -- but n_bc flipped, so society should prefer c over b
 
 /-- The pivotal voter for `(c, b)` comes no later than the one for `(a, b)`. -/
 lemma ncb_le_nab (a b c: α)
