@@ -117,18 +117,12 @@ def NonDictatorship (R : SWF α N): Prop :=
 /-! ## Preference Construction
 
 We construct concrete preference orderings to build test profiles for the proof.
-Given three alternatives, `prefer a₀ a₁ a₂ tie` ranks them with optional ties:
-- `Tie.Not`: a₀ > a₁ > a₂
-- `Tie.Top`: a₀ ~ a₁ > a₂
-- `Tie.Bot`: a₀ > a₁ ~ a₂
+Given three alternatives, `prefer a₀ a₁ a₂ tie` ranks them with optional ties.
 -/
 variable [LinearOrder α]
 
 /-- Where ties occur in a 3-element preference ranking -/
-inductive Tie
-  | Not  -- No ties: a₀ > a₁ > a₂
-  | Top  -- Top two tied: a₀ ~ a₁ > a₂
-  | Bot  -- Bottom two tied: a₀ > a₁ ~ a₂
+inductive Tie | Not | Top | Bot
 
 /-- Construct a preference ordering with optional ties:
     - `Tie.Not`: a₀ > a₁ > a₂ (strict ranking)
