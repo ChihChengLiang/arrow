@@ -301,14 +301,14 @@ lemma nab_pivotal_bc (a b c: α)
   let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
       then match (pp i).cmp b c with
-        | .LT _ _     => prefer c b a .Not hca
-        | .GT _ _     => prefer b c a .Not hba
+        | .LT     _ _ => prefer c b a .Not hca
+        | .GT     _ _ => prefer b c a .Not hba
         | .Indiff _ _ => prefer b c a .Top hba  -- b ~ c > a
       else
         if i = n_ab then prefer b a c .Not hbc
         else match (pp i).cmp b c with
-        | .LT _ _     => prefer a c b .Not hab
-        | .GT _ _     => prefer a b c .Not hac
+        | .LT     _ _ => prefer a c b .Not hab
+        | .GT     _ _ => prefer a b c .Not hac
         | .Indiff _ _ => prefer a b c .Bot hac  -- a > b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
