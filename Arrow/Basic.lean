@@ -169,14 +169,13 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
     · simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
 
 lemma prefer_expand
-  (top mid bot: α)(tie: Tie)
-  (htm: top ≠ mid)(hmb: mid≠ bot)(htb: top ≠ bot)
+  (top mid bot: α)(tie: Tie)(htb: top ≠ bot)
   :let p:= prefer top mid bot tie htb
   (top ≽[p] mid) ∧ (mid ≽[p] bot) ∧ (top ≽[p] bot) ∧ (¬ bot ≽[p] top) ∧
   (match tie with
-  | .Not => (¬ mid ≽[p] top) ∧ (¬ bot ≽[p] mid)
-  | .Top => (  mid ≽[p] top) ∧ (¬ bot ≽[p] mid)
-  | .Bot => (¬ mid ≽[p] top) ∧ (  bot ≽[p] mid)
+  | .Not => (mid≠top → ¬ mid ≽[p] top) ∧ (bot≠ mid → ¬ bot ≽[p] mid)
+  | .Top => bot≠mid → ((mid ≽[p] top) ∧ (¬ bot ≽[p] mid))
+  | .Bot => mid≠top → ((¬ mid ≽[p] top) ∧ (bot ≽[p] mid))
   )
   := by
   intro p
@@ -187,12 +186,11 @@ lemma prefer_expand
   . split <;> try trivial
     intro h; exact absurd h (Ne.symm htb)
   . split <;> trivial
-  . split <;> simp_all <;> push_neg <;> exact Ne.symm htb
-  . split <;> simp_all <;> push_neg
-    . exact ⟨ Ne.symm htm, Ne.symm htb⟩
-    . constructor
-      . exact Ne.symm htm
-      . intro h; exact absurd h (Ne.symm htm)
+  . split <;> try simp_all <;> push_neg <;> exact Ne.symm htb
+    push_neg; exact Ne.symm htb
+  . split <;> simp_all
+    . intro h; exact ⟨ Ne.symm h, Ne.symm htb⟩ ;
+    . intro h; exact Ne.symm h
 
 /-! ### Lemmas for Tie.Not (strict ranking a₀ > a₁ > a₂) -/
 
@@ -288,8 +286,8 @@ variable [NeZero N] {R : SWF α N}
 def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
   fun k: Fin (N+1) =>
     fun i: Fin N => if i < k.val
-      then prefer b b a .Not (Ne.symm hab)  -- b on top
-      else prefer a b b .Not hab            -- a on top
+      then prefer b b a .Top (Ne.symm hab)  -- b on top
+      else prefer a b b .Bot hab            -- a on top
 
 /-- `flipping R a b hab k` holds iff society prefers `b ≻ a` when voters `0..k` prefer `b ≻ a`. -/
 def flipping (R : SWF α N) (a b : α) (hab : a ≠ b) :=
@@ -302,8 +300,10 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   unfold flipping canonicalSwap
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
-  have: b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
-    apply hu; intro i; simp [prefer_lt_02 b _ a (Ne.symm hab)]
+  have: b ≻[R (fun i => prefer b b a .Top (Ne.symm hab) )] a := by
+    apply hu; intro i;
+    have := prefer_expand b b a .Top (Ne.symm hab)
+    exact ⟨this.2.1, this.2.2.2.1⟩
   exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
@@ -358,14 +358,9 @@ lemma nab_pivotal_bc (a b c: α)
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
           intro i; simp only [mg1, canonicalSwap]
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
-          . constructor
-            . rw[← not_iff_not]
-              simp only [(prefer_lt_02 b c a (Ne.symm hab)).2, (prefer_lt_02 b b a (Ne.symm hab)).2]
-            . simp only [prefer_le_02 b c a (Ne.symm hab), prefer_le_02 b b a (Ne.symm hab)]
-          . constructor
-            . simp only [prefer_le_01 a b c hac, prefer_le_01 a b b hab]
-            . rw[← not_iff_not]
-              simp only [(prefer_lt_01 a b c hab hac).2, (prefer_lt_01 a b b hab hab).2]
+          . simp [prefer_expand b c a .Not (Ne.symm hab), prefer_expand b b a .Top]
+          . have := prefer_expand a b c .Not hac
+            simp [this, prefer_expand a b b .Bot, this.2.2.2.2.1 (Ne.symm hab)]
 
         apply (strict_aiia hp hAIIA).mpr
         exact no_flip a b k hk
@@ -428,37 +423,23 @@ lemma nab_pivotal_bc (a b c: α)
         unfold AgreeOn canonicalSwap mg2; intro i;
         by_cases hi: i < n_ab
         . have :i.val < n_ab +1 := by omega
-          simp [hi, this]
-          constructor
-          . simp only [prefer_le_02 b b a (Ne.symm hab)]
-            cases (pp i).cmp b c with
-            | LT _ _ => simp only [prefer_le_12 c b a (Ne.symm hac)]
-            | GT _ _ => simp only [prefer_le_02 b c a (Ne.symm hab)]
-            | Indiff _ _ => simp only [prefer_top_le_02 b c a (Ne.symm hab)]
-          . rw[← not_iff_not]
-            simp [(prefer_lt_02 b b a (Ne.symm hab)).2]
-            cases (pp i).cmp b c with
-            | LT _ _ => simp [(prefer_lt_12 c b a (Ne.symm hab) (Ne.symm hac)).2]
-            | GT _ _ => simp [(prefer_lt_02 b c a (Ne.symm hab)).2]
-            | Indiff _ _ => simp [(prefer_top_lt_02 b c a (Ne.symm hab)).2]
+          simp [hi, this, prefer_expand b b a .Top]
+          split
+          . have := prefer_expand c b a .Not (Ne.symm hac)
+            simp [this, this.2.2.2.2.2 hab]
+          . simp [prefer_expand b c a .Not (Ne.symm hab)]
+          . simp [prefer_expand b c a .Top (Ne.symm hab)]
         . by_cases hi2: i = n_ab
-          . simp [hi2, prefer_le_01 b a c hbc, prefer_le_02 b b a (Ne.symm hab)]
-            rw[← not_iff_not]
-            simp [(prefer_lt_01 b a c (Ne.symm hab) hbc).2, (prefer_lt_02 b b a (Ne.symm hab)).2]
+          . have := prefer_expand b a c .Not hbc
+            simp [hi2, prefer_expand b b a .Top, this, this.2.2.2.2.1 hab]
           . have :¬ (i.val < n_ab +1 ):= by omega
-            simp [hi, hi2, this]
-            constructor
-            . rw[← not_iff_not]
-              simp [(prefer_lt_02 a b b hab).2]
-              cases (pp i).cmp b c with
-              | LT _ _ => simp [(prefer_lt_02 a c b hab).2]
-              | GT _ _ => simp [(prefer_lt_01 a b c hab hac).2]
-              | Indiff _ _ => simp [(prefer_bot_lt_01 a b c hac hab).2]
-            . simp only [(prefer_lt_02 a b b hab).1]
-              cases (pp i).cmp b c with
-              | LT _ _ => simp [(prefer_lt_02 a c b hab).1]
-              | GT _ _ => simp [(prefer_lt_01 a b c hab hac).1]
-              | Indiff _ _ => simp [(prefer_bot_lt_01 a b c hac hab).1]
+            simp [hi, hi2, this, prefer_expand a b b .Bot]
+            split
+            . simp [prefer_expand a c b .Not hab]
+            . have := prefer_expand a b c .Not hac
+              simp [this, this.2.2.2.2.1 (Ne.symm hab)]
+            . have := prefer_expand a b c .Bot hac
+              simp [this, (this.2.2.2.2 (Ne.symm hab)).1]
       apply (hAIIA _ _ _ _ h_agree_ba).1.mpr
       exact flipped a b
     -- By AIIA
@@ -515,7 +496,8 @@ lemma nab_le_nbc (a b c: α)
     simp only [cs, canonicalSwap]
     split_ifs with hh
     . simp at hh; omega
-    . exact prefer_lt_02 b _ c hbc
+    . have := prefer_expand b c c .Bot hbc
+      exact ⟨this.1, (this.2.2.2.2 (Ne.symm hbc)).1 ⟩
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     ((Preorder'.not_lt _ _ _).mpr (flipped b c))          -- but n_bc flipped, so society should prefer c over b
@@ -528,7 +510,10 @@ lemma ncb_le_nab (a b c: α)
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, prefer_lt_02 b _ c hbc]
+  have: b ≻[cs n_ab] c := by
+    simp [cs, canonicalSwap]
+    have := prefer_expand b b c .Top hbc
+    exact ⟨ this.2.1, (this.2.2.2.2 (Ne.symm hbc)).2⟩
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
