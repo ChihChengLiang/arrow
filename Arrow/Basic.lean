@@ -242,9 +242,7 @@ lemma nab_pivotal_bc (a b c: α)
     (hu: Unanimity R) (hAIIA: AIIA R)
     : Dictates R (pivoter a b hab hu) b c := by
   let n_ab := pivoter a b hab hu
-  have hba := Ne.symm hab
-  have hca := Ne.symm hac
-  have hcb := Ne.symm hbc
+  have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
 
   -- Magic profile 1
   -- 0...k-1 prefer b > c > a
