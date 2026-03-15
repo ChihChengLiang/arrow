@@ -397,7 +397,7 @@ lemma ncb_le_nab (a b c: α)
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
 
 /-- Combining the above: `pivoter (c, b) ≤ pivoter (b, c)`. -/
-lemma nbc_le_ncb (a b c: α)
+lemma ncb_le_nbc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hAIIA: AIIA R)
     : pivoter c b (Ne.symm hbc) hu ≤ pivoter b c hbc hu :=
@@ -413,10 +413,10 @@ lemma n_ab_pivotal_bc_cb (a b c: α)
 
   have h_nab_le_nbc := nab_le_nbc a b c hab hac hbc hu hAIIA
   have h_ncb_le_nab := ncb_le_nab a b c hab hac hbc hu hAIIA
-  have h_ncb_le_nbc := nbc_le_ncb a b c hab hac hbc hu hAIIA
+  have h_ncb_le_nbc := ncb_le_nbc a b c hab hac hbc hu hAIIA
 
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
-  have h_nbc_le_ncb := nbc_le_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
+  have h_nbc_le_ncb := ncb_le_nbc a c b hac hab (Ne.symm hbc) hu hAIIA
 
   -- n_bc = n_cb = n_ab
   have h_nbc_eq_ncb := le_antisymm h_nbc_le_ncb h_ncb_le_nbc
