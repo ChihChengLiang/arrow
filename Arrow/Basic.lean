@@ -191,14 +191,14 @@ lemma prefer_expand
 lemma prefer_gt_top_mid (top mid bot: α)(htb: top ≠ bot)(htm: top ≠ mid)
   :let p:= prefer top mid bot .Not htb
   (top ≽[p] mid) ∧ ¬ mid ≽[p] top := by
-  have := prefer_expand top mid bot .Not htb
-  exact ⟨ this.1, this.2.2.2.2.1 htm⟩
+  obtain ⟨h, _, _, _, hn⟩ := prefer_expand top mid bot .Not htb
+  exact ⟨ h, hn.1 htm⟩
 
 lemma prefer_gt_mid_bot (top mid bot: α)(htb: top ≠ bot)(hmb: mid ≠ bot)
   :let p:= prefer top mid bot .Not htb
   (mid ≽[p] bot) ∧ ¬ bot ≽[p] mid:= by
-  have := prefer_expand top mid bot .Not htb
-  exact ⟨ this.2.1, this.2.2.2.2.2 hmb⟩
+  obtain ⟨_, h, _, _, hn⟩ := prefer_expand top mid bot .Not htb
+  exact ⟨ h, hn.2 hmb⟩
 
 /-! ## Pivotal Voter
 
@@ -229,9 +229,7 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
   have: b ≻[R (fun i => prefer b b a .Top (Ne.symm hab) )] a := by
-    apply hu; intro i;
-    have := prefer_expand b b a .Top (Ne.symm hab)
-    exact ⟨this.2.1, this.2.2.2.1⟩
+    apply hu; intro i; simp [Preorder'.lt, prefer_expand b b a .Top (Ne.symm hab)]
   exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
@@ -324,8 +322,8 @@ lemma nab_pivotal_bc (a b c: α)
       | LT h hn => simp [h, hn, prefer_gt_top_mid c b a (Ne.symm hac) (Ne.symm hbc)]
       | GT hn h => simp [h, hn, prefer_gt_top_mid b c a (Ne.symm hab) hbc]
       | Indiff h1 h2 =>
-        have := prefer_expand b c a .Top (Ne.symm hab)
-        simp [h1, h2, this, this.2.2.2.2 (Ne.symm hac)]
+        obtain ⟨h, _, _, _, hn⟩ := prefer_expand b c a .Top (Ne.symm hab)
+        simp [h1, h2, h, hn (Ne.symm hac)]
     . -- i = n_ab
       subst i n_ab
       simp [h.1, h.2, prefer_expand b a c .Not hbc]
@@ -334,8 +332,8 @@ lemma nab_pivotal_bc (a b c: α)
       | LT h hn => simp [h, hn, prefer_gt_mid_bot a c b hab (Ne.symm hbc)]
       | GT hn h => simp [h, hn, prefer_gt_mid_bot a b c hac hbc]
       | Indiff h1 h2 =>
-        have := prefer_expand a b c .Bot hac
-        simp [h1, h2, this, this.2.2.2.2 hab]
+        obtain ⟨_, h, _, _, hn⟩ := prefer_expand a b c .Bot hac
+        simp [h1, h2, h, hn hab]
 
   have hbac: b ≽[R mg2] a ≻ c := by
     constructor
@@ -356,8 +354,7 @@ lemma nab_pivotal_bc (a b c: α)
             split
             . simp [prefer_expand a c b .Not hab]
             . simp [prefer_gt_top_mid a b c hac hab]
-            . have := prefer_expand a b c .Bot hac
-              simp [this, (this.2.2.2.2 hab).1]
+            . obtain ⟨h, _, _, _, hn ⟩ := prefer_expand a b c .Bot hac; simp [h, hn hab]
       apply (hAIIA _ _ _ _ h_agree_ba).1.mpr
       exact flipped a b
     -- By AIIA
@@ -369,8 +366,8 @@ lemma nab_pivotal_bc (a b c: α)
           | LT _ _ => simp [prefer_expand c b a .Not (Ne.symm hac)]
           | GT _ _ => simp [prefer_gt_mid_bot b c a (Ne.symm hab) (Ne.symm hac)]
           | Indiff _ _ =>
-            have := prefer_expand b c a .Top (Ne.symm hab)
-            simp [ this, this.2.2.2.2 (Ne.symm hac)]
+            obtain ⟨_, h, _, _, hn ⟩ := prefer_expand b c a .Top (Ne.symm hab)
+            simp [ h, hn (Ne.symm hac)]
         . -- i = n_ab
           simp [prefer_expand a b c .Not hac, prefer_gt_mid_bot b a c hbc hac]
         . -- i > n_ab
@@ -399,8 +396,7 @@ lemma nab_le_nbc (a b c: α)
     simp only [cs, canonicalSwap]
     split_ifs with hh
     . simp at hh; omega
-    . have := prefer_expand b c c .Bot hbc
-      exact ⟨this.1, (this.2.2.2.2 hbc).1 ⟩
+    . obtain ⟨h, _, _, _, hn⟩ := prefer_expand b c c .Bot hbc; exact ⟨h, (hn hbc).1⟩
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     ((Preorder'.not_lt _ _ _).mpr (flipped b c))          -- but n_bc flipped, so society should prefer c over b
@@ -415,8 +411,8 @@ lemma ncb_le_nab (a b c: α)
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
   have: b ≻[cs n_ab] c := by
     simp [cs, canonicalSwap]
-    have := prefer_expand b b c .Top hbc
-    exact ⟨ this.2.1, (this.2.2.2.2 hbc).2⟩
+    obtain ⟨_, h, _, _, hn⟩ := prefer_expand b b c .Top hbc
+    exact ⟨ h, (hn hbc).2⟩
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
