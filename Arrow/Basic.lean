@@ -142,18 +142,18 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
   trans := by
     intro a b c ha hb
     cases tie <;> simp only at ha hb ⊢
-    · split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
+    . split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
       by_cases hba0: b = a₀
-      · simp_all
-      · simp_all; exact le_trans ha.2 hb
-    · split_ifs at ha hb ⊢; exact ha
-    · split_ifs at ha hb ⊢; exact hb
+      . simp_all
+      . simp_all; exact le_trans ha.2 hb
+    . split_ifs at ha hb ⊢; exact ha
+    . split_ifs at ha hb ⊢; exact hb
   total := by
     intro a b
     cases tie
-    · split_ifs <;> simp_all [le_total a b]
-    · simp only; by_cases hxa : a = a₂ <;> by_cases hya : b = a₂ <;> simp_all
-    · simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
+    . split_ifs <;> simp_all [le_total a b]
+    . simp only; by_cases hxa : a = a₂ <;> by_cases hya : b = a₂ <;> simp_all
+    . simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
 
 lemma prefer_expand
   (top mid bot: α)(tie: Tie)(htb: top ≠ bot)
