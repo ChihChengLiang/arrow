@@ -168,6 +168,32 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
     · simp only; by_cases hxa : a = a₂ <;> by_cases hya : b = a₂ <;> simp_all
     · simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
 
+lemma prefer_expand
+  (top mid bot: α)(tie: Tie)
+  (htm: top ≠ mid)(hmb: mid≠ bot)(htb: top ≠ bot)
+  :let p:= prefer top mid bot tie htb
+  (top ≽[p] mid) ∧ (mid ≽[p] bot) ∧ (top ≽[p] bot) ∧ (¬ bot ≽[p] top) ∧
+  (match tie with
+  | .Not => (¬ mid ≽[p] top) ∧ (¬ bot ≽[p] mid)
+  | .Top => (  mid ≽[p] top) ∧ (¬ bot ≽[p] mid)
+  | .Bot => (¬ mid ≽[p] top) ∧ (  bot ≽[p] mid)
+  )
+  := by
+  intro p
+  unfold p prefer
+  simp
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  . split <;> simp_all
+  . split <;> try trivial
+    intro h; exact absurd h (Ne.symm htb)
+  . split <;> trivial
+  . split <;> simp_all <;> push_neg <;> exact Ne.symm htb
+  . split <;> simp_all <;> push_neg
+    . exact ⟨ Ne.symm htm, Ne.symm htb⟩
+    . constructor
+      . exact Ne.symm htm
+      . intro h; exact absurd h (Ne.symm htm)
+
 /-! ### Lemmas for Tie.Not (strict ranking a₀ > a₁ > a₂) -/
 
 /-- In `prefer a₀ a₁ a₂ .Not`, we have `a₀ > a₁`. -/
