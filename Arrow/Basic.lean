@@ -248,6 +248,9 @@ lemma nab_pivotal_bc (a b c: α)
     (hu: Unanimity R) (hAIIA: AIIA R)
     : Dictates R (pivoter a b hab hu) b c := by
   let n_ab := pivoter a b hab hu
+  have hba := Ne.symm hab
+  have hca := Ne.symm hac
+  have hcb := Ne.symm hbc
 
   -- Magic profile 1
   -- 0...k-1 prefer b > c > a
@@ -255,7 +258,7 @@ lemma nab_pivotal_bc (a b c: α)
   -- result: socPrefer a > b > c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
-      then prefer b c a .Not (Ne.symm hab)
+      then prefer b c a .Not hba
       else prefer a b c .Not hac
   -- soc prefer a > b > c
   have habc: a ≻[R mg1] b ≻ c  := by
@@ -277,7 +280,7 @@ lemma nab_pivotal_bc (a b c: α)
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
           intro i; simp only [mg1, canonicalSwap]
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
-          . simp [prefer_expand b c a .Not (Ne.symm hab), prefer_expand b b a .Top]
+          . simp [prefer_expand b c a .Not hba, prefer_expand b b a .Top]
           . simp [prefer_expand a b b .Bot, prefer_gt_top_mid a b c hac hab]
 
         apply (strict_aiia hp hAIIA).mpr
@@ -285,7 +288,7 @@ lemma nab_pivotal_bc (a b c: α)
     -- b > c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
-        . exact prefer_gt_top_mid b c a (Ne.symm hab) hbc
+        . exact prefer_gt_top_mid b c a hba hbc
         . exact prefer_gt_mid_bot a b c hac hbc
       exact hu _ _ _ h
   intro pp h_pp_bc
@@ -298,9 +301,9 @@ lemma nab_pivotal_bc (a b c: α)
   let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
       then match (pp i).cmp b c with
-        | .LT _ _     => prefer c b a .Not (Ne.symm hac)
-        | .GT _ _     => prefer b c a .Not (Ne.symm hab)
-        | .Indiff _ _ => prefer b c a .Top (Ne.symm hab)  -- b ~ c > a
+        | .LT _ _     => prefer c b a .Not hca
+        | .GT _ _     => prefer b c a .Not hba
+        | .Indiff _ _ => prefer b c a .Top hba  -- b ~ c > a
       else
         if i = n_ab then prefer b a c .Not hbc
         else match (pp i).cmp b c with
@@ -312,20 +315,16 @@ lemma nab_pivotal_bc (a b c: α)
     unfold AgreeOn mg2; intro i; split_ifs
     . -- i < n_ab
       cases (pp i).cmp b c with
-      | LT h hn => simp [h, hn, prefer_gt_top_mid c b a (Ne.symm hac) (Ne.symm hbc)]
-      | GT hn h => simp [h, hn, prefer_gt_top_mid b c a (Ne.symm hab) hbc]
-      | Indiff h1 h2 =>
-        obtain ⟨h, _, _, _, hn⟩ := prefer_expand b c a .Top (Ne.symm hab)
-        simp [h1, h2, h, hn (Ne.symm hac)]
+      | LT h hn => simp [h, hn, prefer_gt_top_mid c b a hca hcb]
+      | GT hn h => simp [h, hn, prefer_gt_top_mid b c a hba hbc]
+      | Indiff h1 h2 => obtain ⟨h, _, _, _, hn⟩ := prefer_expand b c a .Top hba; simp [h1, h2, h, hn hca]
     . -- i = n_ab
       subst i n_ab; simp [h_pp_bc.1, h_pp_bc.2, prefer_expand b a c .Not hbc]
     . -- i > n_ab
       cases (pp i).cmp b c with
-      | LT h hn => simp [h, hn, prefer_gt_mid_bot a c b hab (Ne.symm hbc)]
+      | LT h hn => simp [h, hn, prefer_gt_mid_bot a c b hab hcb]
       | GT hn h => simp [h, hn, prefer_gt_mid_bot a b c hac hbc]
-      | Indiff h1 h2 =>
-        obtain ⟨_, h, _, _, hn⟩ := prefer_expand a b c .Bot hac
-        simp [h1, h2, h, hn hab]
+      | Indiff h1 h2 => obtain ⟨_, h, _, _, hn⟩ := prefer_expand a b c .Bot hac; simp [h1, h2, h, hn hab]
 
   have hbac: b ≽[R mg2] a ≻ c := by
     constructor
@@ -336,11 +335,11 @@ lemma nab_pivotal_bc (a b c: α)
         . have :i.val < n_ab +1 := by omega
           simp [hi, this, prefer_expand b b a .Top]
           split
-          . simp [prefer_gt_mid_bot c b a (Ne.symm hac) (Ne.symm hab)]
-          . simp [prefer_expand b c a .Not (Ne.symm hab)]
-          . simp [prefer_expand b c a .Top (Ne.symm hab)]
+          . simp [prefer_gt_mid_bot c b a hca hba]
+          . simp [prefer_expand b c a .Not hba]
+          . simp [prefer_expand b c a .Top hba]
         . by_cases hi2: i = n_ab
-          . simp [hi2, prefer_expand b b a .Top, prefer_gt_top_mid b a c hbc (Ne.symm hab)]
+          . simp [hi2, prefer_expand b b a .Top, prefer_gt_top_mid b a c hbc hba]
           . have :¬ (i.val < n_ab +1 ):= by omega
             simp [hi, hi2, this, prefer_expand a b b .Bot]
             split
@@ -353,12 +352,11 @@ lemma nab_pivotal_bc (a b c: α)
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
         unfold AgreeOn mg2 mg1; intro i; simp; split_ifs
         . -- i < n_ab
-          simp [prefer_gt_mid_bot b c a (Ne.symm hab) (Ne.symm hac)]
+          simp [prefer_gt_mid_bot b c a hba hca]
           split
-          . simp [prefer_expand c b a .Not (Ne.symm hac)]
-          . simp [prefer_gt_mid_bot b c a (Ne.symm hab) (Ne.symm hac)]
-          . obtain ⟨_, h, _, _, hn ⟩ := prefer_expand b c a .Top (Ne.symm hab)
-            simp [ h, hn (Ne.symm hac)]
+          . simp [prefer_expand c b a .Not hca]
+          . simp [prefer_gt_mid_bot b c a hba hca]
+          . obtain ⟨_, h, _, _, hn ⟩ := prefer_expand b c a .Top hba; simp [ h, hn hca]
         . -- i = n_ab
           simp [prefer_expand a b c .Not hac, prefer_gt_mid_bot b a c hbc hac]
         . -- i > n_ab
