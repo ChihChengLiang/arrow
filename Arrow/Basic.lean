@@ -288,7 +288,7 @@ lemma nab_pivotal_bc (a b c: α)
         . exact prefer_gt_top_mid b c a (Ne.symm hab) hbc
         . exact prefer_gt_mid_bot a b c hac hbc
       exact hu _ _ _ h
-  intro pp h
+  intro pp h_pp_bc
 
   -- Magic profile 2: match arbitrary profile `pp` on (b,c)
   -- For i < n_ab: (b ~ c) > a, or b > c > a, or c > b > a (matching pp)
@@ -318,8 +318,7 @@ lemma nab_pivotal_bc (a b c: α)
         obtain ⟨h, _, _, _, hn⟩ := prefer_expand b c a .Top (Ne.symm hab)
         simp [h1, h2, h, hn (Ne.symm hac)]
     . -- i = n_ab
-      subst i n_ab
-      simp [h.1, h.2, prefer_expand b a c .Not hbc]
+      subst i n_ab; simp [h_pp_bc.1, h_pp_bc.2, prefer_expand b a c .Not hbc]
     . -- i > n_ab
       cases (pp i).cmp b c with
       | LT h hn => simp [h, hn, prefer_gt_mid_bot a c b hab (Ne.symm hbc)]
