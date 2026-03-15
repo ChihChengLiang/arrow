@@ -25,7 +25,6 @@ lemma Preorder'.lt_asymm (p : Preorder' α) (a b : α) :
   intro ⟨hab, hnba⟩ ⟨hba, _⟩
   exact hnba hba
 
-@[simp]
 lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
     ¬ p.lt a b ↔ p.le b a := by
   unfold Preorder'.lt
@@ -166,10 +165,11 @@ lemma prefer_expand
   (top mid bot: α)(tie: Tie)(htb: top ≠ bot)
   :let p:= prefer top mid bot tie htb
   (top ≽[p] mid) ∧ (mid ≽[p] bot) ∧ (top ≽[p] bot) ∧ (¬ bot ≽[p] top) ∧
-  (match tie with
-  | .Not => (top ≠ mid → ¬ mid ≽[p] top) ∧ (mid ≠ bot → ¬ bot ≽[p] mid)
-  | .Top => mid ≠ bot → ((mid ≽[p] top) ∧ (¬ bot ≽[p] mid))
-  | .Bot => top ≠ mid → ((¬ mid ≽[p] top) ∧ (bot ≽[p] mid))
+  (
+    match tie with
+    | .Not => (top ≠ mid → ¬ mid ≽[p] top) ∧ (mid ≠ bot → ¬ bot ≽[p] mid)
+    | .Top => mid ≠ bot → ((mid ≽[p] top) ∧ ¬ bot ≽[p] mid)
+    | .Bot => top ≠ mid → ((¬ mid ≽[p] top) ∧ bot ≽[p] mid)
   )
   := by
   intro p; unfold p prefer; simp; refine ⟨?_, ?_, ?_, ?_, ?_⟩
@@ -224,7 +224,7 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   simp [Nat.sub_add_cancel this]
   have: b ≻[R (fun i => prefer b b a .Top (Ne.symm hab) )] a := by
     apply hu; intro i; simp [Preorder'.lt, prefer_expand b b a .Top (Ne.symm hab)]
-  exact this.1
+  exact Preorder'.lt_asymm _ _ _ this
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
 noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N :=
@@ -298,14 +298,14 @@ lemma nab_pivotal_bc (a b c: α)
   let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
       then match (pp i).cmp b c with
-        | .LT _ _ => prefer c b a .Not (Ne.symm hac)
-        | .GT _ _ => prefer b c a .Not (Ne.symm hab)
+        | .LT _ _     => prefer c b a .Not (Ne.symm hac)
+        | .GT _ _     => prefer b c a .Not (Ne.symm hab)
         | .Indiff _ _ => prefer b c a .Top (Ne.symm hab)  -- b ~ c > a
       else
         if i = n_ab then prefer b a c .Not hbc
         else match (pp i).cmp b c with
-        | .LT _ _ => prefer a c b .Not hab
-        | .GT _ _ => prefer a b c .Not hac
+        | .LT _ _     => prefer a c b .Not hab
+        | .GT _ _     => prefer a b c .Not hac
         | .Indiff _ _ => prefer a b c .Bot hac  -- a > b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
