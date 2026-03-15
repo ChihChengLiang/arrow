@@ -309,8 +309,7 @@ lemma nab_pivotal_bc (a b c: α)
         | .Indiff _ _ => prefer a b c .Bot hac  -- a > b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
-    unfold AgreeOn mg2; intro i
-    split_ifs with hiltnab hieqnab
+    unfold AgreeOn mg2; intro i; split_ifs
     . -- i < n_ab
       cases (pp i).cmp b c with
       | LT h hn => simp [h, hn, prefer_gt_top_mid c b a (Ne.symm hac) (Ne.symm hbc)]
