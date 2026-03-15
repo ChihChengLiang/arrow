@@ -178,19 +178,16 @@ lemma prefer_expand
   | .Bot => mid≠top → ((¬ mid ≽[p] top) ∧ (bot ≽[p] mid))
   )
   := by
-  intro p
-  unfold p prefer
-  simp
-  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  intro p; unfold p prefer; simp; refine ⟨?_, ?_, ?_, ?_, ?_⟩
   . split <;> simp_all
   . split <;> try trivial
     intro h; exact absurd h (Ne.symm htb)
   . split <;> trivial
   . split <;> try simp_all <;> push_neg <;> exact Ne.symm htb
     push_neg; exact Ne.symm htb
-  . split <;> simp_all
-    . intro h; exact ⟨ Ne.symm h, Ne.symm htb⟩ ;
-    . intro h; exact Ne.symm h
+  . split <;> simp_all <;> intro h
+    . exact ⟨ Ne.symm h, Ne.symm htb⟩
+    . exact Ne.symm h
 
 /-! ## Pivotal Voter
 
