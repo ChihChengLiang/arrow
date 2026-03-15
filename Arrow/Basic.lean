@@ -202,6 +202,7 @@ variable [NeZero N] {R : SWF α N}
 def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
   fun k: Fin (N+1) =>
     fun i: Fin N => if i < k.val
+      -- `prefer` takes 3 items, we duplicate middle as a workaround
       then prefer b b a .Not (Ne.symm hab)  -- b on top
       else prefer a b b .Not hab            -- a on top
 
