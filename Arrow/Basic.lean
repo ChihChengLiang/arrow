@@ -21,9 +21,7 @@ def Preorder'.lt (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
 
 lemma Preorder'.lt_asymm (p : Preorder' α) (a b : α) :
-    p.lt a b → ¬ p.lt b a := by
-  intro ⟨hab, hnba⟩ ⟨hba, _⟩
-  exact hnba hba
+    p.lt a b → ¬ p.lt b a := by intro ⟨_, hnba⟩ ⟨hba, _⟩; exact hnba hba
 
 lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
     ¬ p.lt a b ↔ p.le b a := by
@@ -39,8 +37,7 @@ lemma Preorder'.lt_trans (p : Preorder' α) {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
     constructor
     . exact p.trans _ _ _ h1.1 h2.1
-    . intro h
-      exact h1.2 (p.trans _ _ _ h2.1 h)
+    . intro h; exact h1.2 (p.trans _ _ _ h2.1 h)
 
 /-- The three possible outcomes when comparing two elements under a total preorder. -/
 inductive Cmp (p : Preorder' α) (a b : α) : Type
@@ -103,11 +100,8 @@ def AIIA (R : SWF α N) : Prop :=
     AgreeOn p q a b → ((a ≽[R p] b) ↔ a ≽[R q] b) ∧ ((b ≽[R p] a) ↔ b ≽[R q] a)
 
 lemma strict_aiia {R: SWF α N}
-  {p q: Profile α N} {a b: α}
-  (hagree: AgreeOn p q a b)(hAIIA: AIIA R):
-  (a ≻[R p] b) ↔ a ≻[R q] b := by
-  have := hAIIA _ _ _ _ hagree
-  simp [Preorder'.lt, this.1, this.2]
+  {p q: Profile α N} {a b: α} (hagree: AgreeOn p q a b) (hAIIA: AIIA R):
+  (a ≻[R p] b) ↔ a ≻[R q] b := by simp [Preorder'.lt, hAIIA _ _ _ _ hagree]
 
 /-- **Non-Dictatorship**: No single voter dictates the outcome for all pairs. -/
 def NonDictatorship (R : SWF α N): Prop :=
