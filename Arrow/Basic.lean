@@ -356,20 +356,19 @@ lemma nab_pivotal_bc (a b c: α)
         unfold AgreeOn mg2 mg1; intro i; simp; split_ifs
         . -- i < n_ab
           simp [prefer_gt_mid_bot b c a (Ne.symm hab) (Ne.symm hac)]
-          cases (pp i).cmp b c with
-          | LT _ _ => simp [prefer_expand c b a .Not (Ne.symm hac)]
-          | GT _ _ => simp [prefer_gt_mid_bot b c a (Ne.symm hab) (Ne.symm hac)]
-          | Indiff _ _ =>
-            obtain ⟨_, h, _, _, hn ⟩ := prefer_expand b c a .Top (Ne.symm hab)
+          split
+          . simp [prefer_expand c b a .Not (Ne.symm hac)]
+          . simp [prefer_gt_mid_bot b c a (Ne.symm hab) (Ne.symm hac)]
+          . obtain ⟨_, h, _, _, hn ⟩ := prefer_expand b c a .Top (Ne.symm hab)
             simp [ h, hn (Ne.symm hac)]
         . -- i = n_ab
           simp [prefer_expand a b c .Not hac, prefer_gt_mid_bot b a c hbc hac]
         . -- i > n_ab
           simp [prefer_expand a b c .Not hac]
-          cases (pp i).cmp b c with
-          | LT _ _ => simp [prefer_gt_top_mid a c b hab hac]
-          | GT _ _ => simp [prefer_expand a b c .Not hac]
-          | Indiff _ _ => simp [ prefer_expand a b c .Bot hac]
+          split
+          . simp [prefer_gt_top_mid a c b hab hac]
+          . simp [prefer_expand a b c .Not hac]
+          . simp [prefer_expand a b c .Bot hac]
       exact (strict_aiia h_agree_ac hAIIA).mpr ((R mg1).lt_trans habc.2 habc.1)
 
   -- transitivity from b ≽ a ≻ c
