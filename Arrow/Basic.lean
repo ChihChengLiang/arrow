@@ -91,13 +91,13 @@ def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≽[R p] b) ↔ a ≽[R q] b) ∧ ((b ≽[R p] a) ↔ b ≽[R q] a)
 
-lemma strict_aiia {R: SWF α N}
-  {p q: Profile α N} {a b: α} (hagree: AgreeOn p q a b) (hAIIA: AIIA R):
-  (a ≻[R p] b) ↔ a ≻[R q] b := by simp [Preorder'.lt, hAIIA _ _ _ _ hagree]
-
 /-- **Non-Dictatorship**: No single voter dictates the outcome for all pairs. -/
 def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
+
+lemma strict_aiia {R: SWF α N}
+  {p q: Profile α N} {a b: α} (hagree: AgreeOn p q a b) (hAIIA: AIIA R):
+  (a ≻[R p] b) ↔ a ≻[R q] b := by simp [Preorder'.lt, hAIIA _ _ _ _ hagree]
 
 /-! ## Preference Construction
 
@@ -233,9 +233,9 @@ lemma nab_pivotal_bc (a b c: α)
   have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
 
   -- Magic profile 1
-  -- 0 ... k-1 prefer b > c > a
-  -- k ... N-1 prefer a > b > c
-  -- Result: Society prefers a > b > c
+  -- 0 ... k-1 prefer b ≻ c ≻ a
+  -- k ... N-1 prefer a ≻ b ≻ c
+  -- Result: Society prefers a ≻ b ≻ c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
       then prefer b c a .Not hba
