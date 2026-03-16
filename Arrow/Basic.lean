@@ -418,38 +418,34 @@ lemma n_ab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
-  -- Collect pivotal voter equalities for {a,b,c}
-  obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
-  obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-  obtain ⟨_, h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
-  by_cases hxa : x = a; subst x
-  . by_cases hyb : y = b; subst y
-    . simpa [← h_nba_eq_nca, ← h_nab_eq_nba] using nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-    . by_cases hyc : y = c; subst y
-      . simpa [← h_nab_eq_nba] using nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
-      . simpa [← h_nab_eq_nba] using nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyb) hxy hu hAIIA
-  . by_cases hxb : x = b; subst x
-    . by_cases hya : y = a; subst y
-      . simpa [h_ncb_eq_nab] using nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-      . by_cases hyc : y = c; subst y
-        . exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
-        . exact nab_pivotal_bc a b y hab (Ne.symm hya) hxy hu hAIIA
-    . by_cases hxc : x = c; subst x
-      . by_cases hya : y = a; subst y
-        . simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
-        . by_cases hyb : y = b; subst y
-          . simpa [← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-          . simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c y hbc (Ne.symm hyb) hxy hu hAIIA
-      . -- x ∉ {a,b,c}
-        obtain ⟨h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxa) (Ne.symm hxb) hu hAIIA
-        obtain ⟨_, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxa) hab hxb hu hAIIA
-        by_cases hya : y = a; subst y
-        . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x a (Ne.symm hxb) (Ne.symm hab) hxa hu hAIIA
-        . by_cases hyb : y = b; subst y
-          . simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x b (Ne.symm hxa) hab hxb hu hAIIA
-          . by_cases hyc : y = c; subst y
-            . simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxa) hac hxc hu hAIIA
-            . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxb) (Ne.symm hyb) hxy hu hAIIA
+
+  by_cases hax: a ≠ x
+  . by_cases hay: a ≠ y
+    . by_cases hbx: b ≠ x
+      . have h1 := nab_pivotal_bc a x y hax hay hxy hu hAIIA
+        have h2 := n_ab_pivotal_bc_cb a x b hax hab (Ne.symm hbx) hu hAIIA
+        have h3 := n_ab_pivotal_bc_cb a b x hab hax hbx hu hAIIA
+        simp_all
+      . simp_all; subst x
+        exact nab_pivotal_bc a b y hax hay hxy hu hAIIA
+    . simp_all; subst y
+      by_cases hbx: b ≠ x
+      . have h1 := nab_pivotal_bc b x a hbx (Ne.symm hab) hxy hu hAIIA
+        have h3 := n_ab_pivotal_bc_cb a b x hab hax hbx hu hAIIA
+        simp_all
+      . simp_all; subst x
+        have h1 := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+        have h2 := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+        simp_all
+  . simp_all; subst x
+    by_cases hby: b ≠ y
+    . have h1 := nab_pivotal_bc b a y (Ne.symm hab) hby hxy hu hAIIA
+      have h2 := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+      simp_all
+    . simp_all; subst y
+      have h1 := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+      have h2 := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+      simp_all
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
