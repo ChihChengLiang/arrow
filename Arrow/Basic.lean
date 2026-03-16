@@ -418,28 +418,27 @@ lemma n_ab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
-  have := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-  have := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-  by_cases hxa: x ≠ a <;> by_cases hxb: x ≠ b <;> by_cases hya: y ≠ a <;> simp_all <;> try subst x y
-  -- x ∉ {a, b}, y ≠ a
-  . have := nab_pivotal_bc a x y (Ne.symm hxa) (Ne.symm hya) hxy hu hAIIA
-    have := n_ab_pivotal_bc_cb a x b (Ne.symm hxa) hab hxb hu hAIIA
-    have := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxa) (Ne.symm hxb) hu hAIIA
+  have := nab_pivotal_bc a b c hab hac hbc hu hAIIA
+  have := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
+  have := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
+  by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
+  -- x ∉ {b, c}, y ≠ c
+  . have := nab_pivotal_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
+    have := n_ab_pivotal_bc_cb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
     simp_all
-  -- x ≠ b, y = a
-  . have := nab_pivotal_bc b x a (Ne.symm hxb) (Ne.symm hab) hxa hu hAIIA
-    have := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxa) (Ne.symm hxb) hu hAIIA
+  -- x ∉ {b, c}, y = c
+  . have := nab_pivotal_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
+    have := n_ab_pivotal_bc_cb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
     simp_all
-  -- x = b, y ≠ a
-  . have := nab_pivotal_bc a b y hab (Ne.symm hya) hxy hu hAIIA
-    simp_all
-  -- x = a
-  . by_cases hby: b ≠ y
-    . have := nab_pivotal_bc b a y (Ne.symm hab) hby (Ne.symm hya) hu hAIIA
+  -- x = c, y ≠ c
+  . by_cases hyb: y ≠ b
+    . have := nab_pivotal_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hAIIA
       simp_all
-    . have := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-      have := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+    . have := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
       simp_all
+  -- x = b, y ≠ c
+  . have := nab_pivotal_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hAIIA
+    simp_all
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
