@@ -91,13 +91,13 @@ def AIIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≽[R p] b) ↔ a ≽[R q] b) ∧ ((b ≽[R p] a) ↔ b ≽[R q] a)
 
-lemma strict_aiia {R: SWF α N}
-  {p q: Profile α N} {a b: α} (hagree: AgreeOn p q a b) (hAIIA: AIIA R):
-  (a ≻[R p] b) ↔ a ≻[R q] b := by simp [Preorder'.lt, hAIIA _ _ _ _ hagree]
-
 /-- **Non-Dictatorship**: No single voter dictates the outcome for all pairs. -/
 def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
+
+lemma strict_aiia {R: SWF α N}
+  {p q: Profile α N} {a b: α} (hagree: AgreeOn p q a b) (hAIIA: AIIA R):
+  (a ≻[R p] b) ↔ a ≻[R q] b := by simp [Preorder'.lt, hAIIA _ _ _ _ hagree]
 
 /-! ## Preference Construction
 
@@ -233,9 +233,9 @@ lemma nab_pivotal_bc (a b c: α)
   have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
 
   -- Magic profile 1
-  -- 0 ... k-1 prefer b > c > a
-  -- k ... N-1 prefer a > b > c
-  -- Result: Society prefers a > b > c
+  -- 0 ... k-1 prefer b ≻ c ≻ a
+  -- k ... N-1 prefer a ≻ b ≻ c
+  -- Result: Society prefers a ≻ b ≻ c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
       then prefer b c a .Not hba
@@ -418,38 +418,27 @@ lemma n_ab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
-  -- Collect pivotal voter equalities for {a,b,c}
-  obtain ⟨h_nbc_eq_ncb, h_ncb_eq_nab⟩ := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
-  obtain ⟨h_nab_eq_nba, h_nba_eq_nca⟩ := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-  obtain ⟨_, h_nbc_eq_nac⟩ := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
-  by_cases hxa : x = a; subst x
-  . by_cases hyb : y = b; subst y
-    . simpa [← h_nba_eq_nca, ← h_nab_eq_nba] using nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-    . by_cases hyc : y = c; subst y
-      . simpa [← h_nab_eq_nba] using nab_pivotal_bc b a c (Ne.symm hab) hbc hac hu hAIIA
-      . simpa [← h_nab_eq_nba] using nab_pivotal_bc b a y (Ne.symm hab) (Ne.symm hyb) hxy hu hAIIA
-  . by_cases hxb : x = b; subst x
-    . by_cases hya : y = a; subst y
-      . simpa [h_ncb_eq_nab] using nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-      . by_cases hyc : y = c; subst y
-        . exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
-        . exact nab_pivotal_bc a b y hab (Ne.symm hya) hxy hu hAIIA
-    . by_cases hxc : x = c; subst x
-      . by_cases hya : y = a; subst y
-        . simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c a hbc (Ne.symm hab) (Ne.symm hac) hu hAIIA
-        . by_cases hyb : y = b; subst y
-          . simpa [← h_nbc_eq_nac, h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-          . simpa [h_nbc_eq_ncb, h_ncb_eq_nab] using nab_pivotal_bc b c y hbc (Ne.symm hyb) hxy hu hAIIA
-      . -- x ∉ {a,b,c}
-        obtain ⟨h_nbx_eq_nxb, h_nxb_eq_nab⟩ := n_ab_pivotal_bc_cb a b x hab (Ne.symm hxa) (Ne.symm hxb) hu hAIIA
-        obtain ⟨_, h_nbx_eq_nax⟩ := n_ab_pivotal_bc_cb a x b (Ne.symm hxa) hab hxb hu hAIIA
-        by_cases hya : y = a; subst y
-        . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x a (Ne.symm hxb) (Ne.symm hab) hxa hu hAIIA
-        . by_cases hyb : y = b; subst y
-          . simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x b (Ne.symm hxa) hab hxb hu hAIIA
-          . by_cases hyc : y = c; subst y
-            . simpa [← h_nbx_eq_nax, h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc a x c (Ne.symm hxa) hac hxc hu hAIIA
-            . simpa [h_nbx_eq_nxb, h_nxb_eq_nab] using nab_pivotal_bc b x y (Ne.symm hxb) (Ne.symm hyb) hxy hu hAIIA
+  have := nab_pivotal_bc a b c hab hac hbc hu hAIIA
+  have := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
+  have := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
+  by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
+  -- x ∉ {b, c}, y ≠ c
+  . have := nab_pivotal_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
+    have := n_ab_pivotal_bc_cb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
+    simp_all
+  -- x ∉ {b, c}, y = c
+  . have := nab_pivotal_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
+    have := n_ab_pivotal_bc_cb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
+    simp_all
+  -- x = c, y ≠ c
+  . by_cases hyb: y ≠ b
+    . have := nab_pivotal_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hAIIA
+      simp_all
+    . have := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
+      simp_all
+  -- x = b, y ≠ c
+  . have := nab_pivotal_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hAIIA
+    simp_all
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
