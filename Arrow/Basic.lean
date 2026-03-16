@@ -467,8 +467,8 @@ lemma n_ab_dictate_xy (a b c x y: α)
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
 theorem Impossibility [Fintype α] (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N, (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
-  by_contra ⟨ R, ⟨ hu, hAIIA, hNonDictactor ⟩⟩
-  apply hNonDictactor
+  by_contra ⟨ R, ⟨ hu, hAIIA, hNonDictator ⟩⟩
+  apply hNonDictator
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
   use pivoter a b hab hu
   intro x y hxy
