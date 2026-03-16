@@ -233,17 +233,17 @@ lemma nab_pivotal_bc (a b c: α)
   have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
 
   -- Magic profile 1
-  -- 0...k-1 prefer b > c > a
-  -- k ... N prefer a > b > c
-  -- result: socPrefer a > b > c
+  -- 0 ... k-1 prefer b > c > a
+  -- k ... N-1 prefer a > b > c
+  -- Result: Society prefers a > b > c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
       then prefer b c a .Not hba
       else prefer a b c .Not hac
-  -- soc prefer a > b > c
+
   have habc: a ≻[R mg1] b ≻ c  := by
     constructor
-    -- a > b by def of n_ab
+    -- a ≻ b by definition of n_ab
     -- note that voter is `Fin N` but the family of profiles is `Fin N+1`.
     -- The profile zero is not handled in `flipping` related functions.
     . by_cases hn : n_ab = 0
@@ -265,31 +265,32 @@ lemma nab_pivotal_bc (a b c: α)
 
         apply (strict_aiia hp hAIIA).mpr
         exact no_flip a b k hk
-    -- b > c by unanimity
+    -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
         . exact prefer_gt_top_mid b c a hba hbc
         . exact prefer_gt_mid_bot a b c hac hbc
       exact hu _ _ _ h
   intro pp h_pp_bc
+  -- `pp` has arbitrary preference on (b,c), except n_ab
 
-  -- Magic profile 2: match arbitrary profile `pp` on (b,c)
-  -- For i < n_ab: (b ~ c) > a, or b > c > a, or c > b > a (matching pp)
-  -- For i = n_ab: b > a > c
-  -- For i > n_ab: a > (b ~ c), or a > b > c, or a > c > b (matching pp)
-  -- result: socPrefer b ≥ a > c
+  -- Magic profile 2: match `pp` on (b,c)
+  -- For i < n_ab: (b ? c) ≻ a (matching pp)
+  -- For i = n_ab: b ≻ a ≻ c
+  -- For i > n_ab: a ≻ (b ? c) (matching pp)
+  -- Result: Society prefers b ≽ a ≻ c
   let mg2 : Profile α N := fun i: Fin N =>
     if i < n_ab
       then match (pp i).cmp b c with
         | .LT     _ _ => prefer c b a .Not hca
         | .GT     _ _ => prefer b c a .Not hba
-        | .Indiff _ _ => prefer b c a .Top hba  -- b ~ c > a
+        | .Indiff _ _ => prefer b c a .Top hba  -- b ~ c ≻ a
       else
         if i = n_ab then prefer b a c .Not hbc
         else match (pp i).cmp b c with
         | .LT     _ _ => prefer a c b .Not hab
         | .GT     _ _ => prefer a b c .Not hac
-        | .Indiff _ _ => prefer a b c .Bot hac  -- a > b ~ c
+        | .Indiff _ _ => prefer a b c .Bot hac  -- a ≻ b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
     unfold AgreeOn mg2; intro i; split_ifs
