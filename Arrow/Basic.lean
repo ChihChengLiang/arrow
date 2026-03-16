@@ -104,7 +104,6 @@ def NonDictatorship (R : SWF α N): Prop :=
 We construct concrete preference orderings to build test profiles for the proof.
 Given three alternatives, `prefer a₀ a₁ a₂ tie` ranks them with optional ties.
 -/
-variable [LinearOrder α]
 
 /-- Where ties occur in a 3-element preference ranking -/
 inductive Tie | Not | Top | Bot
@@ -112,8 +111,7 @@ inductive Tie | Not | Top | Bot
 /-- Construct a preference ordering with optional ties:
     - `Tie.Not`: a₀ > a₁ > a₂ (strict ranking)
     - `Tie.Top`: a₀ ~ a₁ > a₂ (top two tied)
-    - `Tie.Bot`: a₀ > a₁ ~ a₂ (bottom two tied)
-    Uses the ambient `LinearOrder` as a tiebreaker for elements outside `{a₀, a₁, a₂}`. -/
+    - `Tie.Bot`: a₀ > a₁ ~ a₂ (bottom two tied) -/
 def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' α where
   le x y := match tie with
     | .Not =>
@@ -121,7 +119,7 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
       else if y = a₀ then True         -- a₀ is top
       else if x = a₀ then y = a₀       -- only a₀ ≤ a₀
       else if y = a₂ then x = a₂       -- only a₂ ≥ a₂
-      else x ≤ y                        -- fallback to LinearOrder
+      else True
     | .Top =>
       if y = a₂ then x = a₂           -- only a₂ ≥ a₂ (a₂ is bottom)
       else if x = a₂ then True        -- a₂ ≤ everything else
@@ -135,15 +133,12 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
     intro a b c ha hb
     cases tie <;> simp only at ha hb ⊢
     . split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
-      by_cases hba0: b = a₀
-      . simp_all
-      . simp_all; exact le_trans ha.2 hb
     . split_ifs at ha hb ⊢; exact ha
     . split_ifs at ha hb ⊢; exact hb
   total := by
     intro a b
     cases tie
-    . split_ifs <;> simp_all [le_total a b]
+    . split_ifs <;> simp_all
     . simp only; by_cases hxa : a = a₂ <;> by_cases hya : b = a₂ <;> simp_all
     . simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
 
