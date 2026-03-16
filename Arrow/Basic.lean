@@ -20,6 +20,12 @@ structure Preorder' (α : Type) where
 def Preorder'.lt (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
 
+-- Notation: `a ≻[p] b` means voter with preference `p` strictly prefers `a` over `b`
+notation a " ≻[" p  "] " b => Preorder'.lt p b a
+notation a " ≽[" p  "] " b => Preorder'.le p b a
+notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
+notation a " ≽[" p  "] " b "≻ " c => (a ≽[p] b) ∧ b ≻[p] c
+
 lemma Preorder'.lt_asymm (p : Preorder' α) (a b : α) :
     p.lt a b → ¬ p.lt b a := by intro ⟨_, hnba⟩ ⟨hba, _⟩; exact hnba hba
 
@@ -63,20 +69,6 @@ def Profile (α : Type) (N : ℕ) := Fin N → Preorder' α
 
 /-- A Social Welfare Function aggregates individual preferences into a social ordering. -/
 def SWF (α : Type) (N : ℕ) := (Fin N → Preorder' α) → Preorder' α
-
--- Notation: `a ≻[R p] b` means society (under SWF `R`) strictly prefers `a` over `b` in profile `p`
-notation a " ≻[" R p "] " b => Preorder'.lt (R p) b a
-notation a " ≽[" R p "] " b => Preorder'.le (R p) b a
-notation a " ≻[" R p "] " b "≻ " c =>
-  Preorder'.lt (R p) b a ∧ Preorder'.lt (R p) b c
-notation a " ≽[" R p "] " b "≻ " c =>
-  Preorder'.le (R p) b a ∧ Preorder'.lt (R p) b c
-
--- Notation: `a ≻[p] b` means voter with preference `p` strictly prefers `a` over `b`
-notation a " ≻[" p  "] " b => Preorder'.lt p b a
-notation a " ≽[" p  "] " b => Preorder'.le p b a
-notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
-notation a " ≽[" p  "] " b "≻ " c => (a ≽[p] b) ∧ b ≻[p] c
 
 /-- Voter `k` is a dictator for the pair `(a, b)` if whenever `k` prefers `a` over `b`,
     society also prefers `a` over `b`. -/
