@@ -418,34 +418,31 @@ lemma n_ab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
-
-  by_cases hax: a ≠ x
-  . by_cases hay: a ≠ y
-    . by_cases hbx: b ≠ x
-      . have h1 := nab_pivotal_bc a x y hax hay hxy hu hAIIA
-        have h2 := n_ab_pivotal_bc_cb a x b hax hab (Ne.symm hbx) hu hAIIA
-        have h3 := n_ab_pivotal_bc_cb a b x hab hax hbx hu hAIIA
-        simp_all
-      . simp_all; subst x
-        exact nab_pivotal_bc a b y hax hay hxy hu hAIIA
-    . simp_all; subst y
-      by_cases hbx: b ≠ x
-      . have h1 := nab_pivotal_bc b x a hbx (Ne.symm hab) hxy hu hAIIA
-        have h3 := n_ab_pivotal_bc_cb a b x hab hax hbx hu hAIIA
-        simp_all
-      . simp_all; subst x
-        have h1 := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-        have h2 := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-        simp_all
-  . simp_all; subst x
+  by_cases hax: a ≠ x <;> by_cases hay: a ≠ y
+  -- Case: a ∉ {x,y} - use a as witness
+  · by_cases hbx: b ≠ x
+    · have := nab_pivotal_bc a x y hax hay hxy hu hAIIA
+      have := n_ab_pivotal_bc_cb a x b hax hab (Ne.symm hbx) hu hAIIA
+      have := n_ab_pivotal_bc_cb a b x hab hax hbx hu hAIIA; simp_all
+    · simp at hbx; subst hbx; exact nab_pivotal_bc a b y hax hay hxy hu hAIIA
+  -- Case: a ≠ x, a = y
+  · simp at hay; subst hay
+    by_cases hbx: b ≠ x
+    · have := nab_pivotal_bc b x a hbx (Ne.symm hab) hxy hu hAIIA
+      have := n_ab_pivotal_bc_cb a b x hab hax hbx hu hAIIA; simp_all
+    · simp at hbx; subst hbx  -- {x,y} = {b,a}
+      have := nab_pivotal_bc c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
+      have := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA; simp_all
+  -- Case: a = x, a ≠ y
+  · simp at hax; subst hax
     by_cases hby: b ≠ y
-    . have h1 := nab_pivotal_bc b a y (Ne.symm hab) hby hxy hu hAIIA
-      have h2 := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA
-      simp_all
-    . simp_all; subst y
-      have h1 := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-      have h2 := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
-      simp_all
+    · have := nab_pivotal_bc b a y (Ne.symm hab) hby hxy hu hAIIA
+      have := n_ab_pivotal_bc_cb c b a (Ne.symm hbc) (Ne.symm hac) (Ne.symm hab) hu hAIIA; simp_all
+    · simp at hby; subst hby  -- {x,y} = {a,b}
+      have := nab_pivotal_bc c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA
+      have := n_ab_pivotal_bc_cb c a b (Ne.symm hac) (Ne.symm hbc) hab hu hAIIA; simp_all
+  -- Case: a = x, a = y contradicts x ≠ y
+  · simp_all
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
