@@ -164,7 +164,7 @@ def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
 
 /-- `flipping R a b hab k` holds iff society prefers `b ≻ a` when voters `0..k` prefer `b ≻ a`. -/
 def flipping (R : SWF α N) (a b : α) (hab : a ≠ b) :=
-  fun k: Fin N => ¬ a ≻[R ((canonicalSwap a b hab) k.succ)] b
+  fun k: Fin N => ¬ a ≻[R (canonicalSwap a b hab k.succ)] b
 
 /-- By unanimity, a flip must occur: when all voters prefer `b ≻ a`, so does society. -/
 lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
