@@ -153,6 +153,7 @@ variable [NeZero N] {R : SWF α N}
 
 /-- A family of profiles indexed by `k ∈ Fin (N+1)`:
     voters `0..k-1` prefer `b ≻ a`, voters `k..N-1` prefer `a ≻ b`. -/
+@[simp]
 def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
   fun k: Fin (N+1) =>
     fun i: Fin N => if i < k.val
@@ -225,7 +226,7 @@ lemma nab_pivotal_bc (a b c: α)
           exact Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (Fin.val_ne_of_ne hn))
         have hk : k.val < n_ab := by omega
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
-          intro i; simp only [mg1, canonicalSwap]
+          intro i; unfold mg1
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
           . simp [prefer_expand b b a, prefer_expand b c a]
           . simp [prefer_expand a b b, prefer_expand a b c, hab]
@@ -277,7 +278,7 @@ lemma nab_pivotal_bc (a b c: α)
     constructor
     -- By AIIA on nab pivoting defintion
     . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
-        unfold AgreeOn canonicalSwap mg2; intro i;
+        unfold AgreeOn mg2; intro i;
         by_cases hi: i < n_ab
         . have :i.val < n_ab +1 := by omega
           simp [hi, this, prefer_expand b b a]
@@ -328,8 +329,7 @@ lemma nab_le_nbc (a b c: α)
   by_contra h; push_neg at h;
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
-    simp only [cs, canonicalSwap]
-    split_ifs with hh <;> simp_all [prefer_expand b c c]; omega
+    simp [cs]; split_ifs with hh <;> simp_all [prefer_expand b c c]; omega
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
@@ -342,7 +342,7 @@ lemma ncb_le_nab (a b c: α)
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, prefer_expand b b c]
+  have: b ≻[cs n_ab] c := by simp [cs, prefer_expand b b c]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (no_flip c b n_ab h |> Preorder'.lt_asymm)          -- n_ab before pivoter, so b c shouldn't flip
