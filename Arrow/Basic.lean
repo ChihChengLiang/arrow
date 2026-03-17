@@ -26,13 +26,13 @@ notation a " ≽[" p  "] " b => Preorder'.le p b a
 notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
 notation a " ≽[" p  "] " b "≻ " c => (a ≽[p] b) ∧ b ≻[p] c
 
-lemma Preorder'.lt_asymm (p : Preorder' α) (a b : α) :
+lemma Preorder'.lt_asymm {p : Preorder' α} {a b : α} :
     p.lt a b → ¬ p.lt b a := by intro ⟨_, hnba⟩ ⟨hba, _⟩; exact hnba hba
 
-lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
+lemma Preorder'.not_lt {α : Type} {p : Preorder' α} {a b : α} :
     ¬ p.lt a b ↔ p.le b a := by simp [Preorder'.lt, p.total]
 
-lemma Preorder'.lt_trans (p : Preorder' α) {a b c : α}
+lemma Preorder'.lt_trans {p : Preorder' α} {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
     constructor
     . exact p.trans _ _ _ h1.1 h2.1
@@ -172,7 +172,7 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   simp [Nat.sub_add_cancel this]
   have: b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
     apply hu; intro i; simp [Preorder'.lt, prefer_expand b b a]
-  exact Preorder'.lt_asymm _ _ _ this
+  exact Preorder'.lt_asymm this
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
 noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N :=
@@ -188,7 +188,7 @@ lemma no_flip (a b : α) {hab : a ≠ b} (i : Fin N) {hu: Unanimity R}:
 /-- At the pivotal voter, society flips to `b ≻ a`. -/
 lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
     b ≽[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
-  exact (Preorder'.not_lt _ _ _).mp (Fin.find_spec (flip_exists R a b hab hu))
+  exact Fin.find_spec (flip_exists R a b hab hu) |> Preorder'.not_lt.mp
 
 /-- The pivotal voter for `(a, b)` dictates the pair `(b, c)`. -/
 lemma nab_pivotal_bc (a b c: α)
@@ -317,7 +317,7 @@ lemma nab_pivotal_bc (a b c: α)
   simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree]
   -- transitivity from b ≽ a ≻ c
   show b ≻[R mg2] c
-  exact Preorder'.lt_of_lt_of_le hbac.2 hbac.1
+  exact (R mg2).lt_of_lt_of_le hbac.2 hbac.1
 
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
@@ -331,7 +331,7 @@ lemma nab_le_nbc (a b c: α)
     split_ifs with hh <;> simp_all [Preorder'.lt, prefer_expand b c c]; omega
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
-    ((Preorder'.not_lt _ _ _).mpr (flipped b c))          -- but n_bc flipped, so society should prefer c over b
+    (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
 
 /-- The pivotal voter for `(c, b)` comes no later than the one for `(a, b)`. -/
 lemma ncb_le_nab (a b c: α)
@@ -344,7 +344,7 @@ lemma ncb_le_nab (a b c: α)
   have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, Preorder'.lt, prefer_expand b b c]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
-    (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
+    (no_flip c b n_ab h |> Preorder'.lt_asymm)          -- n_ab before pivoter, so b c shouldn't flip
 
 /-- Combining the above: `pivoter (c, b) ≤ pivoter (b, c)`. -/
 lemma ncb_le_nbc (a b c: α)
