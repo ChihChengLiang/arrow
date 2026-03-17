@@ -192,7 +192,7 @@ lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
   exact Fin.find_spec (flip_exists R a b hab hu) |> Preorder'.not_lt.mp
 
 /-- The pivotal voter for `(a, b)` dictates the pair `(b, c)`. -/
-lemma nab_pivotal_bc (a b c: α)
+lemma nab_dictate_bc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hAIIA: AIIA R)
     : Dictates R (pivoter a b hab hu) b c := by
@@ -330,7 +330,7 @@ lemma nab_le_nbc (a b c: α)
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp [cs]; split_ifs with hh <;> simp_all [prefer_expand b c c]; omega
   exact absurd
-    (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
+    (nab_dictate_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
 
 /-- The pivotal voter for `(c, b)` comes no later than the one for `(a, b)`. -/
@@ -343,7 +343,7 @@ lemma ncb_le_nab (a b c: α)
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
   have: b ≻[cs n_ab] c := by simp [cs, prefer_expand b b c]
   exact absurd
-    (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
+    (nab_dictate_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (no_flip c b n_ab h |> Preorder'.lt_asymm)          -- n_ab before pivoter, so b c shouldn't flip
 
 /-- Combining the above: `pivoter (c, b) ≤ pivoter (b, c)`. -/
@@ -384,27 +384,27 @@ lemma n_ab_dictate_xy (a b c x y: α)
   have := nab_eq_nbc_ncb a b c hab hac hbc hu hAIIA
   by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
   -- x ∉ {b, c}, y ≠ c, bridging from n_cx = n_bc = n_ab
-  . have := nab_pivotal_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
+  . have := nab_dictate_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
     have := nab_eq_nbc_ncb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
     simp_all
   -- x ∉ {b, c}, y = c, bridging from n_bx = n_cb = n_ab
-  . have := nab_pivotal_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
+  . have := nab_dictate_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
     have := nab_eq_nbc_ncb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
     simp_all
   -- x = c, y ≠ c
   . by_cases hyb: y ≠ b
     -- n_bc = n_ab
-    . have := nab_pivotal_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hAIIA
+    . have := nab_dictate_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hAIIA
       simp_all
     -- n_ac = n_cb = n_ab
-    . have := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
+    . have := nab_dictate_bc a c b hac hab (Ne.symm hbc) hu hAIIA
       have := nab_eq_nbc_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
       simp_all
   -- x = b, y ≠ c, n_cb = n_ab
-  . have := nab_pivotal_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hAIIA
+  . have := nab_dictate_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hAIIA
     simp_all
   -- x = b, y = c
-  . exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
+  . exact nab_dictate_bc a b c hab hac hbc hu hAIIA
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
