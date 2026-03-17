@@ -68,7 +68,7 @@ variable {N : ℕ}
 def Profile (α : Type) (N : ℕ) := Fin N → Preorder' α
 
 /-- A Social Welfare Function aggregates individual preferences into a social ordering. -/
-def SWF (α : Type) (N : ℕ) := (Fin N → Preorder' α) → Preorder' α
+def SWF (α : Type) (N : ℕ) := Profile α N → Preorder' α
 
 /-- Voter `k` is a dictator for the pair `(a, b)` if whenever `k` prefers `a` over `b`,
     society also prefers `a` over `b`. -/
@@ -77,14 +77,12 @@ def Dictates (R : SWF α N) (k : Fin N) (a b : α): Prop :=
 
 /-- Two profiles agree on `(a, b)` if every voter ranks `a` vs `b` the same way in both. -/
 @[simp]
-def AgreeOn {α : Type} {N : ℕ}
-    (p q : Profile α N) (a b : α) : Prop :=
+def AgreeOn (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
 
 /-- **Unanimity** (Pareto): If all voters prefer `a` over `b`, so does society. -/
 def Unanimity (R : SWF α N) : Prop :=
-  ∀ (p: Profile α N) (a b: α),
-    (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
+  ∀ (p: Profile α N) (a b: α), (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
 
 /-- **Independence of Irrelevant Alternatives**: The social ranking of `a` vs `b`
     depends only on individual rankings of `a` vs `b`. -/
