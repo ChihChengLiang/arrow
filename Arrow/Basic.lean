@@ -17,6 +17,7 @@ structure Preorder' (α : Type) where
   total : ∀ a b, le a b ∨ le b a
 
 /-- Strict preference: `a` is strictly preferred to `b` iff `a ≤ b` but not `b ≤ a`. -/
+@[simp]
 def Preorder'.lt (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
 
@@ -171,8 +172,8 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
   have: b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
-    apply hu; intro i; simp [Preorder'.lt, prefer_expand b b a]
-  exact Preorder'.lt_asymm this
+    apply hu; intro _; simp [Preorder'.lt, prefer_expand b b a]
+  intro _; exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
 noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N :=
@@ -215,7 +216,7 @@ lemma nab_pivotal_bc (a b c: α)
     . by_cases hn : n_ab = 0
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
-          intro i; simp [mg1, hn, Preorder'.lt, prefer_expand a b c, hab]
+          intro _; simp [mg1, hn, prefer_expand a b c, hab]
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
         let k := n_ab - 1
@@ -229,12 +230,12 @@ lemma nab_pivotal_bc (a b c: α)
           . simp [prefer_expand b b a, prefer_expand b c a]
           . simp [prefer_expand a b b, prefer_expand a b c, hab]
 
-        simp only [Preorder'.lt, hAIIA _ _ _ _ hp]
+        simp [hAIIA _ _ _ _ hp]
         exact no_flip a b k hk
     -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
-        intro i; unfold mg1; split_ifs
-        all_goals simp [Preorder'.lt, prefer_expand b c a, prefer_expand a b c, hbc]
+        intro _; unfold mg1; split_ifs
+        all_goals simp [prefer_expand b c a, prefer_expand a b c, hbc]
       exact hu _ _ _ h
   intro pp h_pp_bc
   -- `pp` has arbitrary preference on (b,c), except n_ab
@@ -311,10 +312,10 @@ lemma nab_pivotal_bc (a b c: α)
           . simp [prefer_expand a c b, hac]
           . simp [prefer_expand a b c]
           . simp [prefer_expand a b c .Bot hac]
-      simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree_ac]
+      simp [hAIIA _ _ _ _ h_agree_ac]
       exact (R mg1).lt_trans habc.2 habc.1
 
-  simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree]
+  simp [hAIIA _ _ _ _ h_agree]
   -- transitivity from b ≽ a ≻ c
   show b ≻[R mg2] c
   exact (R mg2).lt_of_lt_of_le hbac.2 hbac.1
@@ -328,7 +329,7 @@ lemma nab_le_nbc (a b c: α)
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp only [cs, canonicalSwap]
-    split_ifs with hh <;> simp_all [Preorder'.lt, prefer_expand b c c]; omega
+    split_ifs with hh <;> simp_all [prefer_expand b c c]; omega
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
@@ -341,7 +342,7 @@ lemma ncb_le_nab (a b c: α)
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, Preorder'.lt, prefer_expand b b c]
+  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, prefer_expand b b c]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (no_flip c b n_ab h |> Preorder'.lt_asymm)          -- n_ab before pivoter, so b c shouldn't flip
