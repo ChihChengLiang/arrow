@@ -376,7 +376,7 @@ lemma nab_eq_nbc_ncb (a b c: α)
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
 /-- The pivotal voter for any pair `(a, b)` dictates *every* pair `(x, y)`. -/
-lemma n_ab_dictate_xy (a b c x y: α)
+lemma nab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
@@ -415,4 +415,4 @@ theorem Impossibility [Fintype α] (ha : Fintype.card α ≥ 3):
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
   use pivoter a b hab hu
   intro x y hxy
-  exact n_ab_dictate_xy a b c x y hab hac hbc hxy hu hAIIA
+  exact nab_dictate_xy a b c x y hab hac hbc hxy hu hAIIA
