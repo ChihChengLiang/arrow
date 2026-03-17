@@ -129,8 +129,8 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
       else if y = a₀ then True        -- everything else ≤ a₀
       else True                        -- a₁ ~ a₂: both directions
   refl := by intro x; cases tie <;> simp
-  trans := by intro a b c ha hb; cases tie <;> simp only at ha hb ⊢ <;> split_ifs <;> simp_all
-  total := by intro a b; cases tie <;> by_cases hxa2 : a = a₂ <;> by_cases hxa0 : a = a₀ <;> by_cases hba0 : b = a₀ <;> simp_all
+  trans := by intro a b c ha hb; split <;> split_ifs <;> simp_all
+  total := by intro a b; split <;> by_cases a = a₂ <;> by_cases b = a₀ <;> simp_all
 
 lemma prefer_expand
   (top mid bot: α)(tie: Tie)(htb: top ≠ bot)
