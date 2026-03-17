@@ -237,8 +237,9 @@ lemma nab_dictate_bc (a b c: α)
         intro _; unfold mg1; split_ifs
         all_goals simp [prefer_expand b c a, prefer_expand a b c, hbc]
       exact hu _ _ _ h
-  intro pp h_pp_bc
+
   -- `pp` has arbitrary preference on (b,c), except n_ab
+  intro pp h_pp_bc
 
   -- Magic profile 2: match `pp` on (b,c)
   -- For i < n_ab: (b ? c) ≻ a (matching pp)
