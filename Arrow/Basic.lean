@@ -139,19 +139,6 @@ lemma prefer_expand
   intro p; unfold p prefer; simp; refine ⟨?_, ?_, ?_, ?_, ?_⟩
   all_goals split <;> try simp_all [Ne.symm htb] <;> intro h <;> exact Ne.symm h
 
-/-- Writing in weak preference form allows simplification -/
-lemma prefer_gt_top_mid (top mid bot: α)(htb: top ≠ bot)(htm: top ≠ mid)
-  :let p:= prefer top mid bot .Not htb
-  (top ≽[p] mid) ∧ ¬ mid ≽[p] top := by
-  obtain ⟨h, _, _, _, hn⟩ := prefer_expand top mid bot .Not htb
-  exact ⟨ h, hn.1 htm⟩
-
-lemma prefer_gt_mid_bot (top mid bot: α)(htb: top ≠ bot)(hmb: mid ≠ bot)
-  :let p:= prefer top mid bot .Not htb
-  (mid ≽[p] bot) ∧ ¬ bot ≽[p] mid:= by
-  obtain ⟨_, h, _, _, hn⟩ := prefer_expand top mid bot .Not htb
-  exact ⟨ h, hn.2 hmb⟩
-
 /-! ## Pivotal Voter
 
 The key construction: we find the "pivotal voter" who flips society's preference.
@@ -182,7 +169,7 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
   have: b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
-    apply hu; intro i; exact prefer_gt_mid_bot b b a (Ne.symm hab) (Ne.symm hab)
+    apply hu; intro i; simp [Preorder'.lt, prefer_expand b b a]
   exact Preorder'.lt_asymm _ _ _ this
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
@@ -226,7 +213,7 @@ lemma nab_pivotal_bc (a b c: α)
     . by_cases hn : n_ab = 0
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
-          intro i; simp [mg1, hn]; exact prefer_gt_top_mid a b c hac hab
+          intro i; simp [mg1, hn, Preorder'.lt, prefer_expand a b c .Not, hab]
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
         let k := n_ab - 1
@@ -245,8 +232,7 @@ lemma nab_pivotal_bc (a b c: α)
     -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
-        . exact prefer_gt_top_mid b c a hba hbc
-        . exact prefer_gt_mid_bot a b c hac hbc
+        all_goals simp [Preorder'.lt, prefer_expand b c a .Not, prefer_expand a b c .Not, hbc]
       exact hu _ _ _ h
   intro pp h_pp_bc
   -- `pp` has arbitrary preference on (b,c), except n_ab
@@ -341,9 +327,7 @@ lemma nab_le_nbc (a b c: α)
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp only [cs, canonicalSwap]
-    split_ifs with hh
-    . simp at hh; omega
-    . exact prefer_gt_top_mid b c c hbc hbc
+    split_ifs with hh; simp at hh; omega; simp [Preorder'.lt, prefer_expand b c c]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     ((Preorder'.not_lt _ _ _).mpr (flipped b c))          -- but n_bc flipped, so society should prefer c over b
@@ -356,7 +340,7 @@ lemma ncb_le_nab (a b c: α)
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap]; exact prefer_gt_mid_bot b b c hbc hbc
+  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, Preorder'.lt, prefer_expand b b c .Not]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
