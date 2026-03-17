@@ -76,6 +76,7 @@ def Dictates (R : SWF α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: Profile α N ), (a ≻[p k] b) → a ≻[R p] b
 
 /-- Two profiles agree on `(a, b)` if every voter ranks `a` vs `b` the same way in both. -/
+@[simp]
 def AgreeOn {α : Type} {N : ℕ}
     (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
@@ -260,7 +261,7 @@ lemma nab_pivotal_bc (a b c: α)
         | .Indiff _ _ => prefer a b c .Bot hac  -- a ≻ b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
-    unfold AgreeOn mg2; intro i; split_ifs
+    simp [mg2]; intro i; split_ifs
     . -- i < n_ab
       cases (pp i).cmp b c with
       | LT     h  hn => simp [ h, hn, prefer_expand c b a, hcb]
@@ -278,7 +279,7 @@ lemma nab_pivotal_bc (a b c: α)
     constructor
     -- By AIIA on nab pivoting defintion
     . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
-        unfold AgreeOn mg2; intro i;
+        unfold mg2; intro i;
         by_cases hi: i < n_ab
         . have :i.val < n_ab +1 := by omega
           simp [hi, this, prefer_expand b b a]
@@ -298,7 +299,7 @@ lemma nab_pivotal_bc (a b c: α)
       exact flipped a b
     -- By AIIA
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
-        unfold AgreeOn mg2 mg1; intro i; simp; split_ifs
+        simp [mg2, mg1]; intro i; split_ifs
         . -- i < n_ab
           simp [prefer_expand b c a, hca]
           split
