@@ -129,18 +129,8 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
       else if y = a₀ then True        -- everything else ≤ a₀
       else True                        -- a₁ ~ a₂: both directions
   refl := by intro x; cases tie <;> simp
-  trans := by
-    intro a b c ha hb
-    cases tie <;> simp only at ha hb ⊢
-    . split_ifs with haa2 hca0 haa0 hca2 <;> simp_all
-    . split_ifs at ha hb ⊢; exact ha
-    . split_ifs at ha hb ⊢; exact hb
-  total := by
-    intro a b
-    cases tie
-    . split_ifs <;> simp_all
-    . simp only; by_cases hxa : a = a₂ <;> by_cases hya : b = a₂ <;> simp_all
-    . simp only; by_cases hxa : a = a₀ <;> by_cases hya : b = a₀ <;> simp_all
+  trans := by intro a b c ha hb; cases tie <;> simp only at ha hb ⊢ <;> split_ifs <;> simp_all
+  total := by intro a b; cases tie <;> by_cases hxa2 : a = a₂ <;> by_cases hxa0 : a = a₀ <;> by_cases hba0 : b = a₀ <;> simp_all
 
 lemma prefer_expand
   (top mid bot: α)(tie: Tie)(htb: top ≠ bot)
@@ -153,14 +143,10 @@ lemma prefer_expand
     | .Bot => top ≠ mid → ((¬ mid ≽[p] top) ∧ bot ≽[p] mid)
   )
   := by
-  intro p; unfold p prefer; simp; refine ⟨?_, ?_, ?_, ?_, ?_⟩
-  . split <;> simp_all
-  . split <;> try trivial
-    intro h; exact absurd h (Ne.symm htb)
-  . split <;> trivial
-  . split <;> try simp_all <;> exact Ne.symm htb
-    exact Ne.symm htb
-  . split <;> simp_all <;> tauto
+  intro p; unfold p prefer; simp
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> split <;> try simp_all <;> try constructor <;> try intro h; try simp [Ne.symm h, Ne.symm htb]
+  all_goals try intro h2; try exact absurd h2 (Ne.symm htb)
+  simp [Ne.symm htb, Ne.symm h2]
 
 /-- Writing in weak preference form allows simplification -/
 lemma prefer_gt_top_mid (top mid bot: α)(htb: top ≠ bot)(htm: top ≠ mid)
