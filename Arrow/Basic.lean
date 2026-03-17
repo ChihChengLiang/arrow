@@ -171,8 +171,8 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   unfold flipping canonicalSwap
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
-  have: b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
-    apply hu; intro _; simp [Preorder'.lt, prefer_expand b b a]
+  have : b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
+    apply hu; intro _; simp [prefer_expand b b a]
   intro _; exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
