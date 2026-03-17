@@ -237,8 +237,8 @@ lemma nab_pivotal_bc (a b c: α)
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
           intro i; simp only [mg1, canonicalSwap]
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
-          . simp [prefer_expand b c a .Not hba, prefer_expand b b a]
-          . simp [prefer_expand a b b, prefer_gt_top_mid a b c hac hab]
+          . simp [prefer_expand b b a, prefer_expand b c a .Not hba]
+          . simp [prefer_expand a b b, prefer_expand a b c .Not hac, hab]
 
         apply (strict_aiia hp hAIIA).mpr
         exact no_flip a b k hk
@@ -273,16 +273,16 @@ lemma nab_pivotal_bc (a b c: α)
     unfold AgreeOn mg2; intro i; split_ifs
     . -- i < n_ab
       cases (pp i).cmp b c with
-      | LT h hn => simp [h, hn, prefer_gt_top_mid c b a hca hcb]
-      | GT hn h => simp [h, hn, prefer_gt_top_mid b c a hba hbc]
-      | Indiff h1 h2 => obtain ⟨h, _, _, _, hn⟩ := prefer_expand b c a .Top hba; simp [h1, h2, h, hn hca]
+      | LT     h  hn => simp [ h, hn, prefer_expand c b a .Not hca, hcb]
+      | GT     hn h  => simp [ h, hn, prefer_expand b c a .Not hba, hbc]
+      | Indiff h1 h2 => simp [h1, h2, prefer_expand b c a .Top hba, hca]
     . -- i = n_ab
       subst i n_ab; simp [h_pp_bc.1, h_pp_bc.2, prefer_expand b a c .Not hbc]
     . -- i > n_ab
       cases (pp i).cmp b c with
-      | LT h hn => simp [h, hn, prefer_gt_mid_bot a c b hab hcb]
-      | GT hn h => simp [h, hn, prefer_gt_mid_bot a b c hac hbc]
-      | Indiff h1 h2 => obtain ⟨_, h, _, _, hn⟩ := prefer_expand a b c .Bot hac; simp [h1, h2, h, hn hab]
+      | LT     h  hn => simp [ h, hn, prefer_expand a c b .Not hab, hcb]
+      | GT     hn h  => simp [ h, hn, prefer_expand a b c .Not hac, hbc]
+      | Indiff h1 h2 => simp [h1, h2, prefer_expand a b c .Bot hac, hab]
 
   have hbac: b ≽[R mg2] a ≻ c := by
     constructor
@@ -293,34 +293,34 @@ lemma nab_pivotal_bc (a b c: α)
         . have :i.val < n_ab +1 := by omega
           simp [hi, this, prefer_expand b b a]
           split
-          . simp [prefer_gt_mid_bot c b a hca hba]
+          . simp [prefer_expand c b a .Not hca, hba]
           . simp [prefer_expand b c a .Not hba]
           . simp [prefer_expand b c a .Top hba]
         . by_cases hi2: i = n_ab
-          . simp [hi2, prefer_expand b b a, prefer_gt_top_mid b a c hbc hba]
+          . simp [hi2, prefer_expand b b a, prefer_expand b a c .Not hbc, hba]
           . have :¬ (i.val < n_ab +1 ):= by omega
             simp [hi, hi2, this, prefer_expand a b b]
             split
             . simp [prefer_expand a c b .Not hab]
-            . simp [prefer_gt_top_mid a b c hac hab]
-            . obtain ⟨h, _, _, _, hn ⟩ := prefer_expand a b c .Bot hac; simp [h, hn hab]
+            . simp [prefer_expand a b c .Not hac, hab]
+            . simp [prefer_expand a b c .Bot hac, hab]
       apply (hAIIA _ _ _ _ h_agree_ba).1.mpr
       exact flipped a b
     -- By AIIA
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
         unfold AgreeOn mg2 mg1; intro i; simp; split_ifs
         . -- i < n_ab
-          simp [prefer_gt_mid_bot b c a hba hca]
+          simp [prefer_expand b c a .Not hba, hca]
           split
           . simp [prefer_expand c b a .Not hca]
-          . simp [prefer_gt_mid_bot b c a hba hca]
-          . obtain ⟨_, h, _, _, hn ⟩ := prefer_expand b c a .Top hba; simp [ h, hn hca]
+          . simp [prefer_expand b c a .Not hba, hca]
+          . simp [prefer_expand b c a .Top hba, hca]
         . -- i = n_ab
-          simp [prefer_expand a b c .Not hac, prefer_gt_mid_bot b a c hbc hac]
+          simp [prefer_expand a b c .Not hac, prefer_expand b a c .Not hbc, hac]
         . -- i > n_ab
           simp [prefer_expand a b c .Not hac]
           split
-          . simp [prefer_gt_top_mid a c b hab hac]
+          . simp [prefer_expand a c b .Not hab, hac]
           . simp [prefer_expand a b c .Not hac]
           . simp [prefer_expand a b c .Bot hac]
       exact (strict_aiia h_agree_ac hAIIA).mpr ((R mg1).lt_trans habc.2 habc.1)
