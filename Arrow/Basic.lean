@@ -143,10 +143,8 @@ lemma prefer_expand
     | .Bot => top ≠ mid → ((¬ mid ≽[p] top) ∧ bot ≽[p] mid)
   )
   := by
-  intro p; unfold p prefer; simp
-  refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> split <;> try simp_all <;> try constructor <;> try intro h; try simp [Ne.symm h, Ne.symm htb]
-  all_goals try intro h2; try exact absurd h2 (Ne.symm htb)
-  simp [Ne.symm htb, Ne.symm h2]
+  intro p; unfold p prefer; simp; refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  all_goals split <;> try simp_all [Ne.symm htb] <;> intro h <;> exact Ne.symm h
 
 /-- Writing in weak preference form allows simplification -/
 lemma prefer_gt_top_mid (top mid bot: α)(htb: top ≠ bot)(htm: top ≠ mid)
