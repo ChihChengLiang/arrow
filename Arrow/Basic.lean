@@ -38,6 +38,12 @@ lemma Preorder'.lt_trans (p : Preorder' α) {a b c : α}
     . exact p.trans _ _ _ h1.1 h2.1
     . intro h; exact h1.2 (p.trans _ _ _ h2.1 h)
 
+lemma Preorder'.lt_of_lt_of_le {p : Preorder' α} {a b c : α}
+    (hab : p.lt a b) (hbc : p.le b c) : p.lt a c := by
+    simp [Preorder'.lt] at hab ⊢; constructor
+    . exact p.trans _ _ _ hab.1 hbc
+    . intro h; exact absurd (p.trans _ _ _ hbc h) hab.2
+
 /-- The three possible outcomes when comparing two elements under a total preorder. -/
 inductive Cmp (p : Preorder' α) (a b : α) : Type
   | Indiff (h₁ : p.le a b) (h₂ : p.le b a) : Cmp p a b
@@ -308,13 +314,10 @@ lemma nab_pivotal_bc (a b c: α)
       simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree_ac]
       exact (R mg1).lt_trans habc.2 habc.1
 
-  -- transitivity from b ≽ a ≻ c
-  have hRmg2bc : b ≻[R mg2] c := by
-    simp [Preorder'.lt]; constructor
-    . exact (R mg2).trans c a b hbac.2.1 hbac.1
-    . intro h; exact absurd ((R mg2).trans a b c hbac.1 h) hbac.2.2
   simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree]
-  exact hRmg2bc
+  -- transitivity from b ≽ a ≻ c
+  show b ≻[R mg2] c
+  exact Preorder'.lt_of_lt_of_le hbac.2 hbac.1
 
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
