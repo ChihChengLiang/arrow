@@ -377,7 +377,7 @@ lemma ncb_le_nbc (a b c: α)
 
 /-- All pivotal voters for pairs in `{a, b, c}` are the same:
     `pivoter (b, c) = pivoter (c, b) = pivoter (a, b)`. -/
-lemma n_ab_pivotal_bc_cb (a b c: α)
+lemma nab_eq_nbc_ncb (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hAIIA: AIIA R):
     (pivoter b c hbc hu) = (pivoter c b (Ne.symm hbc) hu) ∧
@@ -403,16 +403,16 @@ lemma n_ab_dictate_xy (a b c x y: α)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
   have := nab_pivotal_bc a b c hab hac hbc hu hAIIA
-  have := n_ab_pivotal_bc_cb a b c hab hac hbc hu hAIIA
-  have := n_ab_pivotal_bc_cb a c b hac hab (Ne.symm hbc) hu hAIIA
+  have := nab_eq_nbc_ncb a b c hab hac hbc hu hAIIA
+  have := nab_eq_nbc_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
   by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
   -- x ∉ {b, c}, y ≠ c
   . have := nab_pivotal_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
-    have := n_ab_pivotal_bc_cb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
+    have := nab_eq_nbc_ncb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
     simp_all
   -- x ∉ {b, c}, y = c
   . have := nab_pivotal_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
-    have := n_ab_pivotal_bc_cb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
+    have := nab_eq_nbc_ncb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
     simp_all
   -- x = c, y ≠ c
   . by_cases hyb: y ≠ b
