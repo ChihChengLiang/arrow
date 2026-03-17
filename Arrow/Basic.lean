@@ -88,10 +88,6 @@ def AIIA (R : SWF α N) : Prop :=
 def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
 
-lemma strict_aiia {R: SWF α N}
-  {p q: Profile α N} {a b: α} (hagree: AgreeOn p q a b) (hAIIA: AIIA R):
-  (a ≻[R p] b) ↔ a ≻[R q] b := by simp [Preorder'.lt, hAIIA _ _ _ _ hagree]
-
 /-! ## Preference Construction
 
 We construct concrete preference orderings to build test profiles for the proof.
@@ -227,7 +223,7 @@ lemma nab_pivotal_bc (a b c: α)
           . simp [prefer_expand b b a, prefer_expand b c a]
           . simp [prefer_expand a b b, prefer_expand a b c, hab]
 
-        apply (strict_aiia hp hAIIA).mpr
+        simp only [Preorder'.lt, hAIIA _ _ _ _ hp]
         exact no_flip a b k hk
     -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
@@ -290,7 +286,7 @@ lemma nab_pivotal_bc (a b c: α)
             . simp [prefer_expand a c b]
             . simp [prefer_expand a b c, hab]
             . simp [prefer_expand a b c .Bot hac, hab]
-      apply (hAIIA _ _ _ _ h_agree_ba).1.mpr
+      simp only [hAIIA _ _ _ _ h_agree_ba]
       exact flipped a b
     -- By AIIA
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
@@ -309,14 +305,16 @@ lemma nab_pivotal_bc (a b c: α)
           . simp [prefer_expand a c b, hac]
           . simp [prefer_expand a b c]
           . simp [prefer_expand a b c .Bot hac]
-      exact (strict_aiia h_agree_ac hAIIA).mpr ((R mg1).lt_trans habc.2 habc.1)
+      simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree_ac]
+      exact (R mg1).lt_trans habc.2 habc.1
 
   -- transitivity from b ≽ a ≻ c
   have hRmg2bc : b ≻[R mg2] c := by
     simp [Preorder'.lt]; constructor
     . exact (R mg2).trans c a b hbac.2.1 hbac.1
     . intro h; exact absurd ((R mg2).trans a b c hbac.1 h) hbac.2.2
-  exact (strict_aiia h_agree hAIIA).mpr hRmg2bc
+  simp only [Preorder'.lt, hAIIA _ _ _ _ h_agree]
+  exact hRmg2bc
 
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
