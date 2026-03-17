@@ -126,7 +126,7 @@ def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' 
   total := by intro a b; split <;> by_cases a = a₂ <;> by_cases b = a₀ <;> simp_all
 
 lemma prefer_expand
-  (top mid bot: α)(tie: Tie)(htb: top ≠ bot)
+  (top mid bot: α)(tie: Tie := Tie.Not)(htb: top ≠ bot)
   :let p:= prefer top mid bot tie htb
   (top ≽[p] mid) ∧ (mid ≽[p] bot) ∧ (top ≽[p] bot) ∧ (¬ bot ≽[p] top) ∧
   (
@@ -213,7 +213,7 @@ lemma nab_pivotal_bc (a b c: α)
     . by_cases hn : n_ab = 0
       . -- Case n_ab = 0: All voters prefer a > b, use unanimity
         have h : ∀ i : Fin N, a ≻[mg1 i] b := by
-          intro i; simp [mg1, hn, Preorder'.lt, prefer_expand a b c .Not, hab]
+          intro i; simp [mg1, hn, Preorder'.lt, prefer_expand a b c, hab]
         exact hu _ _ _ h
       . -- Case n_ab ≠ 0: Use no_flip
         let k := n_ab - 1
@@ -224,15 +224,15 @@ lemma nab_pivotal_bc (a b c: α)
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
           intro i; simp only [mg1, canonicalSwap]
           by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi]
-          . simp [prefer_expand b b a, prefer_expand b c a .Not hba]
-          . simp [prefer_expand a b b, prefer_expand a b c .Not hac, hab]
+          . simp [prefer_expand b b a, prefer_expand b c a]
+          . simp [prefer_expand a b b, prefer_expand a b c, hab]
 
         apply (strict_aiia hp hAIIA).mpr
         exact no_flip a b k hk
     -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
         intro i; unfold mg1; split_ifs
-        all_goals simp [Preorder'.lt, prefer_expand b c a .Not, prefer_expand a b c .Not, hbc]
+        all_goals simp [Preorder'.lt, prefer_expand b c a, prefer_expand a b c, hbc]
       exact hu _ _ _ h
   intro pp h_pp_bc
   -- `pp` has arbitrary preference on (b,c), except n_ab
@@ -259,15 +259,15 @@ lemma nab_pivotal_bc (a b c: α)
     unfold AgreeOn mg2; intro i; split_ifs
     . -- i < n_ab
       cases (pp i).cmp b c with
-      | LT     h  hn => simp [ h, hn, prefer_expand c b a .Not hca, hcb]
-      | GT     hn h  => simp [ h, hn, prefer_expand b c a .Not hba, hbc]
+      | LT     h  hn => simp [ h, hn, prefer_expand c b a, hcb]
+      | GT     hn h  => simp [ h, hn, prefer_expand b c a, hbc]
       | Indiff h1 h2 => simp [h1, h2, prefer_expand b c a .Top hba, hca]
     . -- i = n_ab
       subst i n_ab; simp [h_pp_bc.1, h_pp_bc.2, prefer_expand b a c .Not hbc]
     . -- i > n_ab
       cases (pp i).cmp b c with
-      | LT     h  hn => simp [ h, hn, prefer_expand a c b .Not hab, hcb]
-      | GT     hn h  => simp [ h, hn, prefer_expand a b c .Not hac, hbc]
+      | LT     h  hn => simp [ h, hn, prefer_expand a c b, hcb]
+      | GT     hn h  => simp [ h, hn, prefer_expand a b c, hbc]
       | Indiff h1 h2 => simp [h1, h2, prefer_expand a b c .Bot hac, hab]
 
   have hbac: b ≽[R mg2] a ≻ c := by
@@ -279,16 +279,16 @@ lemma nab_pivotal_bc (a b c: α)
         . have :i.val < n_ab +1 := by omega
           simp [hi, this, prefer_expand b b a]
           split
-          . simp [prefer_expand c b a .Not hca, hba]
-          . simp [prefer_expand b c a .Not hba]
+          . simp [prefer_expand c b a, hba]
+          . simp [prefer_expand b c a]
           . simp [prefer_expand b c a .Top hba]
         . by_cases hi2: i = n_ab
-          . simp [hi2, prefer_expand b b a, prefer_expand b a c .Not hbc, hba]
+          . simp [hi2, prefer_expand b b a, prefer_expand b a c, hba]
           . have :¬ (i.val < n_ab +1 ):= by omega
             simp [hi, hi2, this, prefer_expand a b b]
             split
-            . simp [prefer_expand a c b .Not hab]
-            . simp [prefer_expand a b c .Not hac, hab]
+            . simp [prefer_expand a c b]
+            . simp [prefer_expand a b c, hab]
             . simp [prefer_expand a b c .Bot hac, hab]
       apply (hAIIA _ _ _ _ h_agree_ba).1.mpr
       exact flipped a b
@@ -296,18 +296,18 @@ lemma nab_pivotal_bc (a b c: α)
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
         unfold AgreeOn mg2 mg1; intro i; simp; split_ifs
         . -- i < n_ab
-          simp [prefer_expand b c a .Not hba, hca]
+          simp [prefer_expand b c a, hca]
           split
-          . simp [prefer_expand c b a .Not hca]
-          . simp [prefer_expand b c a .Not hba, hca]
+          . simp [prefer_expand c b a]
+          . simp [prefer_expand b c a, hca]
           . simp [prefer_expand b c a .Top hba, hca]
         . -- i = n_ab
-          simp [prefer_expand a b c .Not hac, prefer_expand b a c .Not hbc, hac]
+          simp [prefer_expand a b c, prefer_expand b a c, hac]
         . -- i > n_ab
-          simp [prefer_expand a b c .Not hac]
+          simp [prefer_expand a b c]
           split
-          . simp [prefer_expand a c b .Not hab, hac]
-          . simp [prefer_expand a b c .Not hac]
+          . simp [prefer_expand a c b, hac]
+          . simp [prefer_expand a b c]
           . simp [prefer_expand a b c .Bot hac]
       exact (strict_aiia h_agree_ac hAIIA).mpr ((R mg1).lt_trans habc.2 habc.1)
 
@@ -327,7 +327,7 @@ lemma nab_le_nbc (a b c: α)
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp only [cs, canonicalSwap]
-    split_ifs with hh; simp at hh; omega; simp [Preorder'.lt, prefer_expand b c c]
+    split_ifs with hh <;> simp_all [Preorder'.lt, prefer_expand b c c]; omega
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     ((Preorder'.not_lt _ _ _).mpr (flipped b c))          -- but n_bc flipped, so society should prefer c over b
@@ -340,7 +340,7 @@ lemma ncb_le_nab (a b c: α)
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
-  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, Preorder'.lt, prefer_expand b b c .Not]
+  have: b ≻[cs n_ab] c := by simp [cs, canonicalSwap, Preorder'.lt, prefer_expand b b c]
   exact absurd
     (nab_pivotal_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
     (Preorder'.lt_asymm _ _ _ (no_flip c b n_ab h))     -- n_ab before pivoter, so b c shouldn't flip
