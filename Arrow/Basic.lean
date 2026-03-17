@@ -380,27 +380,31 @@ lemma n_ab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hAIIA: AIIA R):
     Dictates R (pivoter a b hab hu) x y := by
-  have := nab_pivotal_bc a b c hab hac hbc hu hAIIA
+  -- prepare bridging equalities: n_ab = n_bc = n_cb
   have := nab_eq_nbc_ncb a b c hab hac hbc hu hAIIA
-  have := nab_eq_nbc_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
   by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
-  -- x ∉ {b, c}, y ≠ c
+  -- x ∉ {b, c}, y ≠ c, bridging from n_cx = n_bc = n_ab
   . have := nab_pivotal_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
     have := nab_eq_nbc_ncb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
     simp_all
-  -- x ∉ {b, c}, y = c
+  -- x ∉ {b, c}, y = c, bridging from n_bx = n_cb = n_ab
   . have := nab_pivotal_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
     have := nab_eq_nbc_ncb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
     simp_all
   -- x = c, y ≠ c
   . by_cases hyb: y ≠ b
+    -- n_bc = n_ab
     . have := nab_pivotal_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hAIIA
       simp_all
+    -- n_ac = n_cb = n_ab
     . have := nab_pivotal_bc a c b hac hab (Ne.symm hbc) hu hAIIA
+      have := nab_eq_nbc_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
       simp_all
-  -- x = b, y ≠ c
+  -- x = b, y ≠ c, n_cb = n_ab
   . have := nab_pivotal_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hAIIA
     simp_all
+  -- x = b, y = c
+  . exact nab_pivotal_bc a b c hab hac hbc hu hAIIA
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
