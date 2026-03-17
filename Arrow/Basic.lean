@@ -30,14 +30,7 @@ lemma Preorder'.lt_asymm (p : Preorder' α) (a b : α) :
     p.lt a b → ¬ p.lt b a := by intro ⟨_, hnba⟩ ⟨hba, _⟩; exact hnba hba
 
 lemma Preorder'.not_lt {α : Type} (p : Preorder' α) (a b : α) :
-    ¬ p.lt a b ↔ p.le b a := by
-  unfold Preorder'.lt
-  constructor
-  . intro h; push_neg at h
-    rcases p.total a b with hab | hba
-    . exact h hab
-    . exact hba
-  . intro hba; push_neg; intro _; exact hba
+    ¬ p.lt a b ↔ p.le b a := by simp [Preorder'.lt, p.total]
 
 lemma Preorder'.lt_trans (p : Preorder' α) {a b c : α}
     (h1 : p.lt a b) (h2 : p.lt b c) : p.lt a c := by
