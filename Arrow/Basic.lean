@@ -161,7 +161,7 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
   have: 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
   simp [Nat.sub_add_cancel this]
   have : b ≻[R (fun i => prefer b b a .Not (Ne.symm hab) )] a := by
-    apply hu; intro _; unfold prefer prefer_ifs; simp [hab, Ne.symm hab]
+    apply hu; intro _; simp [prefer, prefer_ifs, hab, Ne.symm hab]
   intro _; exact this.1
 
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
@@ -214,14 +214,12 @@ lemma nab_dictate_bc (a b c: α)
           exact Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (Fin.val_ne_of_ne hn))
         have hk : k.val < n_ab := by omega
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
-          intro i; unfold mg1
-          by_cases hi : i.val < n_ab.val <;> simp [hk_succ, hi, prefer, prefer_ifs, hac, hab]
+          intro i; unfold mg1; split_ifs with hi <;> simp [hk_succ, hi, prefer, prefer_ifs, hac, hab]
         simp [hAIIA _ _ _ _ hp]
         exact no_flip a b k hk
     -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
-        intro _; unfold mg1; split_ifs
-        all_goals simp [prefer, prefer_ifs, hbc, hba, hcb, hca]
+        intro _; unfold mg1; split_ifs <;> simp [prefer, prefer_ifs, hbc, hba, hcb, hca]
       exact hu _ _ _ h
 
   -- `pp` has arbitrary preference on (b,c), except n_ab
@@ -246,11 +244,11 @@ lemma nab_dictate_bc (a b c: α)
         | .Indiff _ _ => prefer a b c .Bot hac  -- a ≻ b ~ c
 
   have h_agree: AgreeOn pp mg2 b c := by
-    simp [mg2]; intro i; split_ifs <;> simp_all [prefer, prefer_ifs]
+    simp [mg2]; intro i; split_ifs <;> simp [prefer, prefer_ifs]
     . -- i < n_ab
       split <;> simp_all
     . -- i = n_ab
-      subst i n_ab; simp [h_pp_bc.1, h_pp_bc.2]
+      subst i n_ab; simp [h_pp_bc.1, h_pp_bc.2, hbc, hcb]
     . -- i > n_ab
       split <;> simp_all
 
@@ -258,29 +256,20 @@ lemma nab_dictate_bc (a b c: α)
     constructor
     -- By AIIA on nab pivoting defintion
     . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
-        unfold mg2; intro i;
+        simp [mg2, prefer, prefer_ifs]; intro i;
         by_cases hi: i < n_ab
         . have :i.val < n_ab +1 := by omega
-          simp [hi, this, prefer, prefer_ifs]
-          split <;> simp[hab, hba, hac]
+          simp [hi, this]; split <;> simp[hab, hba, hac]
         . by_cases hi2: i = n_ab
-          . simp [hi2, prefer, prefer_ifs, hbc, hba]
+          . simp [hi2, hbc, hba]
           . have :¬ (i.val < n_ab +1 ):= by omega
-            simp [hi, hi2, this, prefer, prefer_ifs]
-            split <;> simp [hac, hab]
+            simp [hi, hi2, this]; split <;> simp [hac, hab]
       simp only [hAIIA _ _ _ _ h_agree_ba]
       exact flipped a b
     -- By AIIA
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
-        simp [mg2, mg1]; intro i; split_ifs
-        . -- i < n_ab
-          simp [prefer, prefer_ifs]
-          split <;> simp [hca, hac, hab]
-        . -- i = n_ab
-          simp [prefer, prefer_ifs, hac, hcb, hca]
-        . -- i > n_ab
-          simp [prefer, prefer_ifs]
-          split <;> simp [hac, hab]
+        simp [mg2, mg1, prefer, prefer_ifs]; intro _; split_ifs <;> try split
+        all_goals simp [hca, hac, hab, hcb]
       simp [hAIIA _ _ _ _ h_agree_ac]
       exact (R mg1).lt_trans habc.2 habc.1
 
@@ -297,7 +286,7 @@ lemma nab_le_nbc (a b c: α)
   by_contra h; push_neg at h;
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
-    simp [cs]; split_ifs with hh <;> simp_all [prefer, prefer_ifs, Ne.symm hbc]; omega
+    simp [cs]; split_ifs <;> simp [prefer, prefer_ifs, Ne.symm hbc, hbc]; omega
   exact absurd
     (nab_dictate_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
     (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
