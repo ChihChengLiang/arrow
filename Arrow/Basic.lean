@@ -190,8 +190,8 @@ lemma nab_dictate_bc (a b c: α)
   have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
 
   -- Magic profile 1
-  -- 0 ... k-1 prefer b ≻ c ≻ a
-  -- k ... N-1 prefer a ≻ b ≻ c
+  -- 0    ... n_ab-1  prefer b ≻ c ≻ a
+  -- n_ab ... N-1     prefer a ≻ b ≻ c
   -- Result: Society prefers a ≻ b ≻ c
   let mg1: Profile α N := fun i: Fin N =>
     if i < n_ab.val
