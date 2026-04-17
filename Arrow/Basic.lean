@@ -86,7 +86,7 @@ def Unanimity (R : SWF α N) : Prop :=
 
 /-- **Independence of Irrelevant Alternatives**: The social ranking of `a` vs `b`
     depends only on individual rankings of `a` vs `b`. -/
-def AIIA (R : SWF α N) : Prop :=
+def IIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≽[R p] b) ↔ a ≽[R q] b) ∧ ((b ≽[R p] a) ↔ b ≽[R q] a)
 
@@ -184,7 +184,7 @@ lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
 /-- The pivotal voter for `(a, b)` dictates the pair `(b, c)`. -/
 lemma nab_dictate_bc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-    (hu: Unanimity R) (hAIIA: AIIA R)
+    (hu: Unanimity R) (hIIA: IIA R)
     : Dictates R (pivoter a b hab hu) b c := by
   let n_ab := pivoter a b hab hu
   have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
@@ -216,7 +216,7 @@ lemma nab_dictate_bc (a b c: α)
         have hk : k.val < n_ab := by omega
         have hp : AgreeOn mg1 (canonicalSwap a b hab k.succ) a b := by
           intro i; unfold mg1; split_ifs with hi <;> simp [hk_succ, hi, prefer, hac, hab]
-        simp [hAIIA _ _ _ _ hp]
+        simp [hIIA _ _ _ _ hp]
         exact no_flip a b k hk
     -- b ≻ c by unanimity
     . have h: ∀ i: Fin N, b ≻[mg1 i] c := by
@@ -255,7 +255,7 @@ lemma nab_dictate_bc (a b c: α)
 
   have hbac: b ≽[R mg2] a ≻ c := by
     constructor
-    -- By AIIA on nab pivoting defintion
+    -- By IIA on nab pivoting defintion
     . have h_agree_ba: AgreeOn mg2 (canonicalSwap a b hab n_ab.succ) b a := by
         simp [mg2, prefer]; intro i;
         by_cases hi: i < n_ab
@@ -265,16 +265,16 @@ lemma nab_dictate_bc (a b c: α)
           . simp [hi2, hbc, hba]
           . have :¬ (i.val < n_ab +1 ):= by omega
             simp [hi, hi2, this]; split <;> simp [hac, hab]
-      simp only [hAIIA _ _ _ _ h_agree_ba]
+      simp only [hIIA _ _ _ _ h_agree_ba]
       exact flipped a b
-    -- By AIIA
+    -- By IIA
     . have h_agree_ac: AgreeOn mg2 mg1 a c := by
         simp [mg2, mg1, prefer]; intro _; split_ifs <;> try split
         all_goals simp [hca, hac, hab, hcb]
-      simp [hAIIA _ _ _ _ h_agree_ac]
+      simp [hIIA _ _ _ _ h_agree_ac]
       exact (R mg1).lt_trans habc.2 habc.1
 
-  simp [hAIIA _ _ _ _ h_agree]
+  simp [hIIA _ _ _ _ h_agree]
   -- transitivity from b ≽ a ≻ c
   show b ≻[R mg2] c
   exact (R mg2).lt_of_lt_of_le hbac.2 hbac.1
@@ -282,50 +282,50 @@ lemma nab_dictate_bc (a b c: α)
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-    (hu: Unanimity R) (hAIIA: AIIA R)
+    (hu: Unanimity R) (hIIA: IIA R)
     : pivoter a b hab hu ≤ pivoter b c hbc hu := by
   by_contra h; push_neg at h;
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp [cs, prefer]; split_ifs <;> simp [Ne.symm hbc, hbc]; omega
   exact absurd
-    (nab_dictate_bc a b c hab hac hbc hu hAIIA cs h_pref) -- n_ab still dictates b over c
+    (nab_dictate_bc a b c hab hac hbc hu hIIA cs h_pref) -- n_ab still dictates b over c
     (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
 
 /-- The pivotal voter for `(c, b)` comes no later than the one for `(a, b)`. -/
 lemma ncb_le_nab (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-    (hu: Unanimity R) (hAIIA: AIIA R):
+    (hu: Unanimity R) (hIIA: IIA R):
     pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
   by_contra h; push_neg at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
   have: b ≻[cs n_ab] c := by simp [cs, prefer, hbc, Ne.symm hbc]
   exact absurd
-    (nab_dictate_bc a b c hab hac hbc hu hAIIA cs this) -- n_ab prefer b over c, so is society
+    (nab_dictate_bc a b c hab hac hbc hu hIIA cs this) -- n_ab prefer b over c, so is society
     (no_flip c b n_ab h |> Preorder'.lt_asymm)          -- n_ab before pivoter, so b c shouldn't flip
 
 /-- Combining the above: `pivoter (c, b) ≤ pivoter (b, c)`. -/
 lemma ncb_le_nbc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-    (hu: Unanimity R) (hAIIA: AIIA R)
+    (hu: Unanimity R) (hIIA: IIA R)
     : pivoter c b (Ne.symm hbc) hu ≤ pivoter b c hbc hu :=
-  le_trans (ncb_le_nab a b c hab hac hbc hu hAIIA) (nab_le_nbc a b c hab hac hbc hu hAIIA)
+  le_trans (ncb_le_nab a b c hab hac hbc hu hIIA) (nab_le_nbc a b c hab hac hbc hu hIIA)
 
 /-- All pivotal voters for pairs in `{a, b, c}` are the same:
     `pivoter (b, c) = pivoter (c, b) = pivoter (a, b)`. -/
 lemma nab_eq_nbc_ncb (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
-    (hu: Unanimity R) (hAIIA: AIIA R):
+    (hu: Unanimity R) (hIIA: IIA R):
     (pivoter b c hbc hu) = (pivoter c b (Ne.symm hbc) hu) ∧
     (pivoter c b (Ne.symm hbc) hu) = pivoter a b hab hu := by
 
-  have h_nab_le_nbc := nab_le_nbc a b c hab hac hbc hu hAIIA
-  have h_ncb_le_nab := ncb_le_nab a b c hab hac hbc hu hAIIA
-  have h_ncb_le_nbc := ncb_le_nbc a b c hab hac hbc hu hAIIA
+  have h_nab_le_nbc := nab_le_nbc a b c hab hac hbc hu hIIA
+  have h_ncb_le_nab := ncb_le_nab a b c hab hac hbc hu hIIA
+  have h_ncb_le_nbc := ncb_le_nbc a b c hab hac hbc hu hIIA
 
   -- As b and c are distinct and arbitrary, n_bc ≤ n_cb also holds
-  have h_nbc_le_ncb := ncb_le_nbc a c b hac hab (Ne.symm hbc) hu hAIIA
+  have h_nbc_le_ncb := ncb_le_nbc a c b hac hab (Ne.symm hbc) hu hIIA
 
   -- n_bc = n_cb = n_ab
   have h_nbc_eq_ncb := le_antisymm h_nbc_le_ncb h_ncb_le_nbc
@@ -337,41 +337,41 @@ lemma nab_eq_nbc_ncb (a b c: α)
 /-- The pivotal voter for any pair `(a, b)` dictates *every* pair `(x, y)`. -/
 lemma nab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
-    (hu: Unanimity R) (hAIIA: AIIA R):
+    (hu: Unanimity R) (hIIA: IIA R):
     Dictates R (pivoter a b hab hu) x y := by
   -- prepare bridging equalities: n_ab = n_bc = n_cb
-  have := nab_eq_nbc_ncb a b c hab hac hbc hu hAIIA
+  have := nab_eq_nbc_ncb a b c hab hac hbc hu hIIA
   by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
   -- x ∉ {b, c}, y ≠ c, bridging from n_cx = n_bc = n_ab
-  . have := nab_dictate_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hAIIA
-    have := nab_eq_nbc_ncb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hAIIA
+  . have := nab_dictate_bc c x y (Ne.symm hxc) (Ne.symm hyc) hxy hu hIIA
+    have := nab_eq_nbc_ncb b c x hbc (Ne.symm hxb) (Ne.symm hxc) hu hIIA
     simp_all
   -- x ∉ {b, c}, y = c, bridging from n_bx = n_cb = n_ab
-  . have := nab_dictate_bc b x c (Ne.symm hxb) hbc hxc hu hAIIA
-    have := nab_eq_nbc_ncb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hAIIA
+  . have := nab_dictate_bc b x c (Ne.symm hxb) hbc hxc hu hIIA
+    have := nab_eq_nbc_ncb c b x (Ne.symm hbc) (Ne.symm hxc) (Ne.symm hxb) hu hIIA
     simp_all
   -- x = c, y ≠ c
   . by_cases hyb: y ≠ b
     -- n_bc = n_ab
-    . have := nab_dictate_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hAIIA
+    . have := nab_dictate_bc b c y hbc (Ne.symm hyb) (Ne.symm hyc) hu hIIA
       simp_all
     -- n_ac = n_cb = n_ab
-    . have := nab_dictate_bc a c b hac hab (Ne.symm hbc) hu hAIIA
-      have := nab_eq_nbc_ncb a c b hac hab (Ne.symm hbc) hu hAIIA
+    . have := nab_dictate_bc a c b hac hab (Ne.symm hbc) hu hIIA
+      have := nab_eq_nbc_ncb a c b hac hab (Ne.symm hbc) hu hIIA
       simp_all
   -- x = b, y ≠ c, n_cb = n_ab
-  . have := nab_dictate_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hAIIA
+  . have := nab_dictate_bc c b y (Ne.symm hbc) (Ne.symm hyc) hxy hu hIIA
     simp_all
   -- x = b, y = c
-  . exact nab_dictate_bc a b c hab hac hbc hu hAIIA
+  . exact nab_dictate_bc a b c hab hac hbc hu hIIA
 
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
 theorem Impossibility [Fintype α] (ha : Fintype.card α ≥ 3):
-    ¬ ∃ R : SWF α N, (Unanimity R) ∧ (AIIA R) ∧ (NonDictatorship R) := by
-  by_contra ⟨ R, ⟨ hu, hAIIA, hNonDictator ⟩⟩
+    ¬ ∃ R : SWF α N, (Unanimity R) ∧ (IIA R) ∧ (NonDictatorship R) := by
+  by_contra ⟨ R, ⟨ hu, hIIA, hNonDictator ⟩⟩
   apply hNonDictator
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha
   use pivoter a b hab hu
   intro x y hxy
-  exact nab_dictate_xy a b c x y hab hac hbc hxy hu hAIIA
+  exact nab_dictate_xy a b c x y hab hac hbc hxy hu hIIA

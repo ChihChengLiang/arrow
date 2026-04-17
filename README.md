@@ -30,7 +30,7 @@ The build fetches Mathlib and verifies all proofs. Expect a few minutes on first
 | `Profile` | Assignment of a `Preorder'` to each voter |
 | `SWF` | Social Welfare Function — maps a `Profile` to a society-wide `Preorder'` |
 | `Unanimity` | If every voter prefers `a` to `b`, so does society |
-| `AIIA` | Society's ranking of `a` vs `b` depends only on voters' rankings of that pair |
+| `IIA` | Society's ranking of `a` vs `b` depends only on voters' rankings of that pair |
 | `NonDictatorial` | No single voter's preferences determine society's ranking for every pair |
 | `Impossibility` | No `SWF` satisfies all three properties when there are ≥ 3 alternatives |
 
