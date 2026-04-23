@@ -1,6 +1,6 @@
 name = "arrow"
 version = "0.1.0"
-defaultTargets = ["arrow"]
+defaultTargets = ["Arrow"]
 lintDriver = "batteries/runLinter"
 
 [[require]]
@@ -10,6 +10,3 @@ scope = "leanprover-community"
 [[lean_lib]]
 name = "Arrow"
 
-[[lean_exe]]
-name = "arrow"
-root = "Main"
