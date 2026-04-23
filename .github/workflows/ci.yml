@@ -31,9 +31,11 @@ jobs:
           test: false
           lint: false
           use-github-cache: true
+          working-directory: Arrow
 
       - name: Build Arrow
-        run: lake build Arrow
+        working-directory: Arrow
+        run: lake build
 
   docs:
     name: Build and Deploy Documentation
@@ -45,16 +47,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install Lean
+      - name: Install Lean (manual toolchain)
         uses: leanprover/lean-action@v1
         with:
           test: false
           lint: false
           use-github-cache: true
+          working-directory: manual
 
-      - name: Build Documentation
-        working-directory: docbuild
-        run: lake build Arrow:docs
+      - name: Build Verso Documentation
+        working-directory: manual
+        run: lake build
+
+      - name: Generate HTML
+        working-directory: manual
+        run: lake exe docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -62,7 +69,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'docbuild/.lake/build/doc'
+          path: 'manual/_out/html-single'
 
       - name: Deploy to GitHub Pages
         id: deployment
