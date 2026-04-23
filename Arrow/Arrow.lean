@@ -9,23 +9,29 @@ A total preorder over candidates `α`, representing an individual's preference r
 -/
 variable {α : Type}
 
+-- ANCHOR: Preorder
 /-- A total preorder: reflexive, transitive, and total. -/
 structure Preorder' (α : Type) where
   le : α → α → Prop
   refl : ∀ a, le a a
   trans : ∀ a b c, le a b → le b c → le a c
   total : ∀ a b, le a b ∨ le b a
+-- ANCHOR_END: Preorder
 
+-- ANCHOR: StrictPref
 /-- Strict preference: `a` is strictly preferred to `b` iff `a ≤ b` but not `b ≤ a`. -/
 @[simp]
 def Preorder'.lt (p : Preorder' α) (a b : α) : Prop :=
   p.le a b ∧ ¬p.le b a
+-- ANCHOR_END: StrictPref
 
+-- ANCHOR: Notation
 -- Notation: `a ≻[p] b` means voter with preference `p` strictly prefers `a` over `b`
 notation a " ≻[" p  "] " b => Preorder'.lt p b a
 notation a " ≽[" p  "] " b => Preorder'.le p b a
 notation a " ≻[" p  "] " b "≻ " c => (a ≻[p] b) ∧ b ≻[p] c
 notation a " ≽[" p  "] " b "≻ " c => (a ≽[p] b) ∧ b ≻[p] c
+-- ANCHOR_END: Notation
 
 lemma Preorder'.lt_asymm {p : Preorder' α} {a b : α} :
     p.lt a b → ¬ p.lt b a := by intro ⟨_, hnba⟩ ⟨hba, _⟩; exact hnba hba
@@ -64,35 +70,49 @@ Core definitions for Arrow's theorem: profiles, SWFs, and the three key properti
 -/
 variable {N : ℕ}
 
+-- ANCHOR: Profile
 /-- A preference profile assigns each voter `i ∈ Fin N` their preference ordering. -/
 def Profile (α : Type) (N : ℕ) := Fin N → Preorder' α
+-- ANCHOR_END: Profile
 
+-- ANCHOR: SWF
 /-- A Social Welfare Function aggregates individual preferences into a social ordering. -/
 def SWF (α : Type) (N : ℕ) := Profile α N → Preorder' α
+-- ANCHOR_END: SWF
 
+-- ANCHOR: Dictates
 /-- Voter `k` is a dictator for the pair `(a, b)` if whenever `k` prefers `a` over `b`,
     society also prefers `a` over `b`. -/
 def Dictates (R : SWF α N) (k : Fin N) (a b : α): Prop :=
   ∀ (p: Profile α N ), (a ≻[p k] b) → a ≻[R p] b
+-- ANCHOR_END: Dictates
 
+-- ANCHOR: AgreeOn
 /-- Two profiles agree on `(a, b)` if every voter ranks `a` vs `b` the same way in both. -/
 @[simp]
 def AgreeOn (p q : Profile α N) (a b : α) : Prop :=
   ∀ i, ((a ≽[p i] b) ↔ a ≽[q i] b) ∧ ((b ≽[p i] a) ↔ b ≽[q i] a)
+-- ANCHOR_END: AgreeOn
 
+-- ANCHOR: Unanimity
 /-- **Unanimity** (Pareto): If all voters prefer `a` over `b`, so does society. -/
 def Unanimity (R : SWF α N) : Prop :=
   ∀ (p: Profile α N) (a b: α), (∀ i: Fin N, a ≻[p i] b) → a ≻[R p] b
+-- ANCHOR_END: Unanimity
 
+-- ANCHOR: IIA
 /-- **Independence of Irrelevant Alternatives**: The social ranking of `a` vs `b`
     depends only on individual rankings of `a` vs `b`. -/
 def IIA (R : SWF α N) : Prop :=
   ∀ (p q: Profile α N) (a b: α),
     AgreeOn p q a b → ((a ≽[R p] b) ↔ a ≽[R q] b) ∧ ((b ≽[R p] a) ↔ b ≽[R q] a)
+-- ANCHOR_END: IIA
 
+-- ANCHOR: NonDictatorship
 /-- **Non-Dictatorship**: No single voter dictates the outcome for all pairs. -/
 def NonDictatorship (R : SWF α N): Prop :=
   ¬ (∃ i: Fin N, ∀ (a b: α), (a ≠ b) → Dictates R i a b)
+-- ANCHOR_END: NonDictatorship
 
 /-! ## Preference Construction
 
@@ -100,8 +120,10 @@ We construct concrete preference orderings to build test profiles for the proof.
 Given three alternatives, `prefer a₀ a₁ a₂ tie` ranks them with optional ties.
 -/
 
+-- ANCHOR: Tie
 /-- Where ties occur in a 3-element preference ranking -/
 inductive Tie | Not | Top | Bot
+-- ANCHOR_END: Tie
 
 @[simp]
 def prefer_ifs (x y a₀ _a₁ a₂ : α) (tie : Tie): Prop :=
@@ -121,11 +143,13 @@ def prefer_ifs (x y a₀ _a₁ a₂ : α) (tie : Tie): Prop :=
     else if y = a₀ then True        -- everything else ≤ a₀
     else True                        -- a₁ ~ a₂: both directions
 
+-- ANCHOR: prefer
 /-- Construct a preference ordering with optional ties:
     - `Tie.Not`: a₀ > a₁ > a₂ (strict ranking)
     - `Tie.Top`: a₀ ~ a₁ > a₂ (top two tied)
     - `Tie.Bot`: a₀ > a₁ ~ a₂ (bottom two tied) -/
 def prefer (a₀ _a₁ a₂ : α) (tie : Tie) (h02 : a₀ ≠ a₂) : Preorder' α where
+-- ANCHOR_END: prefer
   le x y := prefer_ifs x y a₀ _a₁ a₂ tie
   refl := by intro x; cases tie <;> simp
   trans := by intro a b c ha hb; unfold prefer_ifs at *; split <;> split_ifs <;> simp_all
@@ -140,6 +164,7 @@ whose flip changes society's preference is the pivotal voter.
 -/
 variable [NeZero N] {R : SWF α N}
 
+-- ANCHOR: canonicalSwap
 /-- A family of profiles indexed by `k ∈ Fin (N+1)`:
     voters `0..k-1` prefer `b ≻ a`, voters `k..N-1` prefer `a ≻ b`. -/
 @[simp]
@@ -149,10 +174,13 @@ def canonicalSwap (a b : α) (hab : a ≠ b) : Fin (N+1) → Profile α N :=
       -- `prefer` takes 3 items, we duplicate middle as a workaround
       then prefer b b a .Not (Ne.symm hab)  -- b on top
       else prefer a b b .Not hab            -- a on top
+-- ANCHOR_END: canonicalSwap
 
+-- ANCHOR: flipping
 /-- `flipping R a b hab k` holds iff society prefers `b ≻ a` when voters `0..k` prefer `b ≻ a`. -/
 def flipping (R : SWF α N) (a b : α) (hab : a ≠ b) :=
   fun k: Fin N => ¬ a ≻[R (canonicalSwap a b hab k.succ)] b
+-- ANCHOR_END: flipping
 
 /-- By unanimity, a flip must occur: when all voters prefer `b ≻ a`, so does society. -/
 lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
@@ -165,27 +193,35 @@ lemma flip_exists (R : SWF α N) (a b : α) (hab : a ≠ b) (hu : Unanimity R):
     apply hu; intro _; simp [prefer, hab, Ne.symm hab]
   intro _; exact this.1
 
+-- ANCHOR: pivoter
 /-- The pivotal voter for `(a, b)`: the minimum `k` where society flips from `a ≻ b` to `b ≻ a`. -/
 noncomputable def pivoter (a b : α) (hab : a ≠ b) (hu : Unanimity R) : Fin N :=
   Fin.find (flipping R a b hab) (flip_exists R a b hab hu)
+-- ANCHOR_END: pivoter
 
+-- ANCHOR: no_flip
 /-- Before the pivotal voter, society still prefers `a ≻ b`. -/
 lemma no_flip (a b : α) {hab : a ≠ b} (i : Fin N) {hu: Unanimity R}:
     i < pivoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
+-- ANCHOR_END: no_flip
   intro hilt
   have h := Fin.find_min (flip_exists R a b hab hu) hilt
   unfold flipping at h; push Not at h; exact h
 
+-- ANCHOR: flipped
 /-- At the pivotal voter, society flips to `b ≻ a`. -/
 lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
     b ≽[R (canonicalSwap a b hab (pivoter a b hab hu).succ)] a := by
+-- ANCHOR_END: flipped
   exact Fin.find_spec (flip_exists R a b hab hu) |> Preorder'.not_lt.mp
 
+-- ANCHOR: nab_dictate_bc
 /-- The pivotal voter for `(a, b)` dictates the pair `(b, c)`. -/
 lemma nab_dictate_bc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hIIA: IIA R)
     : Dictates R (pivoter a b hab hu) b c := by
+-- ANCHOR_END: nab_dictate_bc
   let n_ab := pivoter a b hab hu
   have hba := Ne.symm hab; have hca := Ne.symm hac; have hcb := Ne.symm hbc
 
@@ -279,11 +315,13 @@ lemma nab_dictate_bc (a b c: α)
   show b ≻[R mg2] c
   exact (R mg2).lt_of_lt_of_le hbac.2 hbac.1
 
+-- ANCHOR: nab_le_nbc
 /-- The pivotal voter for `(a, b)` comes no later than the one for `(b, c)`. -/
 lemma nab_le_nbc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hIIA: IIA R)
     : pivoter a b hab hu ≤ pivoter b c hbc hu := by
+-- ANCHOR_END: nab_le_nbc
   by_contra h; push Not at h;
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
@@ -292,11 +330,13 @@ lemma nab_le_nbc (a b c: α)
     (nab_dictate_bc a b c hab hac hbc hu hIIA cs h_pref) -- n_ab still dictates b over c
     (flipped b c |> Preorder'.not_lt.mpr)                 -- but n_bc flipped, so society should prefer c over b
 
+-- ANCHOR: ncb_le_nab
 /-- The pivotal voter for `(c, b)` comes no later than the one for `(a, b)`. -/
 lemma ncb_le_nab (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hIIA: IIA R):
     pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
+-- ANCHOR_END: ncb_le_nab
   by_contra h; push Not at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
@@ -334,11 +374,13 @@ lemma nab_eq_nbc_ncb (a b c: α)
 
   exact ⟨ h_nbc_eq_ncb, h_ncb_eq_nab⟩
 
+-- ANCHOR: nab_dictate_xy
 /-- The pivotal voter for any pair `(a, b)` dictates *every* pair `(x, y)`. -/
 lemma nab_dictate_xy (a b c x y: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hxy : x ≠ y)
     (hu: Unanimity R) (hIIA: IIA R):
     Dictates R (pivoter a b hab hu) x y := by
+-- ANCHOR_END: nab_dictate_xy
   -- prepare bridging equalities: n_ab = n_bc = n_cb
   have := nab_eq_nbc_ncb a b c hab hac hbc hu hIIA
   by_cases hxb: x ≠ b <;> by_cases hxc: x ≠ c <;> by_cases hyc: y ≠ c <;> simp_all <;> try subst x y
@@ -365,10 +407,12 @@ lemma nab_dictate_xy (a b c x y: α)
   -- x = b, y = c
   . exact nab_dictate_bc a b c hab hac hbc hu hIIA
 
+-- ANCHOR: Impossibility
 /-- **Arrow's Impossibility Theorem**: No SWF with ≥3 alternatives and ≥1 voters
     can satisfy Unanimity, IIA, and Non-Dictatorship simultaneously. -/
 theorem Impossibility [Fintype α] (ha : Fintype.card α ≥ 3):
     ¬ ∃ R : SWF α N, (Unanimity R) ∧ (IIA R) ∧ (NonDictatorship R) := by
+-- ANCHOR_END: Impossibility
   by_contra ⟨ R, ⟨ hu, hIIA, hNonDictator ⟩⟩
   apply hNonDictator
   obtain ⟨ a, b, c, ⟨ hab, hac, hbc⟩ ⟩ := Fintype.two_lt_card_iff.mp ha

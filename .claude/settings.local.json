@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(lake build:*)",
-      "Bash(lake lint:*)"
+      "Bash(lake lint:*)",
+      "Bash(lake exe:*)"
     ]
   }
 }
