@@ -31,6 +31,7 @@ jobs:
           test: false
           lint: false
           use-github-cache: true
+          lake-package-directory: Arrow
 
       - name: Build Arrow
         working-directory: Arrow
@@ -52,6 +53,7 @@ jobs:
           test: false
           lint: false
           use-github-cache: true
+          lake-package-directory: manual
 
       - name: Build Verso Documentation
         working-directory: manual
