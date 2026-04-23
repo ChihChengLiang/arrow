@@ -18,8 +18,8 @@ open Docs
 
 def config : RenderConfig where
   emitTeX := false
-  emitHtmlSingle := .no
-  emitHtmlMulti := .immediately
+  emitHtmlSingle := .immediately
+  emitHtmlMulti := .no
   htmlDepth := 2
 
 def main := manualMain (%doc Docs) (config := config)

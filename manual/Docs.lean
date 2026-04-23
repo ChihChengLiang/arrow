@@ -1,20 +1,23 @@
 import VersoManual
 
-import Docs.Papers
-
 open Verso Doc
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 open Verso.Code.External
-
-open Docs
 
 set_option pp.rawOnError true
 
 set_option verso.exampleProject "../Arrow"
 set_option verso.exampleModule "Arrow"
 
-#doc (Manual) "Arrow's Impossibility Theorem" =>
+def yu2012 : InProceedings where
+  title := inlines!"A one-shot proof of Arrow's impossibility theorem"
+  authors := #[inlines!"Ning Neil Yu"]
+  year := 2012
+  booktitle := inlines!"Economic Theory"
+  url := "https://sites.math.rutgers.edu/~zeilberg/EM22/yu2012.pdf"
+
+#doc (Manual) "A Formalization of Arrow's Impossibility Theorem" =>
 %%%
 authors := ["CC Liang"]
 shortTitle := "Arrow"
@@ -23,7 +26,7 @@ shortTitle := "Arrow"
 Arrow's Impossibility Theorem is one of the most celebrated results in social choice theory.
 Proved by Kenneth Arrow in 1951, it shows that no voting system with three or more alternatives
 can simultaneously satisfy three basic fairness conditions.
-This project contains a formal proof in Lean 4, following the one-shot proof of {citep somePaper}[].
+This project contains a formal proof in Lean 4, following the one-shot proof of {citep yu2012}[].
 
 # Preferences
 
