@@ -1,15 +1,17 @@
 name = "arrow"
 version = "0.1.0"
-defaultTargets = ["arrow"]
+defaultTargets = ["Arrow"]
 lintDriver = "batteries/runLinter"
 
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
 
+[[require]]
+name = "subverso"
+git = "https://github.com/leanprover/subverso"
+rev = "52b9dfbd2658408e37ae6e8b72601ddeaaa25a0c"
+
 [[lean_lib]]
 name = "Arrow"
 
-[[lean_exe]]
-name = "arrow"
-root = "Main"
