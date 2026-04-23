@@ -31,7 +31,6 @@ jobs:
           test: false
           lint: false
           use-github-cache: true
-          working-directory: Arrow
 
       - name: Build Arrow
         working-directory: Arrow
@@ -53,7 +52,6 @@ jobs:
           test: false
           lint: false
           use-github-cache: true
-          working-directory: manual
 
       - name: Build Verso Documentation
         working-directory: manual
