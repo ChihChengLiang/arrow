@@ -174,7 +174,7 @@ lemma no_flip (a b : α) {hab : a ≠ b} (i : Fin N) {hu: Unanimity R}:
     i < pivoter a b hab hu → a ≻[R (canonicalSwap a b hab i.succ)] b := by
   intro hilt
   have h := Fin.find_min (flip_exists R a b hab hu) hilt
-  unfold flipping at h; push_neg at h; exact h
+  unfold flipping at h; push Not at h; exact h
 
 /-- At the pivotal voter, society flips to `b ≻ a`. -/
 lemma flipped (a b : α) {hab : a ≠ b} {hu: Unanimity R}:
@@ -284,7 +284,7 @@ lemma nab_le_nbc (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hIIA: IIA R)
     : pivoter a b hab hu ≤ pivoter b c hbc hu := by
-  by_contra h; push_neg at h;
+  by_contra h; push Not at h;
   let cs := canonicalSwap b c hbc (pivoter b c hbc hu).succ
   have h_pref : b ≻[cs (pivoter a b hab hu)] c := by
     simp [cs, prefer]; split_ifs <;> simp [Ne.symm hbc, hbc]; omega
@@ -297,7 +297,7 @@ lemma ncb_le_nab (a b c: α)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
     (hu: Unanimity R) (hIIA: IIA R):
     pivoter c b (Ne.symm hbc) hu ≤ pivoter a b hab hu := by
-  by_contra h; push_neg at h
+  by_contra h; push Not at h
   let n_ab := pivoter a b hab hu
   let cs := canonicalSwap c b (Ne.symm hbc) n_ab.succ
   have: b ≻[cs n_ab] c := by simp [cs, prefer, hbc, Ne.symm hbc]
